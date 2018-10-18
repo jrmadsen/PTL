@@ -1,0 +1,236 @@
+//
+// MIT License
+// Copyright (c) 2018 Jonathan R. Madsen
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+// ---------------------------------------------------------------
+//  PTL common header for examples
+//
+//
+//============================================================================//
+
+#include "PTL/Task.hh"
+#include "PTL/TBBTask.hh"
+#include "PTL/TaskGroup.hh"
+#include "PTL/TaskManager.hh"
+#include "PTL/TaskRunManager.hh"
+#include "PTL/Timer.hh"
+#include "PTL/Utility.hh"
+#include "PTL/TiMemory.hh"
+#include "PTL/Threading.hh"
+
+// C headers
+#include <cstdlib>  // setenv
+#include <stdlib.h>
+
+// C++ headers
+#include <random>
+#include <limits>
+#include <fstream>
+#include <iostream>
+
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
+
+//============================================================================//
+
+#if defined(__INTEL_COMPILER)
+#   include <ittnotify.h>
+#   define _pause_collection    __itt_pause()
+#   define _resume_collection   __itt_resume()
+#else
+#   define _pause_collection
+#   define _resume_collection
+#endif
+
+#ifdef _OPENMP
+#   include <omp.h>
+#endif
+
+//============================================================================//
+
+// some typedefs to simplify declarations
+typedef std::vector<uint64_t>           Array_t;
+typedef std::future<uint64_t>           fuint64_t;
+typedef std::default_random_engine      random_engine_t;
+typedef std::vector<float>              farray_t;
+typedef std::vector<int64_t>            iarray_t;
+
+//============================================================================//
+
+// some constants
+const string prefix       = "\n\t### ==> ";
+const string cprefix      = "\t### ==> ";
+static int16_t rng_range    = 2;
+
+//============================================================================//
+//
+// the first template parameter is the result type, the second
+// template parameter is optional. It will default to the first
+// template parameter is not specified. It is available for
+// when the results of individual tasks need to be combined into
+// a different data type. In the fibonacci calculation of order 43
+// the result using int will overflow the max value for int,
+// hence why I am using it here
+
+#if defined(USE_TBB_TASKS)
+const   bool useTBB = true;
+typedef TBBTaskGroup<Array_t, const uint64_t&>  TaskGroup_t;
+typedef TBBTaskGroup<void>                      VoidGroup_t;
+typedef TBBTaskGroup<long>                      LongGroup_t;
+#else
+const   bool useTBB = false;
+typedef TaskGroup<Array_t, const uint64_t&>     TaskGroup_t;
+typedef TaskGroup<void>                         VoidGroup_t;
+typedef TaskGroup<long>                         LongGroup_t;
+#endif
+
+//============================================================================//
+
+struct Measurement
+{
+    long cutoff;
+    long num_task_groups;
+    long nthreads;
+    double ncount;
+    double real;
+    double cpu;
+    double cpu_per_thread;
+    double cpu_util;
+
+    Measurement(long _cutoff, long _ntg, long _nthreads)
+    : cutoff(_cutoff), num_task_groups(_ntg), nthreads(_nthreads)
+    { }
+
+    bool operator==(const Measurement& rhs) const
+    {
+        return cutoff == rhs.cutoff && num_task_groups == rhs.num_task_groups;
+    }
+
+    bool operator!=(const Measurement& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
+    bool operator<(const Measurement& rhs) const
+    {
+        return cutoff > rhs.cutoff;
+    }
+
+    Measurement& operator+=(const Timer& _timer)
+    {
+        real += _timer.GetRealElapsed();
+        auto _cpu = _timer.GetUserElapsed() + _timer.GetSystemElapsed();
+        cpu += _cpu;
+        cpu_per_thread += _cpu / nthreads;
+        cpu_util += (_cpu / _timer.GetRealElapsed())*100.0;
+        ncount += 1.0;
+        return *this;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Measurement& m)
+    {
+        os << m.cutoff << ", " << m.num_task_groups << ", "
+           << (m.real / m.ncount) << ", "
+           << (m.cpu / m.ncount) << ", "
+           << (m.cpu_per_thread / m.ncount) << ", "
+           << (m.cpu_util / m.ncount);
+        return os;
+    }
+};
+
+//============================================================================//
+
+void message(TaskRunManager* runmanager)
+{
+    cout << "\n\t--> Running in multithreaded mode with "
+           << runmanager->GetNumberOfThreads()
+           << " threads\n" << endl;
+}
+
+//============================================================================//
+
+uint32_t get_seed()
+{
+    static const uint32_t seed_base = 6734525;
+    static const uint32_t seed_factor = 1000;
+    static std::atomic<uint32_t> _counter;
+    ThreadLocalStatic uint32_t _tid = ++_counter;
+    return seed_base + (_tid * seed_factor);
+}
+
+//============================================================================//
+
+random_engine_t& get_engine()
+{
+    ThreadLocalStatic random_engine_t* _engine = new random_engine_t(get_seed());
+    return  (*_engine);
+}
+
+//============================================================================//
+
+template <typename _Tp = double>
+_Tp get_random()
+{
+    return std::generate_canonical<_Tp, std::numeric_limits<_Tp>::digits>(get_engine());
+}
+
+//============================================================================//
+
+int16_t get_random_int(int16_t _range = rng_range)
+{
+    ThreadLocalStatic std::uniform_int_distribution<int16_t>* _instance
+            = new std::uniform_int_distribution<int16_t>(-_range, _range);
+    return (*_instance)(get_engine());
+}
+
+//============================================================================//
+
+uint64_t fibonacci(const uint64_t& n)
+{
+    return (n < 2) ? 1 : (fibonacci(n-2) + fibonacci(n-1));
+}
+
+//============================================================================//
+
+std::atomic_uintmax_t& task_group_counter()
+{
+    static std::atomic_uintmax_t _instance(0);
+    return  _instance;
+}
+
+//============================================================================//
+
+uint64_t compute_sum(const Array_t& arr)
+{
+    uint64_t _sum = 0;
+    for(const auto& itr : arr) { _sum += itr; }
+    return _sum;
+}
+
+//============================================================================//
+
+void append(Array_t& lhs, TaskGroup_t* rhs)
+{
+    if(rhs)
+        for(auto& itr : rhs->join())
+            lhs.push_back(itr);
+}
+
+//============================================================================//

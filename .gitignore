@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# IDE project configs
+*CMakeLists.txt.user
+*.vscode
+
+# Build folders
+/build-*
+/install-*

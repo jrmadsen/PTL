@@ -1,0 +1,374 @@
+//
+// MIT License
+// Copyright (c) 2018 Jonathan R. Madsen
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
+/// \file tasking.cc
+/// \brief Example showing the usage of tasking
+
+#include "common/utils.hh"
+
+//============================================================================//
+
+uint64_t tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
+{
+    if(n < 2)
+    {
+        return n;
+    }
+    else
+    {
+        uint64_t x, y;
+        tbb::task_group g;
+        ++task_group_counter();
+        if(n >= cutoff)
+        {
+            g.run([&] () { x = tbb_fibonacci(n-1, cutoff); });
+            g.run([&] () { y = tbb_fibonacci(n-2, cutoff); });
+        }
+        else
+        {
+            //cout << "Number of recursive task-groups: " << nrecur << endl;
+            g.run([&] () { x = fibonacci(n-1); });
+            g.run([&] () { y = fibonacci(n-2); });
+        }
+        // wait for both tasks to complete
+        g.wait();
+        return x + y;
+    }
+}
+
+//============================================================================//
+
+uint64_t task_fibonacci(const uint64_t& n, const uint64_t& cutoff,
+                        TaskManager* taskMan)
+{
+    if(n < 2)
+    {
+        return 1;
+    }
+    else
+    {
+        uint64_t x, y;
+        VoidGroup_t tg;
+        ++task_group_counter();
+        if(n >= cutoff)
+        {
+            taskMan->exec(tg, [&] () { x = task_fibonacci(n-1, cutoff, taskMan); });
+            taskMan->exec(tg, [&] () { y = task_fibonacci(n-2, cutoff, taskMan); });
+        }
+        else
+        {
+            taskMan->exec(tg, [&] () { x = fibonacci(n-1); });
+            taskMan->exec(tg, [&] () { y = fibonacci(n-2); });
+        }
+        tg.wait();
+        return x + y;
+    }
+}
+
+//============================================================================//
+
+void execute_cpu_iterations(uint64_t num_iter,
+                            TaskGroup_t* task_group,
+                            uint64_t n,
+                            uint64_t& remaining,
+                            bool verbose = true)
+{
+    if(remaining <= 0 || !task_group)
+        return;
+
+    if(num_iter > remaining)
+        num_iter = remaining;
+    remaining -= num_iter;
+
+    // add an element of randomness
+    static std::atomic<uint32_t> _counter;
+    uint32_t _seed = get_seed() + (++_counter * 10000);
+    get_engine().seed(_seed);
+
+    std::stringstream ss;
+    if(verbose)
+        ss << cprefix << "Submitting " << num_iter
+           << " tasks computing \"fibonacci(" << n << ")\" to task manager "
+           << "(" << remaining << " iterations remaining)..." << std::flush;
+
+    TaskManager* taskManager
+            = TaskRunManager::GetMasterRunManager()->GetTaskManager();
+
+    Timer t;
+    t.Start();
+    for(uint32_t i = 0; i < num_iter; ++i)
+    {
+        int offset = get_random_int();
+        taskManager->exec(*task_group, fibonacci, n + offset);
+    }
+    t.Stop();
+    if(verbose)
+    {
+        ss << " " << t << endl;
+        AutoLock l(TypeMutex<decltype(std::cout)>());
+        cout << ss.str();
+    }
+}
+
+//============================================================================//
+
+int main(int argc, char** argv)
+{
+    _pause_collection; // for VTune
+
+#if defined(PTL_USE_TIMEMORY)
+    tim::manager* manager = tim::manager::instance();
+#endif
+
+    ConsumeParameters(argc, argv);
+
+    auto hwthreads = std::thread::hardware_concurrency();
+    auto default_fib = 30;
+    auto default_tg = 1;
+    auto default_grain = std::pow(16, 3);
+    auto default_ntasks = std::pow(16, 4);;
+    auto default_nthreads = hwthreads;
+    // cutoff fields
+    auto cutoff_high = 40;
+    auto cutoff_low = 15;
+    auto cutoff_incr = 5;
+    auto cutoff_tasks = 1;
+    long cutoff_value = 44; // greater than 45 answer exceeds INT_MAX
+
+    // default environment controls but don't overwrite
+    setenv("NUM_THREADS",       std::to_string(hwthreads).c_str(), 0);
+    setenv("FIBONACCI",         std::to_string(default_fib).c_str(), 0);
+    setenv("GRAINSIZE",         std::to_string(default_grain).c_str(), 0);
+    setenv("NUM_TASKS",         std::to_string(default_ntasks).c_str(), 0);
+    setenv("NUM_TASK_GROUPS",   std::to_string(default_tg).c_str(), 0);
+
+    rng_range = GetEnv<decltype(rng_range)> ("RNG_RANGE", rng_range,
+                                             "Setting RNG range to +/- this value");
+    unsigned numThreads = GetEnv<unsigned>  ("NUM_THREADS", default_nthreads,
+                                             "Getting the number of threads");
+    uint64_t nfib       = GetEnv<uint64_t>  ("FIBONACCI", default_fib,
+                                             "Setting the centerpoint of fib work distribution");
+    uint64_t grainsize  = GetEnv<uint64_t>  ("GRAINSIZE", numThreads,
+                                             "Dividing number of task into grain of this size");
+    uint64_t num_iter   = GetEnv<uint64_t>  ("NUM_TASKS", numThreads * numThreads,
+                                             "Setting the number of total tasks");
+    uint64_t num_groups = GetEnv<uint64_t>  ("NUM_TASK_GROUPS", 4,
+                                             "Setting the number of task groups");
+
+    cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_high);
+    cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
+    cutoff_low   = GetEnv<int>("CUTOFF_LOW",  cutoff_low);
+    cutoff_tasks = GetEnv<int>("CUTOFF_TASKS", cutoff_tasks);
+    cutoff_value = GetEnv<long>("CUTOFF_VALUE", cutoff_value);
+
+    PrintEnv();
+
+    Timer total_timer;
+    total_timer.Start();
+
+    // Construct the default run manager
+    TaskRunManager* runManager = new TaskRunManager(useTBB);
+    runManager->Initialize(numThreads);
+    message(runManager);
+
+    // the TaskManager is a utility that wraps the
+    // function calls into tasks for the ThreadPool
+    TaskManager* taskManager = runManager->GetTaskManager();
+
+    //------------------------------------------------------------------------//
+    //                                                                        //
+    //                      Asynchronous examples/tests                       //
+    //                                                                        //
+    //------------------------------------------------------------------------//
+    {
+        fuint64_t fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
+        uint64_t fib_n = fib_async.get();
+        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- "
+                  << rng_range << ") = " << fib_n << std::endl;
+        std::cout << std::endl;
+    }
+
+    //------------------------------------------------------------------------//
+    //                                                                        //
+    //                          Task-group example/test                       //
+    //                                                                        //
+    //------------------------------------------------------------------------//
+    std::atomic_uintmax_t true_answer(0);
+
+    ///======================================================================///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///                     PRIMARY TASKING SECTION                          ///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///======================================================================///
+    // this function joins task results
+    auto cpu_join = [&] (Array_t& ref, const uint64_t& thread_local_solution)
+    {
+        true_answer += thread_local_solution;
+        //ref.push_back(thread_local_solution);
+        ref.push_back(thread_local_solution);
+        return ref;
+    };
+    //------------------------------------------------------------------------//
+    // this function deletes task groups
+    auto del = [] (TaskGroup_t*& _task_group)
+    {
+        delete _task_group;
+        _task_group = nullptr;
+    };
+    //------------------------------------------------------------------------//
+    // create a task group
+    auto cpu_create = [=] (TaskGroup_t*& _task_group)
+    {
+        if(!_task_group)
+            _task_group = new TaskGroup_t(cpu_join);
+    };
+    //------------------------------------------------------------------------//
+    std::vector<TaskGroup_t*> cpu_task_groups(num_groups, nullptr);
+    uint64_t remaining = num_iter;
+
+    ///======================================================================///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///                         FAKE SECTION                                 ///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///======================================================================///
+
+    std::cout << cprefix << "BEGIN OF FAKE RUN" << std::endl;
+    //------------------------------------------------------------------------//
+    for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+    {
+        // create the task group
+        cpu_create(cpu_task_groups[i]);
+        // submit task with first task group
+        execute_cpu_iterations(hwthreads, cpu_task_groups[i], hwthreads, remaining, false);
+    }
+    //------------------------------------------------------------------------//
+    // make sure all task groups finished (does join)
+    for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+    {
+        // join task group
+        cpu_task_groups[i]->join();
+        // delete task groups
+        del(cpu_task_groups[i]);
+    }
+    //------------------------------------------------------------------------//
+    std::cout << cprefix << "END OF FAKE RUN\n" << std::endl;
+    //------------------------------------------------------------------------//
+
+    ///======================================================================///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///                         WORK SECTION                                 ///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///======================================================================///
+    Timer timer;
+
+    //------------------------------------------------------------------------//
+    timer.Start();      // start timer for calculation
+    _resume_collection; // for VTune
+    //------------------------------------------------------------------------//
+
+    //------------------------------------------------------------------------//
+    std::vector<Array_t> cpu_results(num_groups);
+    remaining = num_iter;
+    true_answer.store(0);
+    //------------------------------------------------------------------------//
+
+    while(remaining > 0)
+    {
+        for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+        {
+            // create the task group
+            cpu_create(cpu_task_groups[i]);
+            // submit task with first task group
+            execute_cpu_iterations(grainsize, cpu_task_groups[i], nfib, remaining);
+            // make sure all task groups finished (does join)
+            append(cpu_results[i], cpu_task_groups[i]);
+        }
+    }
+
+    ///======================================================================///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///                         JOIN RESULTS                                 ///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///======================================================================///
+    std::cout << prefix << "CPU completed" << std::endl;
+
+    // compute the anser
+    uint64_t cpu_answer = 0;
+    for(uint64_t i = 0; i < cpu_results.size(); ++i)
+    {
+        cpu_answer += compute_sum(cpu_results[i]);
+    }
+
+    //------------------------------------------------------------------------//
+    _pause_collection;  // for VTune
+    timer.Stop();       // stop timer for fibonacci
+    //------------------------------------------------------------------------//
+
+    ///======================================================================///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///                 END OF PRIMARY TASKING SECTION                       ///
+    ///                                                                      ///
+    ///                                                                      ///
+    ///======================================================================///
+
+
+    cout << prefix << "[task group] fibonacci(" << nfib << " +/- " << rng_range
+         << ") = " << cpu_answer << endl;
+    cout << cprefix << "  [atomic]   fibonacci(" << nfib << " +/- " << rng_range
+         << ") = " << true_answer << endl;
+
+    std::stringstream fibprefix;
+    fibprefix << "fibonacci(" << nfib << " +/- " << rng_range
+              << ") calculation time: ";
+    int32_t _w = static_cast<int32_t>(fibprefix.str().length()) + 2;
+
+    cout << prefix << std::setw(_w) << fibprefix.str()
+           << "\t" << timer << endl;
+
+    for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+        del(cpu_task_groups[i]);
+
+    // print the time for the calculation
+    total_timer.Stop();
+    cout << cprefix << std::setw(_w) << "Total time: "
+           << "\t" << total_timer << endl;
+
+    int64_t ret = (true_answer - cpu_answer);
+    if(ret == 0)
+        cout << prefix << "Successful MT fibonacci calculation" << endl;
+    else
+        cout << prefix << "Failure combining MT fibonacci calculation " << endl;
+
+    cout << endl;
+
+    delete runManager;
+
+    return ret;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo.....
