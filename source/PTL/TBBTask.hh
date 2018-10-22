@@ -145,14 +145,14 @@ public:
     : VTask(tg),
       m_ptask(func)
     {
-        m_tid_bin = tg->add(&m_ptask);
+        //m_tid_bin = tg->add(&m_ptask);
     }
 
     TBBTask(task_group_type& tg, function_type func)
     : VTask(&tg),
       m_ptask(func)
     {
-        m_tid_bin = tg.add(&m_ptask);
+        //m_tid_bin = tg.add(&m_ptask);
     }
 
     virtual ~TBBTask() { }

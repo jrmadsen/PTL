@@ -129,7 +129,7 @@ private:
 private:
     bool                        m_is_clone;
     intmax_t                    m_thread_bin;
-    mutable intmax_t            m_insert_bin;
+    mutable std::atomic_intmax_t*            m_insert_bin;
     std::atomic_bool*           m_hold;
     std::atomic_uintmax_t*      m_ntasks;
     Mutex*                      m_mutex;

@@ -127,6 +127,9 @@ public:
     virtual bool is_native_task_group() const { return true; }
     virtual bool is_master() const { return this_tid() == m_main_tid; }
 
+    intmax_t increment();
+    intmax_t decrement();
+
     //------------------------------------------------------------------------//
     // set the number of join calls before clear (zero == never)
     virtual void set_clear_frequency(uint32_t val) { m_clear_freq.store(val); }
@@ -189,6 +192,18 @@ VTaskGroup::store(task_pointer ptr)
     ptr->operator++();
     // return reference
     return vtask_list.back();
+}
+//----------------------------------------------------------------------------//
+inline intmax_t
+VTaskGroup::increment()
+{
+    return ++m_tot_task_count;
+}
+//----------------------------------------------------------------------------//
+inline intmax_t
+VTaskGroup::decrement()
+{
+    return --m_tot_task_count;
 }
 //----------------------------------------------------------------------------//
 

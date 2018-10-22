@@ -127,7 +127,7 @@ public:
     : VTask(tg),
       m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
-        m_tid_bin = tg->add(m_ptask.get_future());
+        //m_tid_bin = tg->add(m_ptask.get_future());
     }
 
     // pass a free function pointer
@@ -135,7 +135,7 @@ public:
     : VTask(&tg),
       m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
-        m_tid_bin = tg.add(m_ptask.get_future());
+        //m_tid_bin = tg.add(m_ptask.get_future());
     }
 
     virtual ~Task() { }
@@ -205,14 +205,14 @@ public:
     : VTask(tg),
       m_ptask(func)
     {
-        m_tid_bin = tg->add(m_ptask.get_future());
+        //m_tid_bin = tg->add(m_ptask.get_future());
     }
 
     Task(task_group_type& tg, function_type func)
     : VTask(&tg),
       m_ptask(func)
     {
-        m_tid_bin = tg.add(m_ptask.get_future());
+        //m_tid_bin = tg.add(m_ptask.get_future());
     }
 
     virtual ~Task() { }

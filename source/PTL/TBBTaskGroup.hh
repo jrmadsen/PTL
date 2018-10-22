@@ -45,16 +45,17 @@ template <typename _Tp, typename _Arg = _Tp>
 class TBBTaskGroup : public TaskGroup<_Tp, _Arg>
 {
 public:
-    typedef TBBTaskGroup<_Tp, _Arg>               this_type;
-    typedef TaskGroup<_Tp, _Arg>                  base_type;
+    typedef TBBTaskGroup<_Tp, _Arg>                 this_type;
+    typedef TaskGroup<_Tp, _Arg>                    base_type;
     typedef typename base_type::result_type         result_type;
     typedef typename base_type::ArgTp               ArgTp;
-    typedef typename VTaskGroup::tid_type         tid_type;
+    typedef typename VTaskGroup::tid_type           tid_type;
     typedef typename base_type::data_type           data_type;
     typedef typename base_type::packaged_task_type  packaged_task_type;
     typedef typename base_type::future_type         future_type;
     typedef typename base_type::promise_type        promise_type;
     typedef tbb::task_group                         tbb_task_group_t;
+    typedef std::function<void()>                   void_func_t;
 
 public:
     // Constructor
@@ -94,7 +95,7 @@ public:
 public:
     //------------------------------------------------------------------------//
     // add task
-    tid_type add(packaged_task_type*);
+    void add(void_func_t, promise_type*);
 
     //------------------------------------------------------------------------//
     // this is not a native Tasking task group
@@ -122,16 +123,17 @@ template <>
 class TBBTaskGroup<void, void> : public TaskGroup<void, void>
 {
 public:
-    typedef TBBTaskGroup<void, void>              this_type;
-    typedef TaskGroup<void, void>                 base_type;
+    typedef TBBTaskGroup<void, void>                this_type;
+    typedef TaskGroup<void, void>                   base_type;
     typedef typename base_type::result_type         result_type;
     typedef typename base_type::ArgTp               ArgTp;
-    typedef typename VTaskGroup::tid_type         tid_type;
+    typedef typename VTaskGroup::tid_type           tid_type;
     typedef typename base_type::data_type           data_type;
     typedef typename base_type::packaged_task_type  packaged_task_type;
     typedef typename base_type::future_type         future_type;
     typedef typename base_type::promise_type        promise_type;
     typedef tbb::task_group                         tbb_task_group_t;
+    typedef std::function<void()>                   void_func_t;
 
 public:
     // Constructor
@@ -171,14 +173,20 @@ public:
 public:
     //------------------------------------------------------------------------//
     // add task
-    tid_type add(packaged_task_type* _task)
+    void add(void_func_t _task, promise_type* _prom)
     {
-        tid_type _tid = this_tid();
-        auto _f = _task->get_future();
-        auto _func = [=]() { (*_task)(); };
+        auto _func = [=]()
+        {
+            _task();
+            intmax_t _count = VTaskGroup::decrement();
+            if(_count < 1)
+            {
+                AutoLock l(this->task_lock());
+                CONDITIONBROADCAST(&(this->task_cond()));
+            }
+        };
         m_tbb_task_group->run(_func);
-        m_task_set.push_back(data_type(false, std::move(_f)));
-        return _tid;
+        m_task_set.push_back(data_type(false, _prom));
     }
     //------------------------------------------------------------------------//
     // this is not a native Tasking task group

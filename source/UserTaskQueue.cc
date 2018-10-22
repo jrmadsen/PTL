@@ -37,7 +37,7 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
 : VUserTaskQueue(nworkers),
   m_is_clone((parent) ? true : false),
   m_thread_bin((parent) ? (ThreadPool::GetThisThreadID() % (nworkers+1)) : 0),
-  m_insert_bin((parent) ? (ThreadPool::GetThisThreadID() % (nworkers+1)) : 0),
+  m_insert_bin((parent) ? parent->m_insert_bin : new std::atomic_intmax_t(0)),
   m_hold((parent) ? parent->m_hold : new std::atomic_bool(false)),
   m_ntasks((parent) ? parent->m_ntasks : new std::atomic_uintmax_t(0)),
   m_subqueues((parent) ? parent->m_subqueues : new TaskSubQueueContainer())
@@ -58,7 +58,7 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
            << "this = " << this << ", "
            << "clone = " << std::boolalpha << m_is_clone << ", "
            << "thread = " << m_thread_bin << ", "
-           << "insert = " << m_insert_bin << ", "
+           << "insert = " << m_insert_bin->load() << ", "
            << "hold = " << m_hold->load() << " @ " << m_hold << ", "
            << "tasks = " << m_ntasks->load() << " @ " << m_ntasks << ", "
            << "subqueue = " << m_subqueues << ", "
@@ -122,19 +122,16 @@ VUserTaskQueue* UserTaskQueue::clone()
 intmax_t UserTaskQueue::GetThreadBin() const
 {
     // get a thread id number
-    ThreadLocalStatic intmax_t tl_bin
-            = (m_thread_bin + ThreadPool::GetThisThreadID()) % (m_workers+1);
-    return tl_bin;
+    ThreadLocalStatic intmax_t* tl_bin
+            = new intmax_t((m_thread_bin + ThreadPool::GetThisThreadID()) % (m_workers+1));
+    return *tl_bin;
 }
 
 //============================================================================//
 
 intmax_t UserTaskQueue::GetInsertBin() const
 {
-    //return (m_is_clone)
-    //        ? ((m_insert_bin) % (m_workers + 1))
-    //        : ((++m_insert_bin) % (m_workers + 1));
-    return ++m_insert_bin;
+    return ++(*m_insert_bin);
 }
 
 //============================================================================//
@@ -143,7 +140,6 @@ UserTaskQueue::VTaskPtr
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 {
     bool spin = m_hold->load(std::memory_order_relaxed);
-    //bool recursive = (nitr < 0);
 
     // if not greater than zero, set to number of workers + 1
     if(nitr < 1)
@@ -155,15 +151,15 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     intmax_t n = (subq < 0) ? tbin : subq;
 
     // ensure the thread has a bin assignment
-    if(!(subq < 0))
-        GetThreadBin();
+    //if(!(subq < 0))
+    //    GetThreadBin();
 
     VTaskPtr _task(nullptr);
 
     //------------------------------------------------------------------------//
     auto get_task = [&] (intmax_t _n)
     {
-        TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
+        TaskSubQueue* task_subq = (*m_subqueues)[_n];
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
         if(!task_subq->empty() && task_subq->AcquireClaim())
@@ -218,10 +214,10 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
 
     bool spin = m_hold->load(std::memory_order_relaxed);
 
-    if(data && data->within_task)
+    if(data && !data->is_master)
     {
         subq = GetThreadBin();
-        spin = true;
+        spin = (data->within_task);
     }
 
     // subq is -1 unless specified so unless specified
@@ -233,7 +229,7 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
     //------------------------------------------------------------------------//
     auto insert_task = [&] (intmax_t _n)
     {
-        TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
+        TaskSubQueue* task_subq = (*m_subqueues)[_n];
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
         if(task_subq->AcquireClaim())
@@ -256,16 +252,27 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
     //
     if(spin)
     {
-        for(intmax_t i = 0; i < m_workers; ++i)
-            if(insert_task(n % (m_workers + 1)))
-                return n % (m_workers + 1);
+        n = n % (m_workers + 1);
+        TaskSubQueue *task_subq = (*m_subqueues)[n];
+        for (intmax_t i = 0; i < (m_workers + 1); ++i)
+        {
+            if (task_subq->AcquireClaim())
+            {
+                // push the task into the bin
+                task_subq->PushTask(task);
+                // release the claim on the bin
+                task_subq->ReleaseClaim();
+                // return bin number
+                return n;
+            }
+        }
         --(*m_ntasks);
         return InsertTask(task, data, subq);
     }
 
     // there are num_workers+1 bins so there is always a bin that is open
     // execute num_workers+2 iterations so the thread checks its bin twice
-    for(intmax_t i = 0; i < (m_workers + 1); ++i, ++n)
+    for(intmax_t i = 0; i < (m_workers + 2); ++i, ++n)
     {
         if(insert_task(n % (m_workers + 1)))
             return n % (m_workers + 1);

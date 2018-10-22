@@ -26,6 +26,10 @@
 
 #include "common/utils.hh"
 
+#if defined(PTL_USE_GPERF)
+#   include <gperftools/profiler.h>
+#endif
+
 //============================================================================//
 
 uint64_t tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
@@ -126,7 +130,8 @@ void execute_iterations(uint64_t num_iter,
 
 int main(int argc, char** argv)
 {
-    _pause_collection; // for VTune
+    _pause_collection;  // VTune
+    //_heap_profiler_start(get_gperf_filename(argv[0], "heap").c_str());  // gperf
 
 #if defined(PTL_USE_TIMEMORY)
     tim::manager* manager = tim::manager::instance();
@@ -137,12 +142,12 @@ int main(int argc, char** argv)
     auto hwthreads = std::thread::hardware_concurrency();
     auto default_fib = 28;
     auto default_tg = 1;
-    auto default_grain = pow(32, 3);
-    auto default_ntasks = pow(32, 3);
+    auto default_grain = pow(32, 1);
+    auto default_ntasks = pow(32, 1);
     auto default_nthreads = hwthreads;
     // cutoff fields
     auto cutoff_high = 40;
-    auto cutoff_low = 15;
+    auto cutoff_low = 10;
     auto cutoff_incr = 5;
     auto cutoff_tasks = 1;
     long cutoff_value = 44; // greater than 45 answer exceeds INT_MAX
@@ -222,8 +227,9 @@ int main(int argc, char** argv)
     //------------------------------------------------------------------------//
 
     std::map<int, Measurement*> measurements;
-    //StatAnalysis::ResetCpuClock();
     // run with recursive
+    Timer measureTimer;
+    measureTimer.Start();
     for(int i = 0; i < cutoff_tasks; ++i)
     {
         cout << cprefix << "iteration #" << i << " of " << cutoff_tasks
@@ -277,9 +283,9 @@ int main(int argc, char** argv)
                 cerr << cprefix << "Warning! async != recursive: "
                      << fib_async << " != " << fib_recur << endl;
         }
-
     }
-
+    measureTimer.Stop();
+    std::cout << prefix << "Total measurement time: " << measureTimer << std::endl;
     std::stringstream ss;
     ss << argv[0] << "_recursive.dat";
     std::ofstream ofs(ss.str().c_str());
@@ -424,6 +430,8 @@ int main(int argc, char** argv)
     cout << endl;
 
     delete runManager;
+
+    //_heap_profiler_stop;
 
     return ret;
 }

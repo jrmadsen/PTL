@@ -56,13 +56,12 @@ public:
     typedef typename std::remove_const<
     typename std::remove_reference<_Arg>::type>::type       ArgTp;
     typedef _Tp                                             result_type;
-    typedef TaskGroup<_Tp, _Arg>                          this_type;
+    typedef TaskGroup<_Tp, _Arg>                            this_type;
     typedef std::promise<ArgTp>                             promise_type;
     typedef std::future<ArgTp>                              future_type;
     typedef std::packaged_task<ArgTp()>                     packaged_task_type;
-    typedef std::tuple<bool, future_type, ArgTp>            data_type;
+    typedef std::tuple<bool, promise_type*, ArgTp>          data_type;
     typedef list_type<data_type>                            task_list_t;
-    typedef map_type<tid_type, task_list_t>                 task_map_t;
     typedef std::function<_Tp(_Tp&, _Arg)>                  function_type;
     typedef typename task_list_t::iterator                  iterator;
     typedef typename task_list_t::reverse_iterator          reverse_iterator;
@@ -137,8 +136,7 @@ public:
 
     //------------------------------------------------------------------------//
     // add task
-    tid_type add(future_type&& _f);
-    tid_type add(packaged_task_type*);
+    void add(promise_type* _f);
     //------------------------------------------------------------------------//
     // wait to finish
     _Tp join(_Tp accum = _Tp());
@@ -166,13 +164,12 @@ class TaskGroup<void, void> : public VTaskGroup
 public:
     typedef void                                            ArgTp;
     typedef void                                            result_type;
-    typedef TaskGroup<void, void>                         this_type;
+    typedef TaskGroup<void, void>                           this_type;
     typedef std::promise<void>                              promise_type;
     typedef std::future<void>                               future_type;
     typedef std::packaged_task<void()>                      packaged_task_type;
-    typedef std::tuple<bool, future_type>                   data_type;
+    typedef std::tuple<bool, promise_type*>                 data_type;
     typedef list_type<data_type>                            task_list_t;
-    typedef map_type<tid_type, task_list_t>                 task_map_t;
     typedef typename task_list_t::iterator                  iterator;
     typedef typename task_list_t::reverse_iterator          reverse_iterator;
     typedef typename task_list_t::const_iterator            const_iterator;
@@ -232,20 +229,9 @@ public:
 
     //------------------------------------------------------------------------//
     // add task
-    tid_type add(future_type&& _f)
+    void add(promise_type* _p)
     {
-        tid_type _tid = this_tid();
-        m_task_set.push_back(data_type(false, std::move(_f)));
-        return _tid;
-    }
-    //------------------------------------------------------------------------//
-    // add task
-    tid_type add(packaged_task_type& _task)
-    {
-        tid_type _tid = this_tid();
-        auto _f = _task.get_future();
-        m_task_set.push_back(data_type(false, std::move(_f)));
-        return _tid;
+        m_task_set.push_back(data_type(false, _p));
     }
     //------------------------------------------------------------------------//
     // wait to finish
@@ -270,7 +256,13 @@ protected:
     {
         if(!std::get<0>(_data))
         {
-            std::get<1>(_data).get();
+            promise_type* prom = std::get<1>(_data);
+            if(prom)
+            {
+                prom->get_future().get();
+                delete prom;
+                std::get<1>(_data) = nullptr;
+            }
             std::get<0>(_data) = true;
         }
     }

@@ -66,10 +66,20 @@ public:
 public:
     VTask(VTaskGroup* _group = nullptr);
     virtual ~VTask();
+    VTask(void_func_t&& _func, VTaskGroup* _group = nullptr);
 
 public:
     // execution operator
-    virtual void operator()() = 0;
+    virtual void operator()()
+    {
+        m_func();
+        // decrements the task-group counter on active tasks
+        // when the counter is < 2, if the thread owning the task group is
+        // sleeping at the TaskGroup::wait(), it signals the thread to wake
+        // up and check if all tasks are finished, proceeding if this
+        // check returns as true
+        this_type::operator--();
+    }
 
 public:
     // used by thread_pool
@@ -92,6 +102,8 @@ public:
     intmax_t& depth() { return m_depth; }
     const intmax_t& depth() const { return m_depth; }
 
+    void set_tid_bin(const tid_type& _bin) { m_tid_bin = _bin; }
+
 protected:
     static tid_type this_tid() { return std::this_thread::get_id(); }
 
@@ -101,6 +113,27 @@ protected:
     intmax_t    m_depth;
     void_func_t m_func = [](){};
 
+public:
+    // define the new operator
+    void* operator new(size_type)
+    {
+        return static_cast<void*>(get_allocator()->MallocSingle());
+    }
+    // define the delete operator
+    void operator delete(void* ptr)
+    {
+        get_allocator()->FreeSingle(static_cast<this_type*>(ptr));
+    }
+
+private:
+    // currently disabled due to memory leak found via -fsanitize=leak
+    // static function to get allocator
+    static allocator_type*& get_allocator()
+    {
+        typedef allocator_type* allocator_ptr;
+        ThreadLocalStatic allocator_ptr _allocator = new allocator_type();
+        return _allocator;
+    }
 };
 
 //============================================================================//

@@ -79,24 +79,10 @@ void TaskGroup<_Tp, _Arg>::set_join_function(_Func _join)
 //============================================================================//
 
 template <typename _Tp, typename _Arg>
-inline typename VTaskGroup::tid_type
-TaskGroup<_Tp, _Arg>::add(future_type&& _f)
+inline void
+TaskGroup<_Tp, _Arg>::add(promise_type* _p)
 {
-    tid_type _tid = this_tid();
-    m_task_set.push_back(data_type(false, std::move(_f), ArgTp()));
-    return _tid;
-}
-
-//============================================================================//
-
-template <typename _Tp, typename _Arg>
-inline typename VTaskGroup::tid_type
-TaskGroup<_Tp, _Arg>::add(packaged_task_type* _task)
-{
-    tid_type _tid = this_tid();
-    auto _f = _task->get_future();
-    m_task_set.push_back(data_type(false, std::move(_f), ArgTp()));
-    return _tid;
+    m_task_set.push_back(data_type(false, _p, ArgTp()));
 }
 
 //============================================================================//
@@ -125,7 +111,13 @@ TaskGroup<_Tp, _Arg>::get(data_type& _data)
 {
     if(!std::get<0>(_data))
     {
-        std::get<2>(_data) = std::get<1>(_data).get();
+        promise_type* prom = std::get<1>(_data);
+        if(prom)
+        {
+            std::get<2>(_data) = prom->get_future().get();
+            delete prom;
+            std::get<1>(_data) = nullptr;
+        }
         std::get<0>(_data) = true;
     }
     return std::get<2>(_data);

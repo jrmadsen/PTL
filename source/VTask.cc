@@ -33,12 +33,26 @@
 #include "PTL/VTaskGroup.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/ThreadData.hh"
+
 //============================================================================//
 
 VTask::VTask(VTaskGroup* _group)
 : m_vgroup(_group),
   m_tid_bin(this_tid()),
   m_depth(0)
+{
+    //ThreadData* data = ThreadData::GetInstance();
+    //if(data && data->within_task)
+    //    m_depth = (data->task_depth += 1);
+}
+
+//============================================================================//
+
+VTask::VTask(void_func_t&& _func, VTaskGroup *_group)
+: m_vgroup(_group),
+  m_tid_bin(this_tid()),
+  m_depth(0),
+  m_func(_func)
 {
     //ThreadData* data = ThreadData::GetInstance();
     //if(data && data->within_task)

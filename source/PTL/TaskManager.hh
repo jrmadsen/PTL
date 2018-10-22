@@ -44,6 +44,7 @@
 #include <cmath>
 #include <cassert>
 #include <cstdint>
+#include <cstdio>
 
 //============================================================================//
 
@@ -67,29 +68,12 @@ public:
     static TaskManager* GetInstanceIfExists();
     static unsigned ncores() { return std::thread::hardware_concurrency(); }
 
-    /*
-    /// function for returning the thread id
-    template <typename _Tp>
-    static long id(_Tp thread_self)
-    {
-        long _id = -1;
-        static mad::mutex _mtx;
-        auto_lock l(_mtx);
-        TaskManager* _tm = TaskManager::Instance();
-        if(!_tm)
-            return _id;
-        if(_tm->m_pool->GetThreadIDs().find(thread_self) !=
-           _tm->m_pool->GetThreadIDs().end())
-            _id = _tm->m_pool->GetThreadIDs().find(thread_self)->second;
-        return _id;
-    }
 
     /// function for returning the thread id in string format
-    template <typename _Tp>
-    static std::string sid(_Tp thread_self)
+    static std::string sid()
     {
-        long _id = TaskManager::id(thread_self);
-        if(_id < 0)
+        auto _id = ThreadPool::GetThisThreadID();
+        if(_id < 1)
             return "";
         std::stringstream ss;
         ss.fill('0');
@@ -98,22 +82,21 @@ public:
     }
 
     /// function for returning the thread id in string format
-    template <typename _Tp>
-    static std::string id_string(_Tp thread_self)
+    static std::string id_string()
     {
-        long _id = TaskManager::id(thread_self);
-        if(_id < 0)
+        auto _id = ThreadPool::GetThisThreadID();
+        if(_id < 1)
             return "";
-        TaskManager* _tm = TaskManager::Instance();
+        TaskManager* _tm = TaskManager::GetInstance();
         if(!_tm)
             return "";
         short _w = 4;
-        _w = std::min(_w, (short) std::ceil(std::log10(_tm->size())));
+        _w = std::min(_w, static_cast<short>(std::ceil(std::log10(_tm->size()))));
         std::stringstream ss;
         ss.fill('0');
         ss << std::setw(_w) << _id;
         return ss.str();
-    }*/
+    }
 
 public:
     //------------------------------------------------------------------------//
@@ -172,8 +155,8 @@ public:
     template <typename _Ret, typename _Func>
     std::future<_Ret> async(_Func func)
     {
-        typedef PackagedTask<_Ret, _Ret>  task_type;
-        typedef std::shared_ptr<task_type>      task_pointer;
+        typedef PackagedTask<_Ret, _Ret>    task_type;
+        typedef std::shared_ptr<task_type>  task_pointer;
 
         task_pointer _ptask(new task_type(func));
         std::future<_Ret> _f = _ptask->get_future();
@@ -184,51 +167,115 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    // public wrap functions
+    // public exec functions
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    std::shared_ptr<Task<_Ret, _Arg, _Args...>>
-    wrap(TBBTaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
+    template <typename _Func, typename... _Args>
+    void exec(TaskGroup<void, void>& tg, _Func func, _Args... args)
     {
-        typedef Task<_Ret, _Arg, _Args...>     task_type;
-        typedef std::shared_ptr<task_type>          task_pointer;
-
-        return tg.store(task_pointer(new task_type(tg, func,
-                                            std::forward<_Args>(args)...)));
-    }
-    //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    std::shared_ptr<Task<_Ret, _Arg>>
-    wrap(TBBTaskGroup<_Ret, _Arg>& tg, _Func func)
-    {
-        typedef Task<_Ret, _Arg>           task_type;
+        typedef VTask                           task_type;
         typedef std::shared_ptr<task_type>      task_pointer;
 
-        return tg.store(task_pointer(new task_type(tg, func)));
+        auto _lfunc = std::bind(func, std::forward<_Args>(args)...);
+        task_pointer _task(new task_type(std::move(_lfunc), &tg));
+        tg.add(nullptr);
+        m_pool->add_task(tg.store(_task));
     }
-
-public:
     //------------------------------------------------------------------------//
-    // public exec functions
+    template <typename _Func>
+    void exec(TaskGroup<void, void>& tg, _Func func)
+    {
+        typedef VTask                                   task_type;
+        typedef std::shared_ptr<task_type>              task_pointer;
+
+        auto _lfunc = std::bind(func);
+        task_pointer _task(new task_type(std::move(_lfunc), &tg));
+        tg.add(nullptr);
+        m_pool->add_task(tg.store(_task));
+    }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
     void exec(TaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
     {
-        typedef Task<_Ret, _Arg, _Args...>    task_type;
-        typedef std::shared_ptr<task_type>      task_pointer;
+        typedef VTask                                   task_type;
+        typedef std::shared_ptr<task_type>              task_pointer;
+        typedef typename TaskGroup<_Ret, _Arg>::ArgTp   ArgTp;
+        typedef std::promise<ArgTp>                     promise_type;
 
-        m_pool->add_task(tg.store(task_pointer(new task_type(tg, func,
-                                            std::forward<_Args>(args)...))));
+        promise_type* prom = new promise_type();
+        auto _efunc = std::bind(func, std::forward<_Args>(args)...);
+        auto _lfunc = [=] () { prom->set_value(_efunc()); };
+        task_pointer _task(new task_type(std::move(_lfunc), &tg));
+        tg.add(prom);
+        m_pool->add_task(tg.store(_task));
+
+        //m_pool->add_task(tg.store(task_pointer(new task_type(tg, func,
+        //                                    std::forward<_Args>(args)...))));
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func>
     void exec(TaskGroup<_Ret, _Arg>& tg, _Func func)
     {
-        typedef Task<_Ret, _Arg>          task_type;
-        typedef std::shared_ptr<task_type>  task_pointer;
+        typedef VTask                                   task_type;
+        typedef std::shared_ptr<task_type>              task_pointer;
+        typedef typename TaskGroup<_Ret, _Arg>::ArgTp   ArgTp;
+        typedef std::promise<ArgTp>                     promise_type;
 
-        m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
+        promise_type* prom = new promise_type();
+        auto _lfunc = [&] () -> void { prom->set_value(func()); };
+        task_pointer _task(new task_type(std::move(_lfunc), &tg));
+        tg.add(prom);
+        m_pool->add_task(tg.store(_task));
+
+        //m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
     }
+
+#if defined(PTL_USE_TBB)
+    //------------------------------------------------------------------------//
+    // public exec functions using TBB tasks
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void exec(TBBTaskGroup<void, void>& tg, _Func func, _Args... args)
+    {
+        auto _lfunc = [=] () -> void { func(args...); };
+        tg.increment();
+        tg.add(_lfunc, nullptr);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Arg, typename _Func>
+    void exec(TBBTaskGroup<void, void>& tg, _Func func)
+    {
+        auto _lfunc = [=] () -> void { func(); };
+        tg.increment();
+        tg.add(_lfunc, nullptr);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
+    void exec(TBBTaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
+    {
+        typedef typename TaskGroup<_Ret, _Arg>::ArgTp   ArgTp;
+        typedef std::promise<ArgTp>                     promise_type;
+
+        promise_type* prom = new promise_type();
+        auto _lfunc = [=] () -> void { prom->set_value(func(args...)); };
+        tg.increment();
+        tg.add(_lfunc, prom);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Ret, typename _Arg, typename _Func>
+    void exec(TBBTaskGroup<_Ret, _Arg>& tg, _Func func)
+    {
+        typedef typename TaskGroup<_Ret, _Arg>::ArgTp   ArgTp;
+        typedef std::promise<ArgTp>                     promise_type;
+
+        promise_type* prom = new promise_type();
+        auto _lfunc = [=] () -> void { prom->set_value(func()); };
+        tg.increment();
+        tg.add(_lfunc, prom);
+    }
+    //------------------------------------------------------------------------//
+#endif
+
+public:
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
     void rexec(TaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
@@ -287,55 +334,6 @@ public:
             func();
     }
     //------------------------------------------------------------------------//
-
-#if defined(PTL_USE_TBB)
-    //------------------------------------------------------------------------//
-    // public wrap functions using TBB tasks
-    //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    std::shared_ptr<TBBTask<_Ret, _Arg, _Args...>>
-    wrap(TBBTaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
-    {
-        typedef TBBTask<_Ret, _Arg, _Args...>     task_type;
-        typedef std::shared_ptr<task_type>          task_pointer;
-
-        return tg.store(task_pointer(new task_type(tg, func,
-                                            std::forward<_Args>(args)...)));
-    }
-    //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    std::shared_ptr<TBBTask<_Ret, _Arg>>
-    wrap(TBBTaskGroup<_Ret, _Arg>& tg, _Func func)
-    {
-        typedef TBBTask<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type>      task_pointer;
-
-        return tg.store(task_pointer(new task_type(tg, func)));
-    }
-
-    //------------------------------------------------------------------------//
-    // public exec functions using TBB tasks
-    //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    void exec(TBBTaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
-    {
-        typedef TBBTask<_Ret, _Arg, _Args...>     task_type;
-        typedef std::shared_ptr<task_type>          task_pointer;
-
-        m_pool->add_task(tg.store(task_pointer(new task_type(tg, func,
-                                            std::forward<_Args>(args)...))));
-    }
-    //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    void exec(TBBTaskGroup<_Ret, _Arg>& tg, _Func func)
-    {
-        typedef TBBTask<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type>      task_pointer;
-
-        m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
-    }
-    //------------------------------------------------------------------------//
-#endif
 
 protected:
     // Protected variables

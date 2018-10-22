@@ -60,7 +60,7 @@ public:
     void insert(const std::string& env_id, _Tp val)
     {
         std::stringstream ss;
-        ss << val;
+        ss << std::boolalpha << val;
         m_env.insert(env_pair_t(env_id, ss.str()));
     }
 
@@ -110,6 +110,30 @@ _Tp GetEnv(const std::string& env_id, _Tp _default = _Tp())
     }
     // record default value
     EnvSettings::GetInstance()->insert<_Tp>(env_id, _default);
+
+    // return default if not specified in environment
+    return _default;
+}
+
+//----------------------------------------------------------------------------//
+//  use this function to get an environment variable setting +
+//  a default if not defined, e.g.
+//      int num_threads =
+//          GetEnv<int>("FORCENUMBEROFTHREADS",
+//                          std::thread::hardware_concurrency());
+//
+template <> inline
+bool GetEnv(const std::string& env_id, bool _default)
+{
+    char* env_var = std::getenv(env_id.c_str());
+    if(env_var)
+    {
+        // record value defined by environment
+        EnvSettings::GetInstance()->insert<bool>(env_id, true);
+        return true;
+    }
+    // record default value
+    EnvSettings::GetInstance()->insert<bool>(env_id, false);
 
     // return default if not specified in environment
     return _default;
