@@ -123,6 +123,14 @@ def run_pyctest():
     pyctest.set("CTEST_GIT_COMMAND", "{}".format(git_exe))
 
     #--------------------------------------------------------------------------#
+    # static analysis
+    #
+    clang_tidy_exe = helpers.FindExePath("clang-tidy")
+    if clang_tidy_exe:
+        pyctest.set("CMAKE_CXX_CLANG_TIDY",
+                    "{};-checks=*".format(clang_tidy_exe))
+
+    #--------------------------------------------------------------------------#
     # find the CTEST_TOKEN_FILE
     #
     if args.pyctest_token_file is None and args.pyctest_token is None:
