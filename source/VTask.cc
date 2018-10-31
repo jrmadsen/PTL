@@ -33,6 +33,7 @@
 #include "PTL/VTaskGroup.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/ThreadData.hh"
+
 //============================================================================//
 
 VTask::VTask(VTaskGroup* _group)

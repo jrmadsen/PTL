@@ -43,6 +43,12 @@
 #include <fstream>
 #include <iostream>
 
+#if defined(PTL_USE_GPERF)
+#   include <gperftools/profiler.h>
+#   include <gperftools/heap-profiler.h>
+#   include <gperftools/heap-checker.h>
+#endif
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -50,13 +56,29 @@ using std::string;
 
 //============================================================================//
 
-#if defined(__INTEL_COMPILER)
+#if defined(PTL_USE_ITTNOTIFY)
 #   include <ittnotify.h>
 #   define _pause_collection    __itt_pause()
 #   define _resume_collection   __itt_resume()
 #else
 #   define _pause_collection
 #   define _resume_collection
+#endif
+
+#if defined(PTL_USE_GPERF)
+#   define _cpu_profiler_start(fname) ProfilerStart(fname)
+#   define _cpu_profiler_flush ProfilerFlush()
+#   define _cpu_profiler_stop ProfilerStop()
+#   define _heap_profiler_start(fname) HeapProfilerStart(fname)
+#   define _heap_profiler_flush HeapProfilerFlush()
+#   define _heap_profiler_stop HeapProfilerStop()
+#else
+#   define _cpu_profiler_start(fname)
+#   define _cpu_profiler_flush
+#   define _cpu_profiler_stop
+#   define _heap_profiler_start(fname)
+#   define _heap_profiler_flush
+#   define _heap_profiler_stop
 #endif
 
 #ifdef _OPENMP
@@ -157,7 +179,7 @@ struct Measurement
 
 //============================================================================//
 
-void message(TaskRunManager* runmanager)
+inline void message(TaskRunManager* runmanager)
 {
     cout << "\n\t--> Running in multithreaded mode with "
            << runmanager->GetNumberOfThreads()
@@ -166,7 +188,7 @@ void message(TaskRunManager* runmanager)
 
 //============================================================================//
 
-uint32_t get_seed()
+inline uint32_t get_seed()
 {
     static const uint32_t seed_base = 6734525;
     static const uint32_t seed_factor = 1000;
@@ -177,7 +199,7 @@ uint32_t get_seed()
 
 //============================================================================//
 
-random_engine_t& get_engine()
+inline random_engine_t& get_engine()
 {
     ThreadLocalStatic random_engine_t* _engine = new random_engine_t(get_seed());
     return  (*_engine);
@@ -193,7 +215,7 @@ _Tp get_random()
 
 //============================================================================//
 
-int16_t get_random_int(int16_t _range = rng_range)
+inline int16_t get_random_int(int16_t _range = rng_range)
 {
     ThreadLocalStatic std::uniform_int_distribution<int16_t>* _instance
             = new std::uniform_int_distribution<int16_t>(-_range, _range);
@@ -202,14 +224,14 @@ int16_t get_random_int(int16_t _range = rng_range)
 
 //============================================================================//
 
-uint64_t fibonacci(const uint64_t& n)
+inline uint64_t fibonacci(const uint64_t& n)
 {
     return (n < 2) ? 1 : (fibonacci(n-2) + fibonacci(n-1));
 }
 
 //============================================================================//
 
-std::atomic_uintmax_t& task_group_counter()
+inline std::atomic_uintmax_t& task_group_counter()
 {
     static std::atomic_uintmax_t _instance(0);
     return  _instance;
@@ -217,7 +239,7 @@ std::atomic_uintmax_t& task_group_counter()
 
 //============================================================================//
 
-uint64_t compute_sum(const Array_t& arr)
+inline uint64_t compute_sum(const Array_t& arr)
 {
     uint64_t _sum = 0;
     for(const auto& itr : arr) { _sum += itr; }
@@ -226,11 +248,28 @@ uint64_t compute_sum(const Array_t& arr)
 
 //============================================================================//
 
-void append(Array_t& lhs, TaskGroup_t* rhs)
+inline void append(Array_t& lhs, TaskGroup_t* rhs)
 {
     if(rhs)
         for(auto& itr : rhs->join())
             lhs.push_back(itr);
 }
 
+//============================================================================//
+
+inline std::string get_gperf_filename(const char* arg0, const std::string& ftype)
+{
+    uintmax_t n = 0;
+    std::string fname = "";
+    while(fname.length() == 0)
+    {
+        std::ifstream in;
+        std::stringstream ss;
+        ss << arg0 << ".gperf." << ftype << "." << n++;
+        in.open(ss.str().c_str());
+        if(!in)
+            fname = ss.str();
+    }
+    return fname;
+}
 //============================================================================//

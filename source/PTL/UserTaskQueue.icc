@@ -45,13 +45,11 @@ class VTask;
 class TaskSubQueue
 {
 public:
-    template <typename _Tp> using container_subtype = std::deque<_Tp>;
+    template <typename _Tp> using container = std::deque<_Tp>;
 
-    typedef std::shared_ptr<VTask>                                VTaskPtr;
-    //typedef std::stack<VTaskPtr, container_subtype<VTaskPtr>>   container_type;
-    //typedef std::queue<VTaskPtr, container_subtype<VTaskPtr>>   container_type;
-    typedef std::deque<VTaskPtr>                                  container_type;
-    typedef typename container_type::size_type                      size_type;
+    typedef std::shared_ptr<VTask>              VTaskPtr;
+    typedef container<VTaskPtr>                 container_type;
+    typedef typename container_type::size_type  size_type;
 
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);

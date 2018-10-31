@@ -48,13 +48,13 @@ endif(PTL_USE_TIMEMORY)
 ################################################################################
 
 if(PTL_USE_GPERF)
-    find_package(GooglePerf)
+    find_package(GPerfTools)
 
-    if(GooglePerf_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${GooglePerf_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${GooglePerf_LIBRARIES})
+    if(GPerfTools_FOUND)
+        list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})
+        list(APPEND EXTERNAL_LIBRARIES ${GPerfTools_LIBRARIES})
         add_definitions(-DPTL_USE_GPERF)
-    endif(GooglePerf_FOUND)
+    endif(GPerfTools_FOUND)
 
 endif(PTL_USE_GPERF)
 
@@ -159,8 +159,9 @@ if(PTL_USE_ITTNOTIFY)
     if(ittnotify_FOUND)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${ITTNOTIFY_INCLUDE_DIRS})
         list(APPEND EXTERNAL_LIBRARIES ${ITTNOTIFY_LIBRARIES})
+        add_definitions(-DPTL_USE_ITTNOTIFY)
     else()
-        message(WARNING "ittnotify not found. Set \"VTUNE_AMPLIFIER_201{7,8,9}_DIR\" or \"VTUNE_AMPLIFIER_XE_201{7,8,9}_DIR\" in environment")
+        message(WARNING "ittnotify not found. Set \"VTUNE_AMPLIFIER_DIR\" in environment")
     endif()
 
 endif()

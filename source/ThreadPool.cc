@@ -36,6 +36,12 @@
 
 #include <cstdlib>
 
+#if defined(PTL_USE_GPERF)
+#   include <gperftools/profiler.h>
+#   include <gperftools/heap-profiler.h>
+#   include <gperftools/heap-checker.h>
+#endif
+
 //============================================================================//
 
 inline intmax_t ncores()
@@ -522,8 +528,78 @@ ThreadPool::stop_thread()
 
 //============================================================================//
 
+void ThreadPool::run(task_pointer task)
+{
+    // check the task_pointer (std::shared_ptr) has a valid pointer
+    if(!task.get())
+        return;
+
+    // execute task
+    (*task)();
+}
+
+//============================================================================//
+
+int ThreadPool::run_on_this(task_pointer task)
+{
+    auto _func = [=]() { this->run(task); };
+    if(m_tbb_tp)
+    {
+        if(m_tbb_task_group)
+            m_tbb_task_group->run(_func);
+        else
+            _func();
+    }
+    else // execute task
+        _func();
+
+    // return the number of tasks added to task-list
+    return 0;
+}
+
+//============================================================================//
+
+int ThreadPool::insert(task_pointer task, int bin)
+{
+    ThreadLocalStatic ThreadData* _data = thread_data();
+
+    // pass the task to the queue
+    auto ibin = m_task_queue->InsertTask(task, _data, bin);
+    notify();
+    return ibin;
+}
+
+//============================================================================//
+
+ThreadPool::size_type
+ThreadPool::add_task(task_pointer task, int bin)
+{
+    // if not native (i.e. TBB) then return
+    if(!task->is_native_task())
+        return 0;
+
+    // if we haven't built thread-pool, just execute
+    if(!m_alive_flag.load())
+        return static_cast<size_type>(run_on_this(task));
+
+    return static_cast<size_type>(insert(task, bin));
+}
+
+//============================================================================//
+
+intmax_t ThreadPool::GetEnvNumThreads(intmax_t _default)
+{
+    return GetEnv<intmax_t>("PTL_NUM_THREADS", _default);
+}
+
+//============================================================================//
+
 void ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
+#if defined(PTL_USE_GPERF)
+    ProfilerRegisterThread();
+#endif
+
     ++(*m_thread_awake);
 
     // initialization function
@@ -632,74 +708,6 @@ void ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //    _task_lock.unlock();
         //----------------------------------------------------------------//
     }
-}
-
-//============================================================================//
-
-void ThreadPool::run(task_pointer task)
-{
-    // check the task_pointer (std::shared_ptr) has a valid pointer
-    if(!task.get())
-        return;
-
-    // execute task
-    (*task)();
-}
-
-//============================================================================//
-
-int ThreadPool::run_on_this(task_pointer task)
-{
-    auto _func = [=]() { this->run(task); };
-    if(m_tbb_tp)
-    {
-        if(m_tbb_task_group)
-            m_tbb_task_group->run(_func);
-        else
-            _func();
-    }
-    else // execute task
-        _func();
-
-    // return the number of tasks added to task-list
-    return 0;
-}
-
-//============================================================================//
-
-int ThreadPool::insert(task_pointer task, int bin)
-{
-    ThreadData* _data = thread_data();
-    //VUserTaskQueue* _taskq = (_data) ? _data->current_queue : m_task_queue;
-    VUserTaskQueue* _taskq = m_task_queue;
-
-    // pass the task to the queue
-    auto ibin = _taskq->InsertTask(task, _data, bin);
-    notify();
-    return ibin;
-}
-
-//============================================================================//
-
-ThreadPool::size_type
-ThreadPool::add_task(task_pointer task, int bin)
-{
-    // if not native (i.e. TBB) then return
-    if(!task->is_native_task())
-        return 0;
-
-    // if we haven't built thread-pool, just execute
-    if(!m_alive_flag.load())
-        return static_cast<size_type>(run_on_this(task));
-
-    return static_cast<size_type>(insert(task, bin));
-}
-
-//============================================================================//
-
-intmax_t ThreadPool::GetEnvNumThreads(intmax_t _default)
-{
-    return GetEnv<intmax_t>("PTL_NUM_THREADS", _default);
 }
 
 //============================================================================//

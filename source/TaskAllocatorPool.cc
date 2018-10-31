@@ -33,9 +33,9 @@
 // TaskAllocatorPool constructor
 // ************************************************************
 //
-TaskAllocatorPool::TaskAllocatorPool( unsigned int sz )
-: esize(sz<sizeof(PoolLink) ? sizeof(PoolLink) : sz),
-  csize(sz<1024/2-16 ? 1024-16 : sz*10-16),
+TaskAllocatorPool::TaskAllocatorPool(unsigned int sz)
+: esize((sz<sizeof(PoolLink)) ? sizeof(PoolLink) : sz),
+  csize((sz < 1024/2-16) ? (1024-16) : (sz*10-16)),
   chunks(nullptr),
   head(nullptr),
   nchunks(0)

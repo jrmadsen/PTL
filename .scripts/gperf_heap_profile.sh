@@ -7,6 +7,7 @@ set -o errexit
 : ${HEAPPROFBASE:=gperf.heap.prof}
 : ${PPROF_ARGS:=""}
 : ${MALLOCSTATS:=1}
+: ${INTERACTIVE:=0}
 
 while [ -z "${HEAPPROFILE}" ]
 do
@@ -22,11 +23,14 @@ export MALLOCSTATS
 
 echo -e "\n\t--> Outputting profile to '${HEAPPROFILE}'...\n"
 
-eval $@
+eval $@ | tee ${HEAPPROFILE}.log
 
 if [ -f "${HEAPPROFILE}" ]; then
     : ${PPROF:=$(which pprof)}
     if [ -n "${PPROF}" ]; then
-        pprof ${PPROF_ARGS} ${1} ${HEAPPROFILE} #| tee ${HEAPPROFILE}.log
+        pprof --text ${PPROF_ARGS} ${1} ${HEAPPROFILE} &> ${HEAPPROFILE}.txt
+        if [ "${INTERACTIVE}" -gt 0 ]; then
+            pprof ${PPROF_ARGS} ${1} ${HEAPPROFILE}
+        fi
     fi
 fi

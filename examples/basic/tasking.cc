@@ -259,7 +259,7 @@ int main(int argc, char** argv)
         // create the task group
         cpu_create(cpu_task_groups[i]);
         // submit task with first task group
-        execute_cpu_iterations(hwthreads, cpu_task_groups[i], hwthreads, remaining, false);
+        execute_cpu_iterations(hwthreads, cpu_task_groups[i], 10, remaining, false);
     }
     //------------------------------------------------------------------------//
     // make sure all task groups finished (does join)
