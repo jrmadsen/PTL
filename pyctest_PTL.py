@@ -43,6 +43,12 @@ def configure():
                         default=False, action='store_true')
     parser.add_argument("--tbb", help="PTL_USE_TBB=ON",
                         default=False, action='store_true')
+    parser.add_argument("--skip-update",
+                        help=("Specify that you want the version control update"
+                            + " command to only discover the current version that"
+                            + " is checked out, and not to update to a different"
+                            + " version"),
+                        default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -69,6 +75,9 @@ def configure():
         if args.build_type == "Release":
             warnings.warn("Changing build type to 'RelWithDebInfo' when GPerf is enabled")
             args.build_type = "RelWithDebInfo"
+
+    if args.skip_update:
+        pyctest.set("CTEST_UPDATE_VERSION_ONLY", "ON")
 
     return args
 
@@ -136,55 +145,50 @@ def run_pyctest():
         return _cmd
 
     #--------------------------------------------------------------------------#
-    # create a CTest that wraps "nosetest"
+    # standard environment settings for tests, adds profile to notes
+    #
+    def test_env_settings(prof_fname, clobber=False):
+        if args.gperf:
+            pyctest.add_note(pyctest.BINARY_DIRECTORY,
+                            "{}.txt".format(prof_fname),
+                            clobber=clobber)
+            pyctest.add_note(pyctest.BINARY_DIRECTORY,
+                            "{}.cum.txt".format(prof_fname),
+                            clobber=False)
+        return "PTL_NUM_THREADS={};CPUPROFILE={};CUTOFF_LOW={}".format(
+            mp.cpu_count(), prof_fname, 15)
+
+    #--------------------------------------------------------------------------#
+    # create tests
     #
     test = pyctest.test()
     test.SetName("tasking")
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-    test.SetProperty("ENVIRONMENT",
-                     "PTL_NUM_THREADS={};CPUPROFILE={}".format(
-                         mp.cpu_count(), "cpu-prof-tasking"))
+    test.SetProperty("ENVIRONMENT", test_env_settings(
+        "cpu-prof-tasking", clobber=True))
     test.SetCommand(construct_command(["./tasking"], args))
 
     test = pyctest.test()
     test.SetName("recursive_tasking")
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-    test.SetProperty("ENVIRONMENT",
-                     "PTL_NUM_THREADS={};CPUPROFILE={}".format(
-                         mp.cpu_count(), "cpu-prof-recursive-tasking"))
+    test.SetProperty("ENVIRONMENT", test_env_settings(
+        "cpu-prof-recursive-tasking"))
     test.SetCommand(construct_command(["./recursive_tasking"], args))
-
-    if args.gperf:
-        clobber = True
-        for f in [ "tasking", "recursive-tasking",
-                   "tasking.cum", "recursive-tasking.cum" ]:
-            pyctest.add_note(pyctest.BINARY_DIRECTORY,
-                         "cpu-prof-{}.txt".format(f),
-                         clobber=clobber)
-            clobber = False
 
     if args.tbb:
         test = pyctest.test()
         test.SetName("tbb_tasking")
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-        test.SetProperty("ENVIRONMENT",
-            "PTL_NUM_THREADS={};CPUPROFILE={}".format(
-                mp.cpu_count(), "cpu-prof-tbb-tasking"))
+        test.SetProperty("ENVIRONMENT", test_env_settings(
+            "cpu-prof-tbb-tasking"))
         test.SetCommand(construct_command(["./tbb_tasking"], args))
 
         test = pyctest.test()
         test.SetName("recursive_tbb_tasking")
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-        test.SetProperty("ENVIRONMENT",
-                         "PTL_NUM_THREADS={};CPUPROFILE={}".format(
-                             mp.cpu_count(), "cpu-prof-recursive-tbb-tasking"))
+        test.SetProperty("ENVIRONMENT", test_env_settings(
+            "cpu-prof-tbb-recursive-tasking"))
         test.SetCommand(construct_command(["./recursive_tbb_tasking"], args))
-
-        if args.gperf:
-            for f in ["tbb-tasking", "recursive-tbb-tasking",
-                      "tbb-tasking.cum", "recursive-tbb-tasking.cum"]:
-                pyctest.add_note(pyctest.BINARY_DIRECTORY,
-                                "cpu-prof-{}.txt".format(f))
 
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
     pyctest.generate_test_file(pyctest.BINARY_DIRECTORY)
