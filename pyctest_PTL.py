@@ -106,6 +106,14 @@ def run_pyctest():
         "{CTEST_CMAKE_COMMAND}", pyctest.BINARY_DIRECTORY)
 
     #--------------------------------------------------------------------------#
+    # how to update the code
+    #
+    git_exe = helpers.FindExePath("git")
+    pyctest.UPDATE_COMMAND = "{}".format(git_exe)
+    pyctest.set("CTEST_UPDATE_TYPE", "git")
+    pyctest.set("CTEST_GIT_COMMAND", "{}".format(git_exe))
+
+    #--------------------------------------------------------------------------#
     # find the CTEST_TOKEN_FILE
     #
     if args.pyctest_token_file is None and args.pyctest_token is None:
