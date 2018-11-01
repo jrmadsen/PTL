@@ -27,36 +27,18 @@ def configure():
                                     source_dir=os.getcwd(),
                                     binary_dir=os.path.join(os.getcwd(), "build-PTL"),
                                     python_exe=sys.executable,
+                                    build_type="Release",
+                                    vcs_type="git",
                                     submit=False)
 
-    build_choices = [ "Release", "RelWithDebInfo", "Debug", "MinSizeRel" ]
-    parser.add_argument("--cc", help="C compiler",
-                        default=os.environ.get("CC"), type=str)
-    parser.add_argument("--cxx", help="C++ compiler",
-                        default=os.environ.get("CXX"), type=str)
-    parser.add_argument("--build-type", help="C++ compiler",
-                        default="Release", type=str,
-                        choices=build_choices)
     parser.add_argument("--arch", help="PTL_USE_ARCH=ON",
                         default=False, action='store_true')
     parser.add_argument("--gperf", help="PTL_USE_GPERF=ON",
                         default=False, action='store_true')
     parser.add_argument("--tbb", help="PTL_USE_TBB=ON",
                         default=False, action='store_true')
-    parser.add_argument("--skip-update",
-                        help=("Specify that you want the version control update"
-                            + " command to only discover the current version that"
-                            + " is checked out, and not to update to a different"
-                            + " version"),
-                        default=False, action='store_true')
 
     args = parser.parse_args()
-
-    if args.cc is not None:
-        os.environ["CC"] = "{}".format(args.cc)
-
-    if args.cxx is not None:
-        os.environ["CXX"] = "{}".format(args.cxx)
 
     if os.path.exists(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")):
         cm = helpers.FindExePath("cmake")
@@ -72,12 +54,9 @@ def configure():
         pyctest.copy_files(["gperf_cpu_profile.sh", "gperf_heap_profile.sh"],
             os.path.join(pyctest.SOURCE_DIRECTORY, ".scripts"),
             pyctest.BINARY_DIRECTORY)
-        if args.build_type == "Release":
+        if pyctest.BUILD_TYPE == "Release":
             warnings.warn("Changing build type to 'RelWithDebInfo' when GPerf is enabled")
-            args.build_type = "RelWithDebInfo"
-
-    if args.skip_update:
-        pyctest.set("CTEST_UPDATE_VERSION_ONLY", "ON")
+            pyctest.BUILD_TYPE = "RelWithDebInfo"
 
     return args
 
@@ -101,18 +80,38 @@ def run_pyctest():
         platform.uname()[4])
 
     #--------------------------------------------------------------------------#
+    #   build specifications
+    #
+    if args.tbb:
+        pyctest.BUILD_NAME = "{} [tbb]".format(pyctest.BUILD_NAME)
+    if args.arch:
+        pyctest.BUILD_NAME = "{} [arch]".format(pyctest.BUILD_NAME)
+    if args.gperf:
+        pyctest.BUILD_NAME = "{} [gperf]".format(pyctest.BUILD_NAME)
+
+    #--------------------------------------------------------------------------#
     # how to build the code
     #
     pyctest.CONFIGURE_COMMAND = "${} -DPTL_USE_ARCH={} -DPTL_USE_GPERF={} -DPTL_USE_TBB={} -DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON {}".format(
         "{CTEST_CMAKE_COMMAND}", "ON" if args.arch else "OFF",
         "ON" if args.gperf else "OFF", "ON" if args.tbb else "OFF",
-        args.build_type, pyctest.SOURCE_DIRECTORY)
+        pyctest.BUILD_TYPE, pyctest.SOURCE_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # how to build the code
     #
     pyctest.BUILD_COMMAND = "${} --build {} --target all".format(
         "{CTEST_CMAKE_COMMAND}", pyctest.BINARY_DIRECTORY)
+
+    #--------------------------------------------------------------------------#
+    # parallel build
+    #
+    if platform.system() != "Windows":
+        pyctest.BUILD_COMMAND = "{} -- -j{}".format(
+            pyctest.BUILD_COMMAND, mp.cpu_count())
+    else:
+        pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(pyctest.BUILD_COMMAND)
+
 
     #--------------------------------------------------------------------------#
     # how to update the code
@@ -174,6 +173,7 @@ def run_pyctest():
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", test_env_settings(
         "cpu-prof-tasking", clobber=True))
+    test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./tasking"], args))
 
     test = pyctest.test()
@@ -181,6 +181,7 @@ def run_pyctest():
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", test_env_settings(
         "cpu-prof-recursive-tasking"))
+    test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./recursive_tasking"], args))
 
     if args.tbb:
@@ -189,6 +190,7 @@ def run_pyctest():
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
         test.SetProperty("ENVIRONMENT", test_env_settings(
             "cpu-prof-tbb-tasking"))
+        test.SetProperty("RUN_SERIAL", "ON")
         test.SetCommand(construct_command(["./tbb_tasking"], args))
 
         test = pyctest.test()
@@ -196,6 +198,7 @@ def run_pyctest():
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
         test.SetProperty("ENVIRONMENT", test_env_settings(
             "cpu-prof-tbb-recursive-tasking"))
+        test.SetProperty("RUN_SERIAL", "ON")
         test.SetCommand(construct_command(["./recursive_tbb_tasking"], args))
 
     pyctest.generate_config(pyctest.BINARY_DIRECTORY)
