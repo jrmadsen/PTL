@@ -37,6 +37,14 @@ def configure():
                         default=False, action='store_true')
     parser.add_argument("--tbb", help="PTL_USE_TBB=ON",
                         default=False, action='store_true')
+    parser.add_argument("--sanitizer", help="PTL_USE_SANITIZER=ON",
+                        default=False, action='store_true')
+    parser.add_argument("--static-analysis", help="PTL_USE_CLANG_TIDY=ON",
+                        default=False, action='store_true')
+    parser.add_argument("--coverage", help="PTL_USE_COVERAGE=ON",
+                        default=False, action='store_true')
+    parser.add_argument("--profile", help="PTL_USE_PROFILE=ON",
+                        default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -54,9 +62,6 @@ def configure():
         pyctest.copy_files(["gperf_cpu_profile.sh", "gperf_heap_profile.sh"],
             os.path.join(pyctest.SOURCE_DIRECTORY, ".scripts"),
             pyctest.BINARY_DIRECTORY)
-        if pyctest.BUILD_TYPE == "Release":
-            warnings.warn("Changing build type to 'RelWithDebInfo' when GPerf is enabled")
-            pyctest.BUILD_TYPE = "RelWithDebInfo"
 
     return args
 
@@ -71,31 +76,78 @@ def run_pyctest():
     args = configure()
 
     #--------------------------------------------------------------------------#
+    # Compiler version
+    #
+    cmd = pyctest.command([os.environ["CXX"], "-dumpversion"])
+    cmd.SetOutputStripTrailingWhitespace(True)
+    cmd.Execute()
+    compiler_version = cmd.Output()
+
+    #--------------------------------------------------------------------------#
     # Set the build name
     #
-    pyctest.BUILD_NAME = "[{}] [{} {} {}]".format(
+    pyctest.BUILD_NAME = "[{}] [{} {} {}] [{} {}]".format(
         pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
         platform.uname()[0],
         helpers.GetSystemVersionInfo(),
-        platform.uname()[4])
+        platform.uname()[4],
+        os.path.basename(os.environ["CXX"]),
+        compiler_version)
 
     #--------------------------------------------------------------------------#
     #   build specifications
     #
+    build_opts = {
+        "PTL_USE_ARCH": "OFF",
+        "PTL_USE_GPERF": "OFF",
+        "PTL_USE_TBB": "OFF",
+        "PTL_USE_SANITIZER": "OFF",
+        "PTL_USE_CLANG_TIDY": "OFF",
+        "PTL_USE_COVERAGE" : "OFF",
+        "PTL_USE_PROFILE" : "OFF"
+    }
+
     if args.tbb:
         pyctest.BUILD_NAME = "{} [tbb]".format(pyctest.BUILD_NAME)
+        build_opts["PTL_USE_TBB"] = "ON"
     if args.arch:
         pyctest.BUILD_NAME = "{} [arch]".format(pyctest.BUILD_NAME)
+        build_opts["PTL_USE_ARCH"] = "ON"
     if args.gperf:
         pyctest.BUILD_NAME = "{} [gperf]".format(pyctest.BUILD_NAME)
+        build_opts["PTL_USE_GPERF"] = "ON"
+        warnings.warn(
+            "Forcing build type to 'RelWithDebInfo' when gperf is enabled")
+        pyctest.BUILD_TYPE = "RelWithDebInfo"
+    if args.sanitizer:
+        pyctest.BUILD_NAME = "{} [asan]".format(pyctest.BUILD_NAME)
+        build_opts["PTL_USE_SANITIZER"] = "ON"
+    if args.static_analysis:
+        build_opts["PTL_USE_CLANG_TIDY"] = "ON"
+    if args.coverage:
+        gcov_exe = helpers.FindExePath("gcov")
+        if gcov_exe is not None:
+            pyctest.COVERAGE_COMMAND = "{}".format(gcov_exe)
+            build_opts["PTL_USE_COVERAGE"] = "ON"
+            warnings.warn(
+                "Forcing build type to 'Debug' when coverage is enabled")
+            pyctest.BUILD_TYPE = "Debug"
+    if args.profile:
+        build_opts["PTL_USE_PROFILE"] = "ON"
+
+    # default options
+    cmake_args = "-DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON".format(
+        pyctest.BUILD_TYPE)
+
+    # customized from args
+    for key, val in build_opts.items():
+        cmake_args = "{} -D{}={}".format(cmake_args, key, val)
 
     #--------------------------------------------------------------------------#
     # how to build the code
     #
-    pyctest.CONFIGURE_COMMAND = "${} -DPTL_USE_ARCH={} -DPTL_USE_GPERF={} -DPTL_USE_TBB={} -DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON {}".format(
-        "{CTEST_CMAKE_COMMAND}", "ON" if args.arch else "OFF",
-        "ON" if args.gperf else "OFF", "ON" if args.tbb else "OFF",
-        pyctest.BUILD_TYPE, pyctest.SOURCE_DIRECTORY)
+    pyctest.CONFIGURE_COMMAND = "${} {} {}".format(
+        "{CTEST_CMAKE_COMMAND}", cmake_args, pyctest.SOURCE_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # how to build the code
@@ -106,11 +158,12 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # parallel build
     #
-    if platform.system() != "Windows":
-        pyctest.BUILD_COMMAND = "{} -- -j{}".format(
-            pyctest.BUILD_COMMAND, mp.cpu_count())
-    else:
-        pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(pyctest.BUILD_COMMAND)
+    if not args.static_analysis:
+        if platform.system() != "Windows":
+            pyctest.BUILD_COMMAND = "{} -- -j{} VERBOSE=1".format(
+                pyctest.BUILD_COMMAND, mp.cpu_count())
+        else:
+            pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(pyctest.BUILD_COMMAND)
 
 
     #--------------------------------------------------------------------------#
@@ -164,6 +217,9 @@ def run_pyctest():
                             clobber=False)
         return "PTL_NUM_THREADS={};CPUPROFILE={};CUTOFF_LOW={}".format(
             mp.cpu_count(), prof_fname, 15)
+
+    #pyctest.set("ENV{GCOV_PREFIX}", pyctest.BINARY_DIRECTORY)
+    #pyctest.set("ENV{GCOV_PREFIX_STRIP}", "4")
 
     #--------------------------------------------------------------------------#
     # create tests

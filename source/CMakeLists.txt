@@ -5,6 +5,10 @@ include(CheckCXXCompilerFlag)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 include_directories(${TiMemory_INCLUDE_DIRS})
 
+if(PTL_USE_CLANG_TIDY AND CLANG_TIDY)
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY};checks=-*,readability-*")
+endif()
+
 ################################################################################
 #                                                                              #
 #                               General                                        #
