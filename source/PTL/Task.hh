@@ -249,8 +249,7 @@ private:
     // static function to get allocator
     static allocator_type*& get_allocator()
     {
-        typedef allocator_type* allocator_ptr;
-        ThreadLocalStatic allocator_ptr _allocator = new allocator_type;
+        ThreadLocalStatic allocator_type* _allocator = new allocator_type();
         return _allocator;
     }
 

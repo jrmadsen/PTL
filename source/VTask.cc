@@ -88,7 +88,7 @@ void VTask::operator--()
         if(_count < 1)
         {
             AutoLock l(m_vgroup->task_lock());
-            CONDITIONBROADCAST(&m_vgroup->task_cond());
+            m_vgroup->task_cond().notify_one();
         }
     }
 }

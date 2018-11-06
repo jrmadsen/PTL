@@ -25,6 +25,7 @@
 //
 
 #include "common/utils.hh"
+#include <cassert>
 
 #if defined(PTL_USE_GPERF)
 #   include <gperftools/profiler.h>

@@ -27,6 +27,16 @@ add_option(PTL_USE_ITTNOTIFY "Enable ittnotify library for VTune" OFF)
 add_option(PTL_USE_TIMEMORY "Enable TiMemory for timing+memory analysis" OFF)
 add_option(PTL_USE_ARCH "Enable architecture specific flags" OFF)
 add_option(PTL_USE_AVX512 "Enable AVX-512 flags (if available)" OFF)
+add_option(PTL_USE_SANITIZER "Enable -fsanitize=leak -fsanitize=address (if available" OFF)
+add_option(PTL_USE_CLANG_TIDY "Enable running clang-tidy on" OFF)
+add_option(PTL_USE_COVERAGE "Enable code coverage" OFF)
+add_option(PTL_USE_PROFILE "Enable profiling" OFF)
+
+if(PTL_USE_CLANG_TIDY)
+    find_program(CLANG_TIDY
+        NAMES clang-tidy)
+    add_feature(CLANG_TIDY "Path to clang-tidy")
+endif()
 
 if(PTL_USE_GPU)
     add_definitions(-DPTL_USE_GPU)

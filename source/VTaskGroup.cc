@@ -110,9 +110,6 @@ void VTaskGroup::execute_this_threads_tasks()
     // only want to process if within a task
     if((!is_master || _tpool->size() < 2) && within_task)
     {
-#if defined(DEBUG)
-        std::cout << "VTaskGroup::" << __FUNCTION__ << "()..." << std::endl;
-#endif
         if(!_taskq)
             return;
         int bin = static_cast<int>(_taskq->GetThreadBin());
@@ -121,10 +118,6 @@ void VTaskGroup::execute_this_threads_tasks()
                            : Thread::hardware_concurrency();
         while(this->pending() > 0)
         {
-#if defined(DEBUG)
-            std::cout << "[" << _taskq->GetThreadBin() << "] pending = "
-                   << this->pending() << "..." << std::endl;
-#endif
             task_pointer _task = _taskq->GetTask(bin, static_cast<int>(nitr));
             if(_task.get())
                 (*_task)();
@@ -161,7 +154,7 @@ void VTaskGroup::wait()
     if(!m_pool->is_alive() || !is_native_task_group())
         return;
 
-    //execute_this_threads_tasks();
+    execute_this_threads_tasks();
     //return;
 
     auto is_active_state = [&] ()

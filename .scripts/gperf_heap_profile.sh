@@ -7,6 +7,7 @@ set -o errexit
 : ${HEAPPROFBASE:=gperf.heap.prof}
 : ${PPROF_ARGS:=""}
 : ${MALLOCSTATS:=1}
+: ${INTERACTIVE:=0}
 
 while [ -z "${HEAPPROFILE}" ]
 do
@@ -28,6 +29,8 @@ if [ -f "${HEAPPROFILE}" ]; then
     : ${PPROF:=$(which pprof)}
     if [ -n "${PPROF}" ]; then
         pprof --text ${PPROF_ARGS} ${1} ${HEAPPROFILE} &> ${HEAPPROFILE}.txt
-        pprof ${PPROF_ARGS} ${1} ${HEAPPROFILE}
+        if [ "${INTERACTIVE}" -gt 0 ]; then
+            pprof ${PPROF_ARGS} ${1} ${HEAPPROFILE}
+        fi
     fi
 fi

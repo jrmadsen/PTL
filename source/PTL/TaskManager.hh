@@ -170,7 +170,7 @@ public:
     // public exec functions
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void exec(TaskGroup<void, void>& tg, _Func func, _Args... args)
+    void exec(TaskGroup<void, void>& tg, _Func&& func, _Args&&... args)
     {
         typedef VTask                           task_type;
         typedef std::shared_ptr<task_type>      task_pointer;
@@ -182,7 +182,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void exec(TaskGroup<void, void>& tg, _Func func)
+    void exec(TaskGroup<void, void>& tg, _Func&& func)
     {
         typedef VTask                                   task_type;
         typedef std::shared_ptr<task_type>              task_pointer;
@@ -194,7 +194,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    void exec(TaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
+    void exec(TaskGroup<_Ret, _Arg>& tg, _Func&& func, _Args&&... args)
     {
         typedef VTask                                   task_type;
         typedef std::shared_ptr<task_type>              task_pointer;
@@ -213,7 +213,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func>
-    void exec(TaskGroup<_Ret, _Arg>& tg, _Func func)
+    void exec(TaskGroup<_Ret, _Arg>& tg, _Func&& func)
     {
         typedef VTask                                   task_type;
         typedef std::shared_ptr<task_type>              task_pointer;
@@ -221,7 +221,7 @@ public:
         typedef std::promise<ArgTp>                     promise_type;
 
         promise_type* prom = new promise_type();
-        auto _lfunc = [&] () -> void { prom->set_value(func()); };
+        auto _lfunc = [=] () -> void { prom->set_value(func()); };
         task_pointer _task(new task_type(std::move(_lfunc), &tg));
         tg.add(prom);
         m_pool->add_task(tg.store(_task));

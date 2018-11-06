@@ -209,7 +209,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 
 intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
 {
-    // skip increment here (handled externally)
+    // increment
     ++(*m_ntasks);
 
     bool spin = m_hold->load(std::memory_order_relaxed);
@@ -253,8 +253,8 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
     if(spin)
     {
         n = n % (m_workers + 1);
-        TaskSubQueue *task_subq = (*m_subqueues)[n];
-        for (intmax_t i = 0; i < (m_workers + 1); ++i)
+        TaskSubQueue* task_subq = (*m_subqueues)[n];
+        while(true)
         {
             if (task_subq->AcquireClaim())
             {
@@ -266,16 +266,17 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
                 return n;
             }
         }
-        --(*m_ntasks);
-        return InsertTask(task, data, subq);
     }
 
     // there are num_workers+1 bins so there is always a bin that is open
     // execute num_workers+2 iterations so the thread checks its bin twice
-    for(intmax_t i = 0; i < (m_workers + 2); ++i, ++n)
+    while(true)
+    //for(intmax_t i = 0; i < (m_workers + 2); ++i, ++n)
     {
-        if(insert_task(n % (m_workers + 1)))
-            return n % (m_workers + 1);
+        n = n % (m_workers + 1);
+        if(insert_task(n))
+            return n;
+        ++n;
     }
 
     // execute task

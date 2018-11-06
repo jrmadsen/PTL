@@ -36,7 +36,7 @@
 
 TaskManager*& TaskManager::fgInstance()
 {
-    ThreadLocalStatic TaskManager* _instance = nullptr;
+    static TaskManager* _instance = nullptr;
     return _instance;
 }
 
@@ -47,7 +47,7 @@ TaskManager* TaskManager::GetInstance()
     if(!fgInstance())
     {
         auto nthreads = std::thread::hardware_concurrency();
-        std::cout << "Allocating mad::TaskManager with " << nthreads
+        std::cout << "Allocating TaskManager with " << nthreads
                   << " thread(s)..." << std::endl;
         new TaskManager(TaskRunManager::GetMasterRunManager()->GetThreadPool());
     }
