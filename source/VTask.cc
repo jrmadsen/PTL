@@ -72,10 +72,22 @@ void VTask::operator--()
     if(m_vgroup)
     {
         intmax_t _count = m_vgroup->reduce(m_tid_bin);
-        if(_count < 1)
+        if(_count < 2)
         {
-            AutoLock l(m_vgroup->task_lock());
-            CONDITIONBROADCAST(&m_vgroup->task_cond());
+            //AutoLock l(m_vgroup->task_lock());
+            //CONDITIONBROADCAST(&m_vgroup->task_cond());
+            try
+            {
+                m_vgroup->task_cond().notify_all();
+            }
+            catch (std::system_error& e)
+            {
+                auto tid = ThreadPool::GetThisThreadID();
+                AutoLock l(TypeMutex<decltype(std::cerr)>());
+                std::cerr << "[" << tid << "] Caught system error: "
+                          << e.what() << std::endl;
+            }
+
         }
     }
 }

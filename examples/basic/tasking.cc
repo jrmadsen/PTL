@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     auto default_nthreads = hwthreads;
     // cutoff fields
     auto cutoff_high = 40;
-    auto cutoff_low = 15;
+    auto cutoff_low = 25;
     auto cutoff_incr = 5;
     auto cutoff_tasks = 1;
     long cutoff_value = 44; // greater than 45 answer exceeds INT_MAX

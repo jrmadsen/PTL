@@ -215,8 +215,8 @@ def run_pyctest():
             pyctest.add_note(pyctest.BINARY_DIRECTORY,
                             "{}.cum.txt".format(prof_fname),
                             clobber=False)
-        return "PTL_NUM_THREADS={};CPUPROFILE={};CUTOFF_LOW={}".format(
-            mp.cpu_count(), prof_fname, 15)
+        return "PTL_NUM_THREADS={};CPUPROFILE={}".format(
+            mp.cpu_count(), prof_fname)
 
     #pyctest.set("ENV{GCOV_PREFIX}", pyctest.BINARY_DIRECTORY)
     #pyctest.set("ENV{GCOV_PREFIX_STRIP}", "4")

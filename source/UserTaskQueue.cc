@@ -256,11 +256,9 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
     //
     if(spin)
     {
-        for(intmax_t i = 0; i < m_workers; ++i)
-            if(insert_task(n % (m_workers + 1)))
-                return n % (m_workers + 1);
-        --(*m_ntasks);
-        return InsertTask(task, data, subq);
+        n = n % (m_workers + 1);
+        while(!insert_task(n));
+        return n;
     }
 
     // there are num_workers+1 bins so there is always a bin that is open

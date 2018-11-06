@@ -130,6 +130,10 @@ void execute_iterations(uint64_t num_iter,
 
 int main(int argc, char** argv)
 {
+#if defined(PTL_USE_TIMEMORY)
+    tim::enable_signal_detection();
+#endif
+
     _pause_collection;  // VTune
     //_heap_profiler_start(get_gperf_filename(argv[0], "heap").c_str());  // gperf
 
@@ -147,7 +151,7 @@ int main(int argc, char** argv)
     auto default_nthreads = hwthreads;
     // cutoff fields
     auto cutoff_high = 40;
-    auto cutoff_low = 10;
+    auto cutoff_low = 25;
     auto cutoff_incr = 5;
     auto cutoff_tasks = 1;
     long cutoff_value = 44; // greater than 45 answer exceeds INT_MAX
@@ -432,6 +436,9 @@ int main(int argc, char** argv)
     delete runManager;
 
     //_heap_profiler_stop;
+#if defined(PTL_USE_TIMEMORY)
+    tim::disable_signal_detection();
+#endif
 
     return ret;
 }
