@@ -8,15 +8,9 @@ include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-if("${CMAKE_PROJECT_NAME}" STREQUAL "${PROJECT_NAME}")
-    set(IS_SUBPROJECT OFF)
-else("${CMAKE_PROJECT_NAME}" STREQUAL "${PROJECT_NAME}")
-    set(IS_SUBPROJECT ON)
-endif("${CMAKE_PROJECT_NAME}" STREQUAL "${PROJECT_NAME}")
-
 # ---------------------------------------------------------------------------- #
 # check C flag
-macro(add_c_if_avail VAR FLAG)
+macro(ADD_C_FLAG_IF_AVAIL FLAG)
     if(NOT "${FLAG}" STREQUAL "")
         string(REGEX REPLACE "^-" "c_" FLAG_NAME "${FLAG}")
         string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
@@ -32,7 +26,7 @@ endmacro()
 
 # ---------------------------------------------------------------------------- #
 # check CXX flag
-macro(add_cxx_if_avail VAR FLAG)
+macro(ADD_CXX_FLAG_IF_AVAIL FLAG)
     if(NOT "${FLAG}" STREQUAL "")
         string(REGEX REPLACE "^-" "cxx_" FLAG_NAME "${FLAG}")
         string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
@@ -47,71 +41,54 @@ endmacro()
 
 
 # ---------------------------------------------------------------------------- #
-if(NOT IS_SUBPROJECT)
+#
+set(SANITIZE_TYPE leak CACHE STRING "-fsantitize=<TYPE>")
+if(WIN32)
+    set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard")
+else(WIN32)
+    set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
+endif(WIN32)
 
-    # Special Intel compiler flags for NERSC Cori
-    foreach(_LANG C CXX)
-        if(CMAKE_${_LANG}_COMPILER_IS_INTEL)
-            if(INTEL_${_LANG}_AVX512)
-                set(INTEL_${_LANG}_COMPILER_FLAGS "-xHOST -axMIC-AVX512")
-            else(INTEL_${_LANG}_AVX512)
-                set(INTEL_${_LANG}_COMPILER_FLAGS "-xHOST")
-            endif(INTEL_${_LANG}_AVX512)
-            add_feature(INTEL_${_LANG}_COMPILER_FLAGS "Intel ${_LANG} compiler flags")
-        endif(CMAKE_${_LANG}_COMPILER_IS_INTEL)
-    endforeach(_LANG C CXX)
+if(GOOD_CMAKE)
+    set(CMAKE_INSTALL_MESSAGE LAZY)
+endif(GOOD_CMAKE)
 
-    set(SANITIZE_TYPE leak CACHE STRING "-fsantitize=<TYPE>")
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# ensure only C++11, C++14, or C++17
+if(NOT "${CMAKE_CXX_STANDARD}" STREQUAL "11" AND
+        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "14" AND
+        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "17" AND
+        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1y" AND
+        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1z")
 
     if(WIN32)
-        set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard")
+        set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard" FORCE)
     else(WIN32)
-        set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
+        set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard" FORCE)
     endif(WIN32)
 
-    if(GOOD_CMAKE)
-        set(CMAKE_INSTALL_MESSAGE LAZY)
-    endif(GOOD_CMAKE)
+endif(NOT "${CMAKE_CXX_STANDARD}" STREQUAL "11" AND
+    NOT "${CMAKE_CXX_STANDARD}" STREQUAL "14" AND
+    NOT "${CMAKE_CXX_STANDARD}" STREQUAL "17" AND
+    NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1y" AND
+    NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1z")
 
-    # ensure only C++11, C++14, or C++17
-    if(NOT "${CMAKE_CXX_STANDARD}" STREQUAL "11" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "14" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "17" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1y" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1z")
-
-        if(WIN32)
-            set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard" FORCE)
-        else(WIN32)
-            set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard" FORCE)
-        endif(WIN32)
-
-    endif(NOT "${CMAKE_CXX_STANDARD}" STREQUAL "11" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "14" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "17" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1y" AND
-        NOT "${CMAKE_CXX_STANDARD}" STREQUAL "1z")
-
-    if(CMAKE_CXX_COMPILER_IS_GNU)
-        add(CMAKE_CXX_FLAGS "-std=c++${CMAKE_CXX_STANDARD}")
-    elseif(CMAKE_CXX_COMPILER_IS_CLANG)
-        add(CMAKE_CXX_FLAGS "-std=c++${CMAKE_CXX_STANDARD} -stdlib=libc++")
-    elseif(CMAKE_CXX_COMPILER_IS_INTEL)
-        add(CMAKE_CXX_FLAGS "-std=c++${CMAKE_CXX_STANDARD}")
-    elseif(CMAKE_CXX_COMPILER_IS_PGI)
-        add(CMAKE_CXX_FLAGS "--c++${CMAKE_CXX_STANDARD} -A")
-    elseif(CMAKE_CXX_COMPILER_IS_XLC)
-        if(CMAKE_CXX_STANDARD GREATER 11)
-            add(CMAKE_CXX_FLAGS "-std=c++1y")
-        else(CMAKE_CXX_STANDARD GREATER 11)
-            add(CMAKE_CXX_FLAGS "-std=c++11")
-        endif(CMAKE_CXX_STANDARD GREATER 11)
-    elseif(CMAKE_CXX_COMPILER_IS_MSVC)
-        add(CMAKE_CXX_FLAGS "-std:c++${CMAKE_CXX_STANDARD}")
-    endif(CMAKE_CXX_COMPILER_IS_GNU)
-
-endif(NOT IS_SUBPROJECT)
+if(CMAKE_CXX_COMPILER_IS_GNU)
+    add(CMAKE_CXX_FLAGS "-std=c++${CMAKE_CXX_STANDARD}")
+elseif(CMAKE_CXX_COMPILER_IS_CLANG)
+    add(CMAKE_CXX_FLAGS "-std=c++${CMAKE_CXX_STANDARD} -stdlib=libc++")
+elseif(CMAKE_CXX_COMPILER_IS_INTEL)
+    add(CMAKE_CXX_FLAGS "-std=c++${CMAKE_CXX_STANDARD}")
+elseif(CMAKE_CXX_COMPILER_IS_PGI)
+    add(CMAKE_CXX_FLAGS "--c++${CMAKE_CXX_STANDARD} -A")
+elseif(CMAKE_CXX_COMPILER_IS_XLC)
+    if(CMAKE_CXX_STANDARD GREATER 11)
+        add(CMAKE_CXX_FLAGS "-std=c++1y")
+    else(CMAKE_CXX_STANDARD GREATER 11)
+        add(CMAKE_CXX_FLAGS "-std=c++11")
+    endif(CMAKE_CXX_STANDARD GREATER 11)
+elseif(CMAKE_CXX_COMPILER_IS_MSVC)
+    add(CMAKE_CXX_FLAGS "-std:c++${CMAKE_CXX_STANDARD}")
+endif(CMAKE_CXX_COMPILER_IS_GNU)
 
 
 # ---------------------------------------------------------------------------- #
@@ -150,101 +127,97 @@ endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     include(Coverage)
-    add_c_if_avail(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_COVERAGE}")
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_COVERAGE}")
+    add_c_flag_if_avail("${CMAKE_C_FLAGS_COVERAGE}")
+    add_cxx_flag_if_avail("${CMAKE_CXX_FLAGS_COVERAGE}")
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 
 # ---------------------------------------------------------------------------- #
 # set the compiler flags
 #
-add_c_if_avail(CMAKE_C_FLAGS "-W")
-add_c_if_avail(CMAKE_C_FLAGS "-Wall")
-add_c_if_avail(CMAKE_C_FLAGS "-Wextra")
-add_c_if_avail(CMAKE_C_FLAGS "-std=c11")
+add_c_flag_if_avail("-W")
+add_c_flag_if_avail("-Wall")
+add_c_flag_if_avail("-Wextra")
+add_c_flag_if_avail("-std=c11")
 if(NOT c_std_c11)
-    add_c_if_avail(CMAKE_C_FLAGS "-std=c99")
+    add_c_flag_if_avail("-std=c99")
 endif()
 
 # pthreads
-add_c_if_avail(CMAKE_C_FLAGS "-pthread")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-pthread")
+add_c_flag_if_avail("-pthread")
+add_cxx_flag_if_avail("-pthread")
 
 # SIMD OpenMP
-add_c_if_avail(CMAKE_C_FLAGS "-fopenmp-simd")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-fopenmp-simd")
+add_c_flag_if_avail("-fopenmp-simd")
+add_cxx_flag_if_avail("-fopenmp-simd")
 
 # general warnings
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-W")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-Wall")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-Wextra")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-Wshadow")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "-faligned-new")
+add_cxx_flag_if_avail("-W")
+add_cxx_flag_if_avail("-Wall")
+add_cxx_flag_if_avail("-Wextra")
+add_cxx_flag_if_avail("-Wshadow")
+add_cxx_flag_if_avail("-faligned-new")
 
-if(USE_ARCH)
+if(PTL_USE_ARCH)
     if(CMAKE_C_COMPILER_IS_INTEL)
-        add_c_if_avail(CMAKE_C_FLAGS "-xHOST")
+        add_c_flag_if_avail("-xHOST")
     else()
-        add_c_if_avail(CMAKE_C_FLAGS "-march")
-        add_c_if_avail(CMAKE_C_FLAGS "-msse2")
-        add_c_if_avail(CMAKE_C_FLAGS "-msse3")
-        add_c_if_avail(CMAKE_C_FLAGS "-msse4")
-        add_c_if_avail(CMAKE_C_FLAGS "-mavx")
-        add_c_if_avail(CMAKE_C_FLAGS "-mavx2")
+        add_c_flag_if_avail("-march")
+        add_c_flag_if_avail("-msse2")
+        add_c_flag_if_avail("-msse3")
+        add_c_flag_if_avail("-msse4")
+        add_c_flag_if_avail("-mavx")
+        add_c_flag_if_avail("-mavx2")
     endif()
 
     if(CMAKE_CXX_COMPILER_IS_INTEL)
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-xHOST")
+        add_cxx_flag_if_avail("-xHOST")
     else()
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-march")
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-msse2")
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-msse3")
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-msse4")
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-mavx")
-        add_cxx_if_avail(CMAKE_CXX_FLAGS "-mavx2")
+        add_cxx_flag_if_avail("-march")
+        add_cxx_flag_if_avail("-msse2")
+        add_cxx_flag_if_avail("-msse3")
+        add_cxx_flag_if_avail("-msse4")
+        add_cxx_flag_if_avail("-mavx")
+        add_cxx_flag_if_avail("-mavx2")
     endif()
 
-    if(USE_AVX512)
+    if(PTL_USE_AVX512)
         if(CMAKE_C_COMPILER_IS_INTEL)
-            add_c_if_avail(CMAKE_C_FLAGS "-axMIC-AVX512")
+            add_c_flag_if_avail("-axMIC-AVX512")
         else()
-            add_c_if_avail(CMAKE_C_FLAGS "-mavx512f")
-            add_c_if_avail(CMAKE_C_FLAGS "-mavx512pf")
-            add_c_if_avail(CMAKE_C_FLAGS "-mavx512er")
-            add_c_if_avail(CMAKE_C_FLAGS "-mavx512cd")
+            add_c_flag_if_avail("-mavx512f")
+            add_c_flag_if_avail("-mavx512pf")
+            add_c_flag_if_avail("-mavx512er")
+            add_c_flag_if_avail("-mavx512cd")
         endif()
 
         if(CMAKE_CXX_COMPILER_IS_INTEL)
-            add_cxx_if_avail(CMAKE_CXX_FLAGS "-axMIC-AVX512")
+            add_cxx_flag_if_avail("-axMIC-AVX512")
         else()
-            add_cxx_if_avail(CMAKE_CXX_FLAGS "-mavx512f")
-            add_cxx_if_avail(CMAKE_CXX_FLAGS "-mavx512pf")
-            add_cxx_if_avail(CMAKE_CXX_FLAGS "-mavx512er")
-            add_cxx_if_avail(CMAKE_CXX_FLAGS "-mavx512cd")
+            add_cxx_flag_if_avail("-mavx512f")
+            add_cxx_flag_if_avail("-mavx512pf")
+            add_cxx_flag_if_avail("-mavx512er")
+            add_cxx_flag_if_avail("-mavx512cd")
         endif()
     endif()
 endif()
 
 if(PTL_USE_SANITIZER)
-    add_c_if_avail(CMAKE_C_FLAGS "-fsanitize=leak")
-    add_c_if_avail(CMAKE_C_FLAGS "-fsanitize=address")
-    add_c_if_avail(CMAKE_C_FLAGS "-fsanitize=all")
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-fsanitize=leak")
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-fsanitize=address")
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-fsanitize=all")
+    add_c_flag_if_avail("-fsanitize=${PTL_SANITITZER_TYPE}")
+    add_cxx_flag_if_avail("-fsanitize=${PTL_SANITITZER_TYPE}")
 endif()
 
 if(PTL_USE_PROFILE)
-    add_c_if_avail(CMAKE_C_FLAGS "-p")
-    add_c_if_avail(CMAKE_C_FLAGS "-pg")
-    add_c_if_avail(CMAKE_C_FLAGS "-fbranch-probabilities")
+    add_c_flag_if_avail("-p")
+    add_c_flag_if_avail("-pg")
+    add_c_flag_if_avail("-fbranch-probabilities")
     if(c_fbranch_probabilities)
         add(PROJECT_C_FLAGS "-fprofile-arcs")
         add(PROJECT_C_FLAGS "-fprofile-dir=${CMAKE_BINARY_DIR}")
         add(PROJECT_C_FLAGS "-fprofile-generate=${CMAKE_BINARY_DIR}/profile")
     endif()
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-p")
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-pg")
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-fbranch-probabilities")
+    add_cxx_flag_if_avail("-p")
+    add_cxx_flag_if_avail("-pg")
+    add_cxx_flag_if_avail("-fbranch-probabilities")
     if(cxx_fbranch_probabilities)
         add(PROJECT_CXX_FLAGS "-fprofile-arcs")
         add(PROJECT_CXX_FLAGS "-fprofile-dir=${CMAKE_BINARY_DIR}")
@@ -255,30 +228,29 @@ if(PTL_USE_PROFILE)
 endif()
 
 if(PTL_USE_COVERAGE)
-    add_c_if_avail(CMAKE_C_FLAGS "-ftest-coverage")
+    add_c_flag_if_avail("-ftest-coverage")
     if(c_ftest_coverage)
         add(PROJECT_C_FLAGS "-fprofile-arcs")
         add(PROJECT_C_FLAGS "-fprofile-dir=${CMAKE_BINARY_DIR}")
     endif()
-    add_cxx_if_avail(CMAKE_CXX_FLAGS "-ftest-coverage")
+    add_cxx_flag_if_avail("-ftest-coverage")
     if(cxx_ftest_coverage)
         add(PROJECT_CXX_FLAGS "-fprofile-arcs")
         add(PROJECT_CXX_FLAGS "-fprofile-dir=${CMAKE_BINARY_DIR}")
-
-        #add(CMAKE_EXE_LINKER_FLAGS "-fprofile-arcs")
+        add(CMAKE_EXE_LINKER_FLAGS "-fprofile-arcs")
         add_feature(CMAKE_EXE_LINKER_FLAGS "Linker flags")
     endif()
 endif()
 
 # user customization
-add_c_if_avail(CMAKE_C_FLAGS "${CFLAGS}")
-add_c_if_avail(CMAKE_C_FLAGS "$ENV{CFLAGS}")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "${CXXFLAGS}")
-add_cxx_if_avail(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS}")
+add_c_flag_if_avail("${CFLAGS}")
+add_c_flag_if_avail("$ENV{CFLAGS}")
+add_cxx_flag_if_avail("${CXXFLAGS}")
+add_cxx_flag_if_avail("$ENV{CXXFLAGS}")
 
 # remove duplicates
-add_c_flags(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-add_cxx_flags(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+add_c_flags(PROJECT_C_FLAGS "${PROJECT_C_FLAGS}")
+add_cxx_flags(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS}")
 
 # message
 add(CMAKE_C_FLAGS "${PROJECT_C_FLAGS}")
