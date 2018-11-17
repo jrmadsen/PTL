@@ -48,7 +48,7 @@ endif(PTL_USE_TIMEMORY)
 ################################################################################
 
 if(PTL_USE_GPERF)
-    find_package(GPerfTools)
+    find_package(GPerfTools COMPONENTS profiler tcmalloc)
 
     if(GPerfTools_FOUND)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})

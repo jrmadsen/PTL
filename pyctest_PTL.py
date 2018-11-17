@@ -45,6 +45,8 @@ def configure():
                         default=False, action='store_true')
     parser.add_argument("--profile", help="PTL_USE_PROFILE=ON",
                         default=False, action='store_true')
+    parser.add_argument("--num-tasks", help="Set the number of tasks",
+                        default=65536, type=int)
 
     args = parser.parse_args()
 
@@ -207,7 +209,7 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # standard environment settings for tests, adds profile to notes
     #
-    def test_env_settings(prof_fname, clobber=False):
+    def test_env_settings(prof_fname, clobber=False, extra=""):
         if args.gperf:
             pyctest.add_note(pyctest.BINARY_DIRECTORY,
                             "{}.txt".format(prof_fname),
@@ -215,8 +217,8 @@ def run_pyctest():
             pyctest.add_note(pyctest.BINARY_DIRECTORY,
                             "{}.cum.txt".format(prof_fname),
                             clobber=False)
-        return "PTL_NUM_THREADS={};CPUPROFILE={}".format(
-            mp.cpu_count(), prof_fname)
+        return "PTL_NUM_THREADS={};CPUPROFILE={};{}".format(
+            mp.cpu_count(), prof_fname, extra)
 
     #pyctest.set("ENV{GCOV_PREFIX}", pyctest.BINARY_DIRECTORY)
     #pyctest.set("ENV{GCOV_PREFIX_STRIP}", "4")
@@ -224,11 +226,14 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # create tests
     #
+    tasking_suffix = ""
+    if args.num_tasks != 65536:
+        tasking_suffix="_{}".format(args.num_tasks)
     test = pyctest.test()
-    test.SetName("tasking")
+    test.SetName("tasking{}".format(tasking_suffix))
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
     test.SetProperty("ENVIRONMENT", test_env_settings(
-        "cpu-prof-tasking", clobber=True))
+        "cpu-prof-tasking", clobber=True, extra="NUM_TASKS={}".format(args.num_tasks)))
     test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./tasking"], args))
 
@@ -242,10 +247,10 @@ def run_pyctest():
 
     if args.tbb:
         test = pyctest.test()
-        test.SetName("tbb_tasking")
+        test.SetName("tbb_tasking{}".format(tasking_suffix))
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
         test.SetProperty("ENVIRONMENT", test_env_settings(
-            "cpu-prof-tbb-tasking"))
+            "cpu-prof-tbb-tasking", extra="NUM_TASKS={}".format(args.num_tasks)))
         test.SetProperty("RUN_SERIAL", "ON")
         test.SetCommand(construct_command(["./tbb_tasking"], args))
 

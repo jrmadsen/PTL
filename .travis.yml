@@ -1,0 +1,135 @@
+# Madthreading Travis CI file
+
+language: python
+
+python:
+  - "3.6"
+
+# The apt packages here install our compiled code dependencies.
+matrix:
+  include:
+    # GCC 4.9
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-4.9
+            - g++-4.9
+            - build-essential
+            - cmake3
+            - libtbb-dev
+      env:
+        - MATRIX_EVAL="CC=$(which gcc-4.9) && CXX=$(which g++-4.9) && COVERAGE=1"
+    # GCC 5
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-5
+            - g++-5
+            - build-essential
+            - cmake3
+            - libtbb-dev
+      env:
+        - MATRIX_EVAL="CC=$(which gcc-5) && CXX=$(which g++-5) && COVERAGE=0"
+    # GCC 6
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-6
+            - g++-6
+            - build-essential
+            - cmake3
+            - libtbb-dev
+      env:
+        - MATRIX_EVAL="CC=$(which gcc-6) && CXX=$(which g++-6) && COVERAGE=0"
+    # GCC 7
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-7
+            - g++-7
+            - build-essential
+            - cmake3
+            - libtbb-dev
+      env:
+        - MATRIX_EVAL="CC=$(which gcc-7) && CXX=$(which g++-7) && COVERAGE=0"
+    # Clang 4.0
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-4.0
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-4.0
+            - clang++-4.0
+            - build-essential
+            - cmake3
+            - libtbb-dev
+      env:
+        - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0"
+    # Clang 5.0
+    - os: linux
+      dist: trusty
+      sudo: false
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-5.0
+            - clang++-5.0
+            - build-essential
+            - cmake3
+            - libtbb-dev
+      env:
+        - MATRIX_EVAL="CC=$(which clang-5.0) && CXX=$(which clang++-5.0) && COVERAGE=0"
+         
+         
+before_install:
+    - eval "${MATRIX_EVAL}"
+    - export CC=${CC}
+    - export CXX=${CXX}
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p ${HOME}/miniconda
+    - export PATH="${HOME}/miniconda/bin:${PATH}"
+    - conda config --add channels jrmadsen
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update conda
+
+install:
+    - env
+    - conda install pyctest
+    - if [ "${COVERAGE}" -gt 0 ]; then
+        python ./pyctest_PTL.py --coverage --tbb --num-tasks=64
+          --pyctest-submit --pyctest-clean-first --pyctest-model=Continuous
+          --pyctest-site=Travis;
+      else
+        python ./pyctest_PTL.py --tbb --num-tasks=256
+          --pyctest-submit --pyctest-clean-first
+          --pyctest-model=Continuous --pyctest-build-type=RelWithDebInfo
+          --pyctest-site=Travis;
+      fi
+    
