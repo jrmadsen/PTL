@@ -107,7 +107,7 @@ void VTaskGroup::execute_this_threads_tasks()
     }
 
     // only want to process if within a task
-    if((!is_master || _tpool->size() < 2) && within_task)
+    if((!is_master() || _tpool->size() < 2) && within_task)
     {
 #if defined(DEBUG)
         std::cout << "VTaskGroup::" << __FUNCTION__ << "()..." << std::endl;
