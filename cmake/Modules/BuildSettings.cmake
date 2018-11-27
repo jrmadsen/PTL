@@ -50,6 +50,9 @@ else(WIN32)
     set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
 endif(WIN32)
 
+if(CMAKE_CXX_COMPILER_IS_CLANG)
+    add(CMAKE_CXX_FLAGS "-stdlib=libc++")
+endif()
 
 # ---------------------------------------------------------------------------- #
 # set the output directory (critical on Windows
