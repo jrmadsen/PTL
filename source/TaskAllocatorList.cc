@@ -101,7 +101,7 @@ void TaskAllocatorList::Destroy(int nStat, int verboseLevel)
                    << std::setprecision(6) << " MB" << std::endl;
         }
         (*itr)->ResetStorage();
-        delete *itr;
+        //delete *itr;
     }
     if(verboseLevel>0)
     {

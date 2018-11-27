@@ -75,7 +75,7 @@ TaskAllocatorPool::operator= (const TaskAllocatorPool& right)
 TaskAllocatorPool::~TaskAllocatorPool()
 {
     // disable reset since tasks are shared_ptrs
-    //Reset();
+    Reset();
 }
 
 // ************************************************************

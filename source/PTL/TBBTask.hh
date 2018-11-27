@@ -51,15 +51,15 @@ template <typename _Ret, typename _Arg, typename... _Args>
 class TBBTask : public VTask
 {
 public:
-    typedef TBBTask<_Ret, _Arg, _Args...>                 this_type;
+    typedef TBBTask<_Ret, _Arg, _Args...>                   this_type;
     typedef _Ret                                            result_type;
-    typedef TBBTaskGroup<_Ret, _Arg>                      task_group_type;
+    typedef TBBTaskGroup<_Ret, _Arg>                        task_group_type;
     typedef typename task_group_type::ArgTp                 ArgTp;
     typedef typename task_group_type::promise_type          promise_type;
     typedef typename task_group_type::future_type           future_type;
     typedef typename task_group_type::packaged_task_type    packaged_task_type;
     typedef std::function<ArgTp(_Args...)>                  function_type;
-    typedef TaskAllocator<this_type>                      allocator_type;
+    typedef TaskAllocator<this_type>                        allocator_type;
 
 public:
     // pass a free function pointer
@@ -110,11 +110,12 @@ public:
 private:
     // currently disabled due to memory leak found via -fsanitize=leak
     // static function to get allocator
-    static allocator_type*& get_allocator()
+    static allocator_type* get_allocator()
     {
-        typedef allocator_type* allocator_ptr;
-        ThreadLocalStatic allocator_ptr _allocator = new allocator_type;
-        return _allocator;
+        typedef std::unique_ptr<allocator_type> allocator_ptr;
+        static thread_local allocator_ptr _allocator
+                = allocator_ptr(new allocator_type);
+        return _allocator.get();
     }
 
 private:
@@ -187,10 +188,12 @@ public:
 private:
     // currently disabled due to memory leak found via -fsanitize=leak
     // static function to get allocator
-    static allocator_type*& get_allocator()
+    static allocator_type* get_allocator()
     {
-        ThreadLocalStatic allocator_type* _allocator = new allocator_type();
-        return _allocator;
+        typedef std::unique_ptr<allocator_type> allocator_ptr;
+        static thread_local allocator_ptr _allocator
+                = allocator_ptr(new allocator_type);
+        return _allocator.get();
     }
 
 private:

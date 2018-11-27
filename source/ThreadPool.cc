@@ -89,7 +89,9 @@ void ThreadPool::start_thread(ThreadPool* tp)
         f_thread_indexes[_idx] = std::this_thread::get_id();
         //tp->get_queue()->ThisThreadNumber() = _idx;
     }
-    thread_data() = new ThreadData(tp);
+    static thread_local
+            std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
+    thread_data() = _unique_data.get();
     tp->execute_thread(thread_data()->current_queue);
 }
 
@@ -160,6 +162,7 @@ ThreadPool::ThreadPool(const size_type& pool_size,
 
 ThreadPool::~ThreadPool()
 {
+    delete m_thread_awake;
     // Release resources
     if (m_pool_state.load() != state::STOPPED)
     {

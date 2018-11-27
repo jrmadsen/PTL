@@ -170,11 +170,12 @@ public:
 private:
     // currently disabled due to memory leak found via -fsanitize=leak
     // static function to get allocator
-    static allocator_type*& get_allocator()
+    static allocator_type* get_allocator()
     {
-        typedef allocator_type* allocator_ptr;
-        ThreadLocalStatic allocator_ptr _allocator = new allocator_type;
-        return _allocator;
+        typedef std::unique_ptr<allocator_type> allocator_ptr;
+        static thread_local allocator_ptr _allocator
+                = allocator_ptr(new allocator_type);
+        return _allocator.get();
     }
 
 private:
@@ -247,11 +248,12 @@ public:
 private:
     // currently disabled due to memory leak found via -fsanitize=leak
     // static function to get allocator
-    static allocator_type*& get_allocator()
+    static allocator_type* get_allocator()
     {
-        typedef allocator_type* allocator_ptr;
-        ThreadLocalStatic allocator_ptr _allocator = new allocator_type;
-        return _allocator;
+        typedef std::unique_ptr<allocator_type> allocator_ptr;
+        static thread_local allocator_ptr _allocator
+                = allocator_ptr(new allocator_type);
+        return _allocator.get();
     }
 
 private:

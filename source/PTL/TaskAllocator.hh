@@ -59,8 +59,8 @@ class TaskAllocator : public TaskAllocatorBase
 {
 public:  // with description
 
-    TaskAllocator() throw();
-    ~TaskAllocator() throw();
+    TaskAllocator();
+    ~TaskAllocator();
     // Constructor & destructor
 
     inline Type* MallocSingle();
@@ -170,7 +170,7 @@ private:
 // ************************************************************
 //
 template <class Type>
-TaskAllocator<Type>::TaskAllocator() throw()
+TaskAllocator<Type>::TaskAllocator()
 : mem(sizeof(Type))
 {
     tname = typeid(Type).name();
@@ -181,7 +181,7 @@ TaskAllocator<Type>::TaskAllocator() throw()
 // ************************************************************
 //
 template <class Type>
-TaskAllocator<Type>::~TaskAllocator() throw()
+TaskAllocator<Type>::~TaskAllocator()
 { }
 
 // ************************************************************

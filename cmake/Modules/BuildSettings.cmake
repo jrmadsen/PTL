@@ -204,14 +204,3 @@ add_c_flag_if_avail("${CFLAGS}")
 add_c_flag_if_avail("$ENV{CFLAGS}")
 add_cxx_flag_if_avail("${CXXFLAGS}")
 add_cxx_flag_if_avail("$ENV{CXXFLAGS}")
-
-# remove duplicates
-#add_c_flags(PROJECT_C_FLAGS "${PROJECT_C_FLAGS}")
-#add_cxx_flags(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS}")
-
-add_feature(PROJECT_C_FLAGS "C flags for project")
-add_feature(PROJECT_CXX_FLAGS "C++ flags for project")
-
-# message
-#add(CMAKE_C_FLAGS "${PROJECT_C_FLAGS}")
-#add(CMAKE_CXX_FLAGS "${PROJECT_CXX_FLAGS}")

@@ -86,7 +86,6 @@ void VTaskGroup::execute_this_threads_tasks()
                                       : ((data) ? data->current_queue : nullptr);
 
     // for external threads
-    bool is_master = (data) ? data->is_master : false;
     bool within_task = (data) ? data->within_task : true;
 
     // for external threads
