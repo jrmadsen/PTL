@@ -86,7 +86,8 @@ void VTaskGroup::execute_this_threads_tasks()
                                       : ((data) ? data->current_queue : nullptr);
 
     // for external threads
-    bool within_task = (data) ? data->within_task : true;
+    bool ext_is_master = (data) ? data->is_master : false;
+    bool ext_within_task = (data) ? data->within_task : true;
 
     // for external threads
     if(!data)
@@ -107,11 +108,8 @@ void VTaskGroup::execute_this_threads_tasks()
     }
 
     // only want to process if within a task
-    if((!is_master() || _tpool->size() < 2) && within_task)
+    if((!ext_is_master || _tpool->size() < 2) && ext_within_task)
     {
-#if defined(DEBUG)
-        std::cout << "VTaskGroup::" << __FUNCTION__ << "()..." << std::endl;
-#endif
         if(!_taskq)
             return;
         int bin = static_cast<int>(_taskq->GetThreadBin());
@@ -120,10 +118,6 @@ void VTaskGroup::execute_this_threads_tasks()
                            : Thread::hardware_concurrency();
         while(this->pending() > 0)
         {
-#if defined(DEBUG)
-            std::cout << "[" << _taskq->GetThreadBin() << "] pending = "
-                   << this->pending() << "..." << std::endl;
-#endif
             task_pointer _task = _taskq->GetTask(bin, static_cast<int>(nitr));
             if(_task.get())
                 (*_task)();
