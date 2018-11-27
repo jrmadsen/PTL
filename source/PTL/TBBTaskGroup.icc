@@ -83,7 +83,7 @@ TBBTaskGroup<_Tp, _Arg>::add(packaged_task_type* _task)
     auto _func = [=]()
     {
         (*_task)();
-        intmax_t _count = --VTaskGroup::m_tot_task_count;
+        intmax_t _count = --m_tot_task_count;
         if(_count < 1)
         {
             AutoLock l(this->task_lock());

@@ -7,6 +7,9 @@
 
 include(MacroUtilities)
 
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "Require the C++ standard" FORCE)
+set(CMAKE_CXX_EXTENSIONS OFF CACHE BOOL "Disable GNU extensions" FORCE)
+
 # features
 add_feature(CMAKE_BUILD_TYPE "Build type (Debug, Release, RelWithDebInfo, MinSizeRel)")
 add_feature(CMAKE_INSTALL_PREFIX "Installation prefix")

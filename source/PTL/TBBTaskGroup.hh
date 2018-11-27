@@ -114,6 +114,7 @@ protected:
     using base_type::m_task_set;
     using base_type::m_promise;
     using base_type::m_join_function;
+    using base_type::m_tot_task_count;
 };
 
 //----------------------------------------------------------------------------//
@@ -194,6 +195,7 @@ public:
 
 protected:
     // Private variables
+    using base_type::m_tot_task_count;
     tbb_task_group_t*   m_tbb_task_group;
     using TaskGroup<void, void>::m_task_set;
 };
