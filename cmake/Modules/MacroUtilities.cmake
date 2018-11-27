@@ -903,6 +903,7 @@ macro(BUILD_LIBRARY)
             LANGUAGE                    CXX
             LINKER_LANGUAGE             CXX
             POSITION_INDEPENDENT_CODE   ON
+            COMPILE_FLAGS               ${PROJECT_CXX_FLAGS}
             ${LIB_EXTRA_ARGS})
 
     list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})

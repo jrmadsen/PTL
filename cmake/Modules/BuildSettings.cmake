@@ -50,10 +50,6 @@ else(WIN32)
     set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
 endif(WIN32)
 
-if(CMAKE_CXX_COMPILER_IS_CLANG)
-    add(CMAKE_CXX_FLAGS "-stdlib=libc++")
-endif()
-
 # ---------------------------------------------------------------------------- #
 # set the output directory (critical on Windows
 
@@ -213,6 +209,9 @@ add_cxx_flag_if_avail("$ENV{CXXFLAGS}")
 #add_c_flags(PROJECT_C_FLAGS "${PROJECT_C_FLAGS}")
 #add_cxx_flags(PROJECT_CXX_FLAGS "${PROJECT_CXX_FLAGS}")
 
+add_feature(PROJECT_C_FLAGS "C flags for project")
+add_feature(PROJECT_CXX_FLAGS "C++ flags for project")
+
 # message
-add(CMAKE_C_FLAGS "${PROJECT_C_FLAGS}")
-add(CMAKE_CXX_FLAGS "${PROJECT_CXX_FLAGS}")
+#add(CMAKE_C_FLAGS "${PROJECT_C_FLAGS}")
+#add(CMAKE_CXX_FLAGS "${PROJECT_CXX_FLAGS}")

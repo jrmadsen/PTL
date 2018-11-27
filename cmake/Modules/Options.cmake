@@ -16,6 +16,8 @@ add_feature(CMAKE_INSTALL_PREFIX "Installation prefix")
 add_feature(CMAKE_C_FLAGS "C compiler flags")
 add_feature(CMAKE_CXX_FLAGS "C++ compiler flags")
 add_feature(CMAKE_CXX_STANDARD "C++11 STL standard")
+add_feature(PROJECT_C_FLAGS "C flags for project")
+add_feature(PROJECT_CXX_FLAGS "C++ flags for project")
 
 # options (always available)
 add_option(BUILD_STATIC_LIBS "Build static library" ON)
