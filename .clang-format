@@ -35,7 +35,7 @@ BraceWrapping:
 ColumnLimit: 80
 ContinuationIndentWidth: 4
 ConstructorInitializerIndentWidth: 0
-ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
 KeepEmptyLinesAtTheStartOfBlocks: false
 PointerAlignment: Left
 SpaceAfterTemplateKeyword: true

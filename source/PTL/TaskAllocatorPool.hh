@@ -77,7 +77,9 @@ private:
     {
     public:
         explicit PoolChunk(unsigned int sz)
-        : size(sz), mem(new char[size]), next(0)
+        : size(sz)
+        , mem(new char[size])
+        , next(0)
         {
             ;
         }

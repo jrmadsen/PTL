@@ -36,7 +36,9 @@
 //============================================================================//
 
 VTask::VTask(VTaskGroup* _group)
-: m_vgroup(_group), m_tid_bin(this_tid()), m_depth(0)
+: m_vgroup(_group)
+, m_tid_bin(this_tid())
+, m_depth(0)
 {
     // ThreadData* data = ThreadData::GetInstance();
     // if(data && data->within_task)

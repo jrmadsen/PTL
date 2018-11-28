@@ -60,7 +60,8 @@ public:
 public:
     // pass a free function pointer
     PackagedTask(function_type func, _Args... args)
-    : VTask(nullptr), m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    : VTask(nullptr)
+    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
     }
 
@@ -120,14 +121,16 @@ public:
 public:
     // pass a free function pointer
     Task(task_group_type* tg, function_type func, _Args... args)
-    : VTask(tg), m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    : VTask(tg)
+    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
         m_tid_bin = tg->add(m_ptask.get_future());
     }
 
     // pass a free function pointer
     Task(task_group_type& tg, function_type func, _Args... args)
-    : VTask(&tg), m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    : VTask(&tg)
+    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
         m_tid_bin = tg.add(m_ptask.get_future());
     }
@@ -194,12 +197,16 @@ public:
 
 public:
     // pass a free function pointer
-    Task(task_group_type* tg, function_type func) : VTask(tg), m_ptask(func)
+    Task(task_group_type* tg, function_type func)
+    : VTask(tg)
+    , m_ptask(func)
     {
         m_tid_bin = tg->add(m_ptask.get_future());
     }
 
-    Task(task_group_type& tg, function_type func) : VTask(&tg), m_ptask(func)
+    Task(task_group_type& tg, function_type func)
+    : VTask(&tg)
+    , m_ptask(func)
     {
         m_tid_bin = tg.add(m_ptask.get_future());
     }

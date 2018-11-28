@@ -80,7 +80,9 @@ private:
 //============================================================================//
 
 inline TaskSubQueue::TaskSubQueue(std::atomic_uintmax_t* _ntasks)
-: m_ntasks(0), m_available(true), m_all_tasks(_ntasks)
+: m_ntasks(0)
+, m_available(true)
+, m_all_tasks(_ntasks)
 {
     m_available.store(true);
 }

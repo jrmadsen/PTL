@@ -65,7 +65,8 @@ TaskManager::GetInstanceIfExists()
 
 //============================================================================//
 
-TaskManager::TaskManager(ThreadPool* _pool) : m_pool(_pool)
+TaskManager::TaskManager(ThreadPool* _pool)
+: m_pool(_pool)
 {
     if(!fgInstance())
         fgInstance() = this;
@@ -82,7 +83,10 @@ TaskManager::~TaskManager()
 
 //============================================================================//
 
-TaskManager::TaskManager(const TaskManager& rhs) : m_pool(rhs.m_pool) {}
+TaskManager::TaskManager(const TaskManager& rhs)
+: m_pool(rhs.m_pool)
+{
+}
 
 //============================================================================//
 

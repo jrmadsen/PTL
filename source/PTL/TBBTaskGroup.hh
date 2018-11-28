@@ -135,7 +135,8 @@ public:
 public:
     // Constructor
     TBBTaskGroup(ThreadPool* _tp = nullptr)
-    : base_type(_tp), m_tbb_task_group(new tbb_task_group_t())
+    : base_type(_tp)
+    , m_tbb_task_group(new tbb_task_group_t())
     {
     }
 

@@ -49,7 +49,8 @@ typedef tbb::task_group tbb_task_group_t;
 template <typename _Tp, typename _Arg>
 template <typename _Func>
 TBBTaskGroup<_Tp, _Arg>::TBBTaskGroup(_Func _join, ThreadPool* _tp)
-: base_type(_join, _tp), m_tbb_task_group(new tbb_task_group_t())
+: base_type(_join, _tp)
+, m_tbb_task_group(new tbb_task_group_t())
 {
 }
 
@@ -58,7 +59,8 @@ TBBTaskGroup<_Tp, _Arg>::TBBTaskGroup(_Func _join, ThreadPool* _tp)
 template <typename _Tp, typename _Arg>
 template <typename _Func>
 TBBTaskGroup<_Tp, _Arg>::TBBTaskGroup(int _freq, _Func _join, ThreadPool* _tp)
-: base_type(_freq, _join, _tp), m_tbb_task_group(new tbb_task_group_t())
+: base_type(_freq, _join, _tp)
+, m_tbb_task_group(new tbb_task_group_t())
 {
 }
 

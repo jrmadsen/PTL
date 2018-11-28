@@ -181,14 +181,20 @@ public:
 
 public:
     // Constructor
-    TaskGroup(ThreadPool* tp = nullptr) : VTaskGroup(tp) {}
+    TaskGroup(ThreadPool* tp = nullptr)
+    : VTaskGroup(tp)
+    {
+    }
     // Destructor
     virtual ~TaskGroup() {}
 
     // delete copy-construct
     TaskGroup(const this_type&) = delete;
     // define move-construct
-    TaskGroup(this_type&& rhs) : m_task_set(std::move(rhs.m_task_set)) {}
+    TaskGroup(this_type&& rhs)
+    : m_task_set(std::move(rhs.m_task_set))
+    {
+    }
 
     // delete copy-assign
     this_type& operator=(const this_type& rhs) = delete;

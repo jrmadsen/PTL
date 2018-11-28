@@ -99,7 +99,8 @@ public:  // without description
     typedef const Type& const_reference;
 
     template <class U>
-    TaskAllocator(const TaskAllocator<U>& right) throw() : mem(right.mem)
+    TaskAllocator(const TaskAllocator<U>& right) throw()
+    : mem(right.mem)
     {
     }
     // Copy constructor
@@ -169,7 +170,9 @@ private:
 // TaskAllocator constructor
 // ************************************************************
 //
-template <class Type> TaskAllocator<Type>::TaskAllocator() : mem(sizeof(Type))
+template <class Type>
+TaskAllocator<Type>::TaskAllocator()
+: mem(sizeof(Type))
 {
     tname = typeid(Type).name();
 }

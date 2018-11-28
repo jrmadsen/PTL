@@ -30,7 +30,8 @@
 
 //============================================================================//
 
-VUserTaskQueue::VUserTaskQueue(intmax_t nworkers) : m_workers(nworkers)
+VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)
+: m_workers(nworkers)
 {
     if(m_workers < 0)
     {

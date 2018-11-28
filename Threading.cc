@@ -30,11 +30,11 @@
 #include "PTL/Globals.hh"
 
 #if defined(WIN32)
-#include <Windows.h>
+#    include <Windows.h>
 #else
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <unistd.h>
+#    include <sys/syscall.h>
+#    include <sys/types.h>
+#    include <unistd.h>
 #endif
 
 #include <atomic>
