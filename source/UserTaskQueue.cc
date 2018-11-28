@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
@@ -25,22 +24,22 @@
 //  ---------------------------------------------------------------
 
 #include "PTL/UserTaskQueue.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/TaskGroup.hh"
 #include "PTL/Task.hh"
+#include "PTL/TaskGroup.hh"
+#include "PTL/ThreadPool.hh"
 
 #include <cassert>
 
 //============================================================================//
 
 UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
-: VUserTaskQueue(nworkers),
-  m_is_clone((parent) ? true : false),
-  m_thread_bin((parent) ? (ThreadPool::GetThisThreadID() % (nworkers+1)) : 0),
-  m_insert_bin((parent) ? (ThreadPool::GetThisThreadID() % (nworkers+1)) : 0),
-  m_hold((parent) ? parent->m_hold : new std::atomic_bool(false)),
-  m_ntasks((parent) ? parent->m_ntasks : new std::atomic_uintmax_t(0)),
-  m_subqueues((parent) ? parent->m_subqueues : new TaskSubQueueContainer())
+: VUserTaskQueue(nworkers)
+, m_is_clone((parent) ? true : false)
+, m_thread_bin((parent) ? (ThreadPool::GetThisThreadID() % (nworkers + 1)) : 0)
+, m_insert_bin((parent) ? (ThreadPool::GetThisThreadID() % (nworkers + 1)) : 0)
+, m_hold((parent) ? parent->m_hold : new std::atomic_bool(false))
+, m_ntasks((parent) ? parent->m_ntasks : new std::atomic_uintmax_t(0))
+, m_subqueues((parent) ? parent->m_subqueues : new TaskSubQueueContainer())
 {
     // create nthreads + 1 subqueues so there is always a subqueue available
     if(!parent)
@@ -52,8 +51,7 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
     {
         RecursiveAutoLock l(TypeRecursiveMutex<decltype(std::cout)>());
         std::stringstream ss;
-        ss << ThreadPool::GetThisThreadID() << "> "
-           << ThisThread::get_id()
+        ss << ThreadPool::GetThisThreadID() << "> " << ThisThread::get_id()
            << " [" << __FUNCTION__ << ":" << __LINE__ << "] "
            << "this = " << this << ", "
            << "clone = " << std::boolalpha << m_is_clone << ", "
@@ -89,7 +87,8 @@ UserTaskQueue::~UserTaskQueue()
 
 //============================================================================//
 
-void UserTaskQueue::resize(intmax_t n)
+void
+UserTaskQueue::resize(intmax_t n)
 {
     AutoLock l(m_mutex);
     if(m_workers < n)
@@ -113,25 +112,28 @@ void UserTaskQueue::resize(intmax_t n)
 
 //============================================================================//
 
-VUserTaskQueue* UserTaskQueue::clone()
+VUserTaskQueue*
+UserTaskQueue::clone()
 {
     return new UserTaskQueue(workers(), this);
 }
 //============================================================================//
 
-intmax_t UserTaskQueue::GetThreadBin() const
+intmax_t
+UserTaskQueue::GetThreadBin() const
 {
     // get a thread id number
-    ThreadLocalStatic intmax_t tl_bin
-            = (m_thread_bin + ThreadPool::GetThisThreadID()) % (m_workers+1);
+    ThreadLocalStatic intmax_t tl_bin =
+        (m_thread_bin + ThreadPool::GetThisThreadID()) % (m_workers + 1);
     return tl_bin;
 }
 
 //============================================================================//
 
-intmax_t UserTaskQueue::GetInsertBin() const
+intmax_t
+UserTaskQueue::GetInsertBin() const
 {
-    //return (m_is_clone)
+    // return (m_is_clone)
     //        ? ((m_insert_bin) % (m_workers + 1))
     //        : ((++m_insert_bin) % (m_workers + 1));
     return ++m_insert_bin;
@@ -143,7 +145,7 @@ UserTaskQueue::VTaskPtr
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 {
     bool spin = m_hold->load(std::memory_order_relaxed);
-    //bool recursive = (nitr < 0);
+    // bool recursive = (nitr < 0);
 
     // if not greater than zero, set to number of workers + 1
     if(nitr < 1)
@@ -161,8 +163,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     VTaskPtr _task(nullptr);
 
     //------------------------------------------------------------------------//
-    auto get_task = [&] (intmax_t _n)
-    {
+    auto get_task = [&](intmax_t _n) {
         TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
@@ -173,7 +174,8 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
             // release the claim on the bin
             task_subq->ReleaseClaim();
             // debug
-            //printf("> Acquired task from bin %li [thread bin: %li]\n", _n, tbin);
+            // printf("> Acquired task from bin %li [thread bin: %li]\n", _n,
+            // tbin);
             // if not an empty task, return the task
             return (_task.get()) ? true : false;
         }
@@ -191,7 +193,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         return _task;
     }
 
-    //if(get_task(m_subqueues->at(GetRandomBin())))
+    // if(get_task(m_subqueues->at(GetRandomBin())))
     //    return _task;
 
     // there are num_workers+1 bins so there is always a bin that is open
@@ -211,7 +213,8 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 
 //============================================================================//
 
-intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
+intmax_t
+UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
 {
     // skip increment here (handled externally)
     ++(*m_ntasks);
@@ -231,8 +234,7 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
     intmax_t n = (subq < 0) ? GetInsertBin() : subq;
 
     //------------------------------------------------------------------------//
-    auto insert_task = [&] (intmax_t _n)
-    {
+    auto insert_task = [&](intmax_t _n) {
         TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
@@ -243,7 +245,8 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
             // release the claim on the bin
             task_subq->ReleaseClaim();
             // debug
-            //printf("> Inserted task in bin %li [thread bin: %li]\n", _n, GetThreadBin());
+            // printf("> Inserted task in bin %li [thread bin: %li]\n", _n,
+            // GetThreadBin());
             // return success
             return true;
         }
@@ -257,7 +260,8 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
     if(spin)
     {
         n = n % (m_workers + 1);
-        while(!insert_task(n));
+        while(!insert_task(n))
+            ;
         return n;
     }
 
@@ -276,13 +280,13 @@ intmax_t UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t sub
 
 //============================================================================//
 
-void UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp,
-                                        function_type func)
+void
+UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 {
-    typedef Task<int, int>        task_type;
-    typedef std::shared_ptr<task_type>  task_pointer;
-    typedef TaskGroup<int, int>   task_group_type;
-    typedef std::map<int64_t, bool>   thread_execute_map_t;
+    typedef Task<int, int>             task_type;
+    typedef std::shared_ptr<task_type> task_pointer;
+    typedef TaskGroup<int, int>        task_group_type;
+    typedef std::map<int64_t, bool>    thread_execute_map_t;
 
     if(!tp->is_alive())
     {
@@ -290,7 +294,10 @@ void UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp,
         return;
     }
 
-    auto join_func = [=] (int& ref, int i) { ref += i; return ref; };
+    auto join_func = [=](int& ref, int i) {
+        ref += i;
+        return ref;
+    };
     task_group_type* tg = new task_group_type(join_func);
 
     // wait for all threads to finish any work
@@ -307,8 +314,7 @@ void UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp,
             continue;
 
         //--------------------------------------------------------------------//
-        auto thread_specific_func = [=] ()
-        {
+        auto thread_specific_func = [=]() {
             bool& _executed = (*thread_execute_map)[GetThreadBin()];
             if(!_executed)
             {
@@ -320,7 +326,8 @@ void UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp,
         };
         //--------------------------------------------------------------------//
 
-        VTaskPtr _task = tg->store(task_pointer(new task_type(tg, thread_specific_func)));
+        VTaskPtr _task =
+            tg->store(task_pointer(new task_type(tg, thread_specific_func)));
         //++(*this);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
@@ -330,11 +337,10 @@ void UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp,
     if(nexecuted != m_workers)
     {
         std::stringstream msg;
-        msg << "Failure executing routine on all threads! Only "
-            << nexecuted << " threads executed function out of "
-            << m_workers;
+        msg << "Failure executing routine on all threads! Only " << nexecuted
+            << " threads executed function out of " << m_workers;
         std::cerr << msg.str() << std::endl;
-        //Exception("UserTaskQueue::ExecuteOnAllThreads", "TaskQueue0000",
+        // Exception("UserTaskQueue::ExecuteOnAllThreads", "TaskQueue0000",
         //            JustWarning, msg);
     }
     delete thread_execute_map;
@@ -343,16 +349,19 @@ void UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp,
 
 //============================================================================//
 
-void UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set,
-                                               ThreadPool* tp,
-                                               function_type func)
+void
+UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
+                                        function_type func)
 {
-    typedef Task<int, int>        task_type;
-    typedef std::shared_ptr<task_type>  task_pointer;
-    typedef TaskGroup<int, int>   task_group_type;
-    typedef std::map<int64_t, bool>   thread_execute_map_t;
+    typedef Task<int, int>             task_type;
+    typedef std::shared_ptr<task_type> task_pointer;
+    typedef TaskGroup<int, int>        task_group_type;
+    typedef std::map<int64_t, bool>    thread_execute_map_t;
 
-    auto join_func = [=] (int& ref, int i) { ref += i; return ref; };
+    auto join_func = [=](int& ref, int i) {
+        ref += i;
+        return ref;
+    };
     task_group_type* tg = new task_group_type(join_func);
 
     // wait for all threads to finish any work
@@ -371,8 +380,7 @@ void UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set,
     //========================================================================//
     // wrap the function so that it will only be executed if the thread
     // has an ID in the set
-    auto thread_specific_func = [=] ()
-    {
+    auto thread_specific_func = [=]() {
         bool& _executed = (*thread_execute_map)[GetThreadBin()];
         if(!_executed && tid_set.count(ThisThread::get_id()) > 0)
         {
@@ -393,8 +401,8 @@ void UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set,
         if(i == GetThreadBin())
             continue;
 
-        VTaskPtr _task = tg->store(task_pointer(new task_type(tg,
-                                                    thread_specific_func)));
+        VTaskPtr _task =
+            tg->store(task_pointer(new task_type(tg, thread_specific_func)));
         //++(*this);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
@@ -403,11 +411,10 @@ void UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set,
     if(nexecuted != m_workers)
     {
         std::stringstream msg;
-        msg << "Failure executing routine on all threads! Only "
-            << nexecuted << " threads executed function out of "
-            << tid_set.size();
+        msg << "Failure executing routine on all threads! Only " << nexecuted
+            << " threads executed function out of " << tid_set.size();
         std::cerr << msg.str() << std::endl;
-        //Exception("UserTaskQueue::ExecuteOnSpecificThreads", "TaskQueue0001",
+        // Exception("UserTaskQueue::ExecuteOnSpecificThreads", "TaskQueue0001",
         //            JustWarning, msg);
     }
     delete thread_execute_map;
@@ -416,26 +423,26 @@ void UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set,
 
 //============================================================================//
 
-void UserTaskQueue::AcquireHold()
+void
+UserTaskQueue::AcquireHold()
 {
     bool _hold;
     while(!(_hold = m_hold->load(std::memory_order_relaxed)))
     {
-        m_hold->compare_exchange_strong(_hold, true,
-                                        std::memory_order_release,
+        m_hold->compare_exchange_strong(_hold, true, std::memory_order_release,
                                         std::memory_order_relaxed);
     }
 }
 
 //============================================================================//
 
-void UserTaskQueue::ReleaseHold()
+void
+UserTaskQueue::ReleaseHold()
 {
     bool _hold;
     while((_hold = m_hold->load(std::memory_order_relaxed)))
     {
-        m_hold->compare_exchange_strong(_hold, false,
-                                        std::memory_order_release,
+        m_hold->compare_exchange_strong(_hold, false, std::memory_order_release,
                                         std::memory_order_relaxed);
     }
 }

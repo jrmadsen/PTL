@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 // Tasking class header file
@@ -31,18 +30,19 @@
 #ifndef TBBTask_hh_
 #define TBBTask_hh_
 
-#include "PTL/VTask.hh"
-#include "PTL/Task.hh"
 #include "PTL/TBBTaskGroup.hh"
+#include "PTL/Task.hh"
 #include "PTL/TaskAllocator.hh"
+#include "PTL/VTask.hh"
 
 #if defined(PTL_USE_TBB)
 
-#include <stdexcept>
-#include <functional>
-#include <cstdint>
+#    include <cstdint>
+#    include <functional>
+#    include <stdexcept>
 
-#define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
+#    define _forward_args_t(_Args, _args)                                      \
+        std::forward<_Args>(std::move(_args))...
 
 //============================================================================//
 
@@ -51,34 +51,32 @@ template <typename _Ret, typename _Arg, typename... _Args>
 class TBBTask : public VTask
 {
 public:
-    typedef TBBTask<_Ret, _Arg, _Args...>                   this_type;
-    typedef _Ret                                            result_type;
-    typedef TBBTaskGroup<_Ret, _Arg>                        task_group_type;
-    typedef typename task_group_type::ArgTp                 ArgTp;
-    typedef typename task_group_type::promise_type          promise_type;
-    typedef typename task_group_type::future_type           future_type;
-    typedef typename task_group_type::packaged_task_type    packaged_task_type;
-    typedef std::function<ArgTp(_Args...)>                  function_type;
-    typedef TaskAllocator<this_type>                        allocator_type;
+    typedef TBBTask<_Ret, _Arg, _Args...>                this_type;
+    typedef _Ret                                         result_type;
+    typedef TBBTaskGroup<_Ret, _Arg>                     task_group_type;
+    typedef typename task_group_type::ArgTp              ArgTp;
+    typedef typename task_group_type::promise_type       promise_type;
+    typedef typename task_group_type::future_type        future_type;
+    typedef typename task_group_type::packaged_task_type packaged_task_type;
+    typedef std::function<ArgTp(_Args...)>               function_type;
+    typedef TaskAllocator<this_type>                     allocator_type;
 
 public:
     // pass a free function pointer
     TBBTask(task_group_type* tg, function_type func, _Args... args)
-    : VTask(tg),
-      m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    : VTask(tg), m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
         m_tid_bin = tg->add(&m_ptask);
     }
 
     // pass a free function pointer
     TBBTask(task_group_type& tg, function_type func, _Args... args)
-    : VTask(&tg),
-      m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    : VTask(&tg), m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
         m_tid_bin = tg.add(&m_ptask);
     }
 
-    virtual ~TBBTask() { }
+    virtual ~TBBTask() {}
 
 public:
     // execution operator
@@ -113,50 +111,44 @@ private:
     static allocator_type* get_allocator()
     {
         typedef std::unique_ptr<allocator_type> allocator_ptr;
-        static thread_local allocator_ptr _allocator
-                = allocator_ptr(new allocator_type);
+        static thread_local allocator_ptr       _allocator =
+            allocator_ptr(new allocator_type);
         return _allocator.get();
     }
 
 private:
-    packaged_task_type      m_ptask;
+    packaged_task_type m_ptask;
 };
-
 
 //============================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <>
-class TBBTask<void, void> : public VTask
+template <> class TBBTask<void, void> : public VTask
 {
 public:
-    typedef TBBTask<void, void>                           this_type;
-    typedef void                                            _Ret;
-    typedef _Ret                                            result_type;
-    typedef std::function<_Ret()>                           function_type;
-    typedef TBBTaskGroup<_Ret, _Ret>                      task_group_type;
-    typedef typename task_group_type::promise_type          promise_type;
-    typedef typename task_group_type::future_type           future_type;
-    typedef typename task_group_type::packaged_task_type    packaged_task_type;
-    typedef TaskAllocator<this_type>                      allocator_type;
+    typedef TBBTask<void, void>                          this_type;
+    typedef void                                         _Ret;
+    typedef _Ret                                         result_type;
+    typedef std::function<_Ret()>                        function_type;
+    typedef TBBTaskGroup<_Ret, _Ret>                     task_group_type;
+    typedef typename task_group_type::promise_type       promise_type;
+    typedef typename task_group_type::future_type        future_type;
+    typedef typename task_group_type::packaged_task_type packaged_task_type;
+    typedef TaskAllocator<this_type>                     allocator_type;
 
 public:
     // pass a free function pointer
-    TBBTask(task_group_type* tg, function_type func)
-    : VTask(tg),
-      m_ptask(func)
+    TBBTask(task_group_type* tg, function_type func) : VTask(tg), m_ptask(func)
     {
         m_tid_bin = tg->add(&m_ptask);
     }
 
-    TBBTask(task_group_type& tg, function_type func)
-    : VTask(&tg),
-      m_ptask(func)
+    TBBTask(task_group_type& tg, function_type func) : VTask(&tg), m_ptask(func)
     {
         m_tid_bin = tg.add(&m_ptask);
     }
 
-    virtual ~TBBTask() { }
+    virtual ~TBBTask() {}
 
 public:
     // execution operator
@@ -191,20 +183,19 @@ private:
     static allocator_type* get_allocator()
     {
         typedef std::unique_ptr<allocator_type> allocator_ptr;
-        static thread_local allocator_ptr _allocator
-                = allocator_ptr(new allocator_type);
+        static thread_local allocator_ptr       _allocator =
+            allocator_ptr(new allocator_type);
         return _allocator.get();
     }
 
 private:
-    packaged_task_type      m_ptask;
+    packaged_task_type m_ptask;
 };
 
 //----------------------------------------------------------------------------//
 #else
 
-template <typename _Tp, typename _Arg = _Tp>
-using TBBTask = Task<_Tp, _Arg>;
+template <typename _Tp, typename _Arg = _Tp> using TBBTask = Task<_Tp, _Arg>;
 
 #endif
 

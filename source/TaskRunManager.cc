@@ -7,45 +7,46 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
 
 #include "PTL/TaskRunManager.hh"
 #include "PTL/AutoLock.hh"
-#include "PTL/ThreadPool.hh"
+#include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"
-#include "PTL/Task.hh"
-#include "PTL/Utility.hh"
+#include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
 #include "PTL/TiMemory.hh"
+#include "PTL/Utility.hh"
 
-#include <iterator>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
+#include <iterator>
 
 //============================================================================//
 
-TaskRunManager*& TaskRunManager::GetPrivateMasterRunManager(bool init, bool useTBB)
+TaskRunManager*&
+TaskRunManager::GetPrivateMasterRunManager(bool init, bool useTBB)
 {
-    static TaskRunManager* _instance
-            = (init) ? new TaskRunManager(useTBB) : nullptr;
+    static TaskRunManager* _instance =
+        (init) ? new TaskRunManager(useTBB) : nullptr;
     return _instance;
 }
 
 //============================================================================//
 
-TaskRunManager*& TaskRunManager::GetMasterRunManager(bool useTBB)
+TaskRunManager*&
+TaskRunManager::GetMasterRunManager(bool useTBB)
 {
     static TaskRunManager* _instance = GetPrivateMasterRunManager(true, useTBB);
     return _instance;
@@ -53,7 +54,8 @@ TaskRunManager*& TaskRunManager::GetMasterRunManager(bool useTBB)
 
 //============================================================================//
 
-TaskRunManager* TaskRunManager::GetInstance(bool useTBB)
+TaskRunManager*
+TaskRunManager::GetInstance(bool useTBB)
 {
     return GetMasterRunManager(useTBB);
 }
@@ -61,14 +63,14 @@ TaskRunManager* TaskRunManager::GetInstance(bool useTBB)
 //============================================================================//
 
 TaskRunManager::TaskRunManager(bool useTBB)
-: isInitialized(false),
-  verbose(0),
-  nworkers(std::thread::hardware_concurrency()),
-  taskQueue(nullptr),
-  threadPool(nullptr),
-  taskManager(nullptr),
-  workTaskGroup(nullptr),
-  workTaskGroupTBB(nullptr)
+: isInitialized(false)
+, verbose(0)
+, nworkers(std::thread::hardware_concurrency())
+, taskQueue(nullptr)
+, threadPool(nullptr)
+, taskManager(nullptr)
+, workTaskGroup(nullptr)
+, workTaskGroupTBB(nullptr)
 {
     if(!GetPrivateMasterRunManager(false))
         GetPrivateMasterRunManager(false) = this;
@@ -76,7 +78,7 @@ TaskRunManager::TaskRunManager(bool useTBB)
 #ifdef PTL_USE_TBB
     int _useTBB = GetEnv<int>("FORCE_TBB", (int) useTBB);
     if(_useTBB > 0)
-    useTBB = true;
+        useTBB = true;
 #endif
 
     // handle TBB
@@ -86,22 +88,19 @@ TaskRunManager::TaskRunManager(bool useTBB)
 
     /*
 #if defined(PTL_USE_TIMEMORY)
-    tim::manager::instance()->set_get_num_threads_func([=] () { return nworkers; });
-#endif
+    tim::manager::instance()->set_get_num_threads_func([=] () { return nworkers;
+}); #endif
     */
-
 }
 
 //============================================================================//
 
-TaskRunManager::~TaskRunManager()
-{
-    Terminate();
-}
+TaskRunManager::~TaskRunManager() { Terminate(); }
 
 //============================================================================//
 
-void TaskRunManager::Initialize(uint64_t n)
+void
+TaskRunManager::Initialize(uint64_t n)
 {
     nworkers = n;
 
@@ -109,10 +108,12 @@ void TaskRunManager::Initialize(uint64_t n)
     if(!threadPool)
     {
         if(verbose > 0)
-            std::cout << "TaskRunManager :: Creating thread pool..." << std::endl;
+            std::cout << "TaskRunManager :: Creating thread pool..."
+                      << std::endl;
         threadPool = new ThreadPool(nworkers, taskQueue);
         if(verbose > 0)
-            std::cout << "TaskRunManager :: Creating task manager..." << std::endl;
+            std::cout << "TaskRunManager :: Creating task manager..."
+                      << std::endl;
         taskManager = new TaskManager(threadPool);
     }
     // or resize
@@ -151,14 +152,15 @@ void TaskRunManager::Initialize(uint64_t n)
 
     /*
 #if defined(PTL_USE_TIMEMORY)
-    tim::manager::instance()->set_get_num_threads_func([=] () { return nworkers; });
-#endif
+    tim::manager::instance()->set_get_num_threads_func([=] () { return nworkers;
+}); #endif
     */
 }
 
 //============================================================================//
 
-void TaskRunManager::Terminate()
+void
+TaskRunManager::Terminate()
 {
     isInitialized = false;
 
@@ -171,16 +173,17 @@ void TaskRunManager::Terminate()
     delete taskManager;
     delete threadPool;
     workTaskGroupTBB = nullptr;
-    workTaskGroup = nullptr;
-    taskManager = nullptr;
-    threadPool = nullptr;
+    workTaskGroup    = nullptr;
+    taskManager      = nullptr;
+    threadPool       = nullptr;
 }
 
 //============================================================================//
 
-void TaskRunManager::Wait()
+void
+TaskRunManager::Wait()
 {
-    //Now join threads.
+    // Now join threads.
     if(workTaskGroupTBB)
         workTaskGroupTBB->join();
 
@@ -190,7 +193,8 @@ void TaskRunManager::Wait()
 
 //============================================================================//
 
-void TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
+void
+TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
 {
 #ifdef PTL_USE_TIMEMORY
     if(fname.length() > 0 || echo_stdout)

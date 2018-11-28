@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ----------------------------------------------------------------------
 // class Timer
@@ -29,44 +28,51 @@
 #include <stdexcept>
 
 #if defined(IRIX6_2)
-#   if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED==1)
-#       define __vfork vfork
-#   endif
+#    if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED == 1)
+#        define __vfork vfork
+#    endif
 #endif
 
 #ifdef WIN32
-#   include <sys/types.h>
-#   include <windows.h>
+#    include <sys/types.h>
+#    include <windows.h>
 
 //============================================================================//
 
 // extract milliseconds time unit
-int sysconf(int a)
+int
+sysconf(int a)
 {
-    if( a == _SC_CLK_TCK ) return 1000;
-    else return 0;
+    if(a == _SC_CLK_TCK)
+        return 1000;
+    else
+        return 0;
 }
 
 //============================================================================//
 
-static clock_t filetime2msec( FILETIME* t )
+static clock_t
+filetime2msec(FILETIME* t)
 {
-    return (clock_t)((((float)t->dwHighDateTime)*429496.7296)+
-                     (((float)t->dwLowDateTime)*.0001) );
+    return (clock_t)((((float) t->dwHighDateTime) * 429496.7296) +
+                     (((float) t->dwLowDateTime) * .0001));
 }
 
 //============================================================================//
 
-clock_t times(struct tms * t)
+clock_t
+times(struct tms* t)
 {
-    FILETIME      ct = {0,0}, et = {0,0}, st = {0,0}, ut = {0,0}, rt = {0,0};
+    FILETIME ct = { 0, 0 }, et = { 0, 0 }, st = { 0, 0 }, ut = { 0, 0 },
+             rt = { 0, 0 };
     SYSTEMTIME realtime;
 
-    GetSystemTime( &realtime );
-    SystemTimeToFileTime( &realtime, &rt ); // get real time in 10^-9 sec
-    if( t != 0 )
+    GetSystemTime(&realtime);
+    SystemTimeToFileTime(&realtime, &rt);  // get real time in 10^-9 sec
+    if(t != 0)
     {
-        GetProcessTimes( GetCurrentProcess(), &ct, &et, &st, &ut);// get process time in 10^-9 sec
+        GetProcessTimes(GetCurrentProcess(), &ct, &et, &st,
+                        &ut);  // get process time in 10^-9 sec
         t->tms_utime = t->tms_cutime = filetime2msec(&ut);
         t->tms_stime = t->tms_cstime = filetime2msec(&st);
     }
@@ -80,21 +86,21 @@ clock_t times(struct tms * t)
 //============================================================================//
 
 // Print timer status n std::ostream
-std::ostream& operator<<(std::ostream& os, const Timer& t)
+std::ostream&
+operator<<(std::ostream& os, const Timer& t)
 {
     // so fixed doesn't propagate
     std::stringstream ss;
     ss << std::fixed;
     if(t.IsValid())
     {
-        ss << "Real=" << t.GetRealElapsed()
-           << "s User=" << t.GetUserElapsed()
+        ss << "Real=" << t.GetRealElapsed() << "s User=" << t.GetUserElapsed()
            << "s Sys=" << t.GetSystemElapsed() << "s";
 
         // avoid possible FPE error
         if(t.GetRealElapsed() > 1.0e-6)
         {
-            double cpu_util = (t.GetUserElapsed()+t.GetSystemElapsed()) /
+            double cpu_util = (t.GetUserElapsed() + t.GetSystemElapsed()) /
                               t.GetRealElapsed() * 100.0;
             ss << std::setprecision(1);
             ss << " [Cpu=" << std::setprecision(1) << cpu_util << "%]";
@@ -111,41 +117,42 @@ std::ostream& operator<<(std::ostream& os, const Timer& t)
 
 //============================================================================//
 
-Timer::Timer()
-: fValidTimes(false)
-{ }
+Timer::Timer() : fValidTimes(false) {}
 
 //============================================================================//
 
-double Timer::GetRealElapsed() const
+double
+Timer::GetRealElapsed() const
 {
-    if (!fValidTimes)
+    if(!fValidTimes)
         throw std::runtime_error("Timer::GetRealElapsed() - "
                                  "Timer not stopped or times not recorded!");
-    std::chrono::duration<double> diff=fEndRealTime-fStartRealTime;
+    std::chrono::duration<double> diff = fEndRealTime - fStartRealTime;
     return diff.count();
 }
 
 //============================================================================//
 
-double Timer::GetSystemElapsed() const
+double
+Timer::GetSystemElapsed() const
 {
-    if (!fValidTimes)
+    if(!fValidTimes)
         throw std::runtime_error("Timer::GetSystemElapsed() - "
                                  "Timer not stopped or times not recorded!");
-    double diff=fEndTimes.tms_stime-fStartTimes.tms_stime;
-    return diff/sysconf(_SC_CLK_TCK);
+    double diff = fEndTimes.tms_stime - fStartTimes.tms_stime;
+    return diff / sysconf(_SC_CLK_TCK);
 }
 
 //============================================================================//
 
-double Timer::GetUserElapsed() const
+double
+Timer::GetUserElapsed() const
 {
-    if (!fValidTimes)
+    if(!fValidTimes)
         throw std::runtime_error("Timer::GetUserElapsed() - "
                                  "Timer not stopped or times not recorded!");
-    double diff=fEndTimes.tms_utime-fStartTimes.tms_utime;
-    return diff/sysconf(_SC_CLK_TCK);
+    double diff = fEndTimes.tms_utime - fStartTimes.tms_utime;
+    return diff / sysconf(_SC_CLK_TCK);
 }
 
 //============================================================================//

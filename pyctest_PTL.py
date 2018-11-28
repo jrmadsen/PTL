@@ -148,14 +148,15 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # how to build the code
     #
-    pyctest.CONFIGURE_COMMAND = "${} {} {}".format(
-        "{CTEST_CMAKE_COMMAND}", cmake_args, pyctest.SOURCE_DIRECTORY)
+    ctest_cmake_cmd = "${CTEST_CMAKE_COMMAND}"
+    pyctest.CONFIGURE_COMMAND = "{} {} {}".format(
+        ctest_cmake_cmd, cmake_args, pyctest.SOURCE_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # how to build the code
     #
-    pyctest.BUILD_COMMAND = "${} --build {} --target all".format(
-        "{CTEST_CMAKE_COMMAND}", pyctest.BINARY_DIRECTORY)
+    pyctest.BUILD_COMMAND = "{} --build {} --target all".format(
+        ctest_cmake_cmd, pyctest.BINARY_DIRECTORY)
 
     #--------------------------------------------------------------------------#
     # parallel build

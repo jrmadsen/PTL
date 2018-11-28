@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ------------------------------------------------------------
 // Tasking class header file
@@ -30,9 +29,9 @@
 #ifndef TaskAllocatorList_h
 #define TaskAllocatorList_h 1
 
-#include <vector>
 #include "PTL/Globals.hh"
 #include "PTL/ThreadLocalStatic.hh"
+#include <vector>
 
 class TaskAllocatorBase;
 
@@ -45,14 +44,14 @@ public:  // with description
 public:
     ~TaskAllocatorList();
     void Register(TaskAllocatorBase*);
-    void Destroy(int nStat=0, int verboseLevel=0);
-    int Size() const;
+    void Destroy(int nStat = 0, int verboseLevel = 0);
+    int  Size() const;
 
 private:
     TaskAllocatorList();
 
 private:
-    static TaskAllocatorList*& fAllocatorList();
+    static TaskAllocatorList*&      fAllocatorList();
     std::vector<TaskAllocatorBase*> fList;
 };
 

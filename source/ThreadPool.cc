@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
@@ -30,29 +29,30 @@
 // ---------------------------------------------------------------
 
 #include "PTL/ThreadPool.hh"
-#include "PTL/VUserTaskQueue.hh"
-#include "PTL/UserTaskQueue.hh"
 #include "PTL/ThreadData.hh"
+#include "PTL/UserTaskQueue.hh"
+#include "PTL/VUserTaskQueue.hh"
 
 #include <cstdlib>
 
 #if defined(PTL_USE_GPERF)
-#   include <gperftools/profiler.h>
-#   include <gperftools/heap-profiler.h>
-#   include <gperftools/heap-checker.h>
+#    include <gperftools/heap-checker.h>
+#    include <gperftools/heap-profiler.h>
+#    include <gperftools/profiler.h>
 #endif
 
 //============================================================================//
 
-inline intmax_t ncores()
+inline intmax_t
+ncores()
 {
     return static_cast<intmax_t>(Thread::hardware_concurrency());
 }
 
 //============================================================================//
 
-ThreadPool::thread_id_map_t       ThreadPool::f_thread_ids;
-ThreadPool::thread_index_map_t    ThreadPool::f_thread_indexes;
+ThreadPool::thread_id_map_t    ThreadPool::f_thread_ids;
+ThreadPool::thread_index_map_t ThreadPool::f_thread_indexes;
 
 //============================================================================//
 
@@ -67,7 +67,8 @@ static const int NONINIT = 2;
 
 namespace
 {
-ThreadData*& thread_data()
+ThreadData*&
+thread_data()
 {
     return ThreadData::GetInstance();
 }
@@ -80,24 +81,26 @@ bool ThreadPool::f_use_tbb = false;
 //============================================================================//
 // static member function that calls the member function we want the thread to
 // run
-void ThreadPool::start_thread(ThreadPool* tp)
+void
+ThreadPool::start_thread(ThreadPool* tp)
 {
     {
         AutoLock lock(TypeMutex<ThreadPool>());
-        auto _idx = f_thread_ids.size();
+        auto     _idx                            = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
-        f_thread_indexes[_idx] = std::this_thread::get_id();
-        //tp->get_queue()->ThisThreadNumber() = _idx;
+        f_thread_indexes[_idx]                   = std::this_thread::get_id();
+        // tp->get_queue()->ThisThreadNumber() = _idx;
     }
-    static thread_local
-            std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
+    static thread_local std::unique_ptr<ThreadData> _unique_data(
+        new ThreadData(tp));
     thread_data() = _unique_data.get();
     tp->execute_thread(thread_data()->current_queue);
 }
 
 //============================================================================//
 // static member function that initialized tbb library
-void ThreadPool::set_use_tbb(bool enable)
+void
+ThreadPool::set_use_tbb(bool enable)
 {
 #if defined(PTL_USE_TBB)
     f_use_tbb = enable;
@@ -108,15 +111,16 @@ void ThreadPool::set_use_tbb(bool enable)
 
 //============================================================================//
 
-uintmax_t ThreadPool::GetThisThreadID()
+uintmax_t
+ThreadPool::GetThisThreadID()
 {
     auto _tid = ThisThread::get_id();
     {
         AutoLock lock(TypeMutex<ThreadPool>());
         if(f_thread_ids.find(_tid) == f_thread_ids.end())
         {
-            auto _idx = f_thread_ids.size();
-            f_thread_ids[_tid] = _idx;
+            auto _idx              = f_thread_ids.size();
+            f_thread_ids[_tid]     = _idx;
             f_thread_indexes[_idx] = _tid;
         }
     }
@@ -125,23 +129,21 @@ uintmax_t ThreadPool::GetThisThreadID()
 
 //============================================================================//
 
-ThreadPool::ThreadPool(const size_type& pool_size,
-                       VUserTaskQueue* task_queue,
-                       bool _use_affinity,
-                       affinity_func_t _affinity_func)
-: m_use_affinity(_use_affinity),
-  m_tbb_tp(false),
-  m_alive_flag(false),
-  m_verbose(0),
-  m_pool_size(0),
-  m_recursive_limit(GetEnv<size_type>("TP_RECURSIVE_LIMIT", 20)),
-  m_pool_state(state::NONINIT),
-  m_master_tid(ThisThread::get_id()),
-  m_thread_awake(new atomic_int_type(0)),
-  m_task_queue(task_queue),
-  m_tbb_task_group(nullptr),
-  m_init_func([]() { return; }),
-  m_affinity_func(_affinity_func)
+ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
+                       bool _use_affinity, affinity_func_t _affinity_func)
+: m_use_affinity(_use_affinity)
+, m_tbb_tp(false)
+, m_alive_flag(false)
+, m_verbose(0)
+, m_pool_size(0)
+, m_recursive_limit(GetEnv<size_type>("TP_RECURSIVE_LIMIT", 20))
+, m_pool_state(state::NONINIT)
+, m_master_tid(ThisThread::get_id())
+, m_thread_awake(new atomic_int_type(0))
+, m_task_queue(task_queue)
+, m_tbb_task_group(nullptr)
+, m_init_func([]() { return; })
+, m_affinity_func(_affinity_func)
 {
     m_verbose = GetEnv<int>("PTL_VERBOSE", m_verbose);
 
@@ -164,18 +166,18 @@ ThreadPool::~ThreadPool()
 {
     delete m_thread_awake;
     // Release resources
-    if (m_pool_state.load() != state::STOPPED)
+    if(m_pool_state.load() != state::STOPPED)
     {
         size_type ret = destroy_threadpool();
-        while(ret > 0)
-            ret = stop_thread();
+        while(ret > 0) ret = stop_thread();
     }
 
     // wait until thread pool is fully destroyed
-    while(is_alive());
+    while(is_alive())
+        ;
 
     // delete thread-local allocator and erase thread IDS
-    auto _tid = std::this_thread::get_id();
+    auto      _tid = std::this_thread::get_id();
     uintmax_t _idx = ThreadPool::GetThreadIDs().find(_tid)->second;
 
     if(f_thread_ids.find(_tid) != f_thread_ids.end())
@@ -185,19 +187,21 @@ ThreadPool::~ThreadPool()
         f_thread_indexes.erase(f_thread_indexes.find(_idx));
 
     // deleted by ThreadData
-    //delete m_task_queue;
+    // delete m_task_queue;
 }
 
 //============================================================================//
 
-bool ThreadPool::is_initialized() const
+bool
+ThreadPool::is_initialized() const
 {
     return !(m_pool_state.load() == state::NONINIT);
 }
 
 //============================================================================//
 
-void ThreadPool::resize(size_type _n)
+void
+ThreadPool::resize(size_type _n)
 {
     if(_n == m_pool_size)
         return;
@@ -207,7 +211,8 @@ void ThreadPool::resize(size_type _n)
 
 //============================================================================//
 
-void ThreadPool::set_affinity(intmax_t i)
+void
+ThreadPool::set_affinity(intmax_t i)
 {
     if(!(i < static_cast<intmax_t>(m_main_threads.size())))
         return;
@@ -217,20 +222,19 @@ void ThreadPool::set_affinity(intmax_t i)
     try
     {
         NativeThread native_thread = _thread->native_handle();
-        intmax_t _pin = m_affinity_func(i);
+        intmax_t     _pin          = m_affinity_func(i);
         if(m_verbose > 0)
         {
-            std::cout << "Setting pin affinity for thread "
-                   << _thread->get_id() << " to " << _pin << std::endl;
+            std::cout << "Setting pin affinity for thread " << _thread->get_id()
+                      << " to " << _pin << std::endl;
         }
-        Threading::SetPinAffinity( _pin, native_thread );
+        Threading::SetPinAffinity(_pin, native_thread);
     }
     catch(std::runtime_error& e)
     {
         std::cout << "Error setting pin affinity" << std::endl;
-        std::cerr << e.what() << std::endl; // issue assigning affinity
+        std::cerr << e.what() << std::endl;  // issue assigning affinity
     }
-
 }
 
 //============================================================================//
@@ -248,13 +252,13 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     if(!m_alive_flag.load())
         m_pool_state.store(state::STARTED);
 
-    //--------------------------------------------------------------------//
-    // handle tbb task scheduler
+        //--------------------------------------------------------------------//
+        // handle tbb task scheduler
 #ifdef PTL_USE_TBB
     if(f_use_tbb)
     {
-        m_tbb_tp = true;
-        m_pool_size = proposed_size;
+        m_tbb_tp                               = true;
+        m_pool_size                            = proposed_size;
         tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
         // delete if wrong size
         if(m_pool_size != proposed_size)
@@ -264,8 +268,8 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         }
 
         if(!_task_scheduler)
-            _task_scheduler = new tbb_task_scheduler_t(
-                                  tbb::task_scheduler_init::deferred);
+            _task_scheduler =
+                new tbb_task_scheduler_t(tbb::task_scheduler_init::deferred);
 
         if(!_task_scheduler->is_active())
         {
@@ -282,7 +286,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     }
     else if(tbb_task_scheduler())
     {
-        m_tbb_tp = false;
+        m_tbb_tp                               = false;
         tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
         if(_task_scheduler)
         {
@@ -308,7 +312,8 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     {
         if(m_pool_size > proposed_size)
         {
-            while(stop_thread() > proposed_size);
+            while(stop_thread() > proposed_size)
+                ;
             if(m_verbose > 0)
                 std::cout << "ThreadPool initialized with " << m_pool_size
                           << " threads." << std::endl;
@@ -331,7 +336,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         m_is_joined.reserve(proposed_size);
     }
 
-    for (size_type i = m_pool_size; i < proposed_size; ++i)
+    for(size_type i = m_pool_size; i < proposed_size; ++i)
     {
         // add the threads
         Thread* tid = new Thread;
@@ -347,7 +352,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         }
         catch(std::runtime_error& e)
         {
-            std::cerr << e.what() << std::endl; // issue creating thread
+            std::cerr << e.what() << std::endl;  // issue creating thread
             continue;
         }
         catch(std::bad_alloc& e)
@@ -370,8 +375,8 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         std::stringstream ss;
         ss << "ThreadPool::initialize_threadpool - boolean is_joined vector "
            << "is a different size than threads vector: " << m_is_joined.size()
-           << " vs. " << m_main_threads.size() << " (tid: "
-           << std::this_thread::get_id() << ")";
+           << " vs. " << m_main_threads.size()
+           << " (tid: " << std::this_thread::get_id() << ")";
 
         throw std::runtime_error(ss.str());
     }
@@ -403,7 +408,7 @@ ThreadPool::destroy_threadpool()
         tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
         delete _task_scheduler;
         _task_scheduler = nullptr;
-        m_tbb_tp = false;
+        m_tbb_tp        = false;
         std::cout << "ThreadPool [TBB] destroyed" << std::endl;
     }
     if(m_tbb_task_group)
@@ -429,13 +434,13 @@ ThreadPool::destroy_threadpool()
         std::stringstream ss;
         ss << "   ThreadPool::destroy_thread_pool - boolean is_joined vector "
            << "is a different size than threads vector: " << m_is_joined.size()
-           << " vs. " << m_main_threads.size() << " (tid: "
-           << std::this_thread::get_id() << ")";
+           << " vs. " << m_main_threads.size()
+           << " (tid: " << std::this_thread::get_id() << ")";
 
         throw std::runtime_error(ss.str());
     }
 
-    for (size_type i = 0; i < m_is_joined.size(); i++)
+    for(size_type i = 0; i < m_is_joined.size(); i++)
     {
         //--------------------------------------------------------------------//
         // if its joined already, nothing else needs to be done
@@ -472,8 +477,7 @@ ThreadPool::destroy_threadpool()
         //--------------------------------------------------------------------//
     }
 
-    for(auto& itr : m_main_threads)
-        delete itr;
+    for(auto& itr : m_main_threads) delete itr;
 
     m_main_threads.clear();
     m_is_joined.clear();
@@ -513,7 +517,8 @@ ThreadPool::stop_thread()
         // remove from stopped
         m_stop_threads.pop_back();
         // remove from main
-        for(auto itr = m_main_threads.begin(); itr != m_main_threads.end(); ++itr)
+        for(auto itr = m_main_threads.begin(); itr != m_main_threads.end();
+            ++itr)
             if((*itr)->get_id() == t->get_id())
             {
                 m_main_threads.erase(itr);
@@ -531,7 +536,8 @@ ThreadPool::stop_thread()
 
 //============================================================================//
 
-void ThreadPool::run(task_pointer task)
+void
+ThreadPool::run(task_pointer task)
 {
     // check the task_pointer (std::shared_ptr) has a valid pointer
     if(!task.get())
@@ -543,7 +549,8 @@ void ThreadPool::run(task_pointer task)
 
 //============================================================================//
 
-int ThreadPool::run_on_this(task_pointer task)
+int
+ThreadPool::run_on_this(task_pointer task)
 {
     auto _func = [=]() { this->run(task); };
     if(m_tbb_tp)
@@ -553,7 +560,7 @@ int ThreadPool::run_on_this(task_pointer task)
         else
             _func();
     }
-    else // execute task
+    else  // execute task
         _func();
 
     // return the number of tasks added to task-list
@@ -562,7 +569,8 @@ int ThreadPool::run_on_this(task_pointer task)
 
 //============================================================================//
 
-int ThreadPool::insert(task_pointer task, int bin)
+int
+ThreadPool::insert(task_pointer task, int bin)
 {
     ThreadLocalStatic ThreadData* _data = thread_data();
 
@@ -590,14 +598,16 @@ ThreadPool::add_task(task_pointer task, int bin)
 
 //============================================================================//
 
-intmax_t ThreadPool::GetEnvNumThreads(intmax_t _default)
+intmax_t
+ThreadPool::GetEnvNumThreads(intmax_t _default)
 {
     return GetEnv<intmax_t>("PTL_NUM_THREADS", _default);
 }
 
 //============================================================================//
 
-void ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
+void
+ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
 #if defined(PTL_USE_GPERF)
     ProfilerRegisterThread();
@@ -638,7 +648,8 @@ void ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //    actually true!
         while(_task_queue->empty())
         {
-            // If the thread was waked to notify process shutdown, return from here
+            // If the thread was waked to notify process shutdown, return from
+            // here
             if(m_pool_state.load() == state::STOPPED)
             {
                 // has exited.
@@ -698,8 +709,7 @@ void ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //----------------------------------------------------------------//
 
         // get the next task and execute the task (will return if nullptr)
-        while(!_task_queue->empty())
-            run(_task_queue->GetTask());
+        while(!_task_queue->empty()) run(_task_queue->GetTask());
         //----------------------------------------------------------------//
 
         // disable guard against recursive deadlock
@@ -707,11 +717,10 @@ void ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //----------------------------------------------------------------//
 
         // release the lock
-        //if(_task_lock.owns_lock())
+        // if(_task_lock.owns_lock())
         //    _task_lock.unlock();
         //----------------------------------------------------------------//
     }
 }
 
 //============================================================================//
-

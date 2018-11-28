@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
@@ -30,12 +29,12 @@
 #include "PTL/AutoLock.hh"
 #include "PTL/Globals.hh"
 
-#if defined (WIN32)
-   #include <Windows.h>
+#if defined(WIN32)
+#    include <Windows.h>
 #else
-   #include <unistd.h>
-   #include <sys/types.h>
-   #include <sys/syscall.h>
+#    include <sys/syscall.h>
+#    include <sys/types.h>
+#    include <unistd.h>
 #endif
 
 #include <atomic>
@@ -44,13 +43,14 @@
 
 namespace
 {
-   ThreadLocal int ThreadID = Threading::MASTER_ID;
-   std::atomic_int numActThreads(0);
+ThreadLocal int ThreadID = Threading::MASTER_ID;
+std::atomic_int numActThreads(0);
 }
 
 //============================================================================//
 
-Pid_t Threading::GetPidId()
+Pid_t
+Threading::GetPidId()
 {
     // In multithreaded mode return Thread ID
     return std::this_thread::get_id();
@@ -58,21 +58,39 @@ Pid_t Threading::GetPidId()
 
 //============================================================================//
 
-unsigned Threading::GetNumberOfCores()
+unsigned
+Threading::GetNumberOfCores()
 {
     return std::thread::hardware_concurrency();
 }
 
 //============================================================================//
 
-void Threading::SetThreadId(int value)  { ThreadID = value; }
-int  Threading::GetThreadId()           { return ThreadID; }
-bool Threading::IsWorkerThread()        { return (ThreadID >= 0); }
-bool Threading::IsMasterThread()        { return (ThreadID == MASTER_ID); }
+void
+Threading::SetThreadId(int value)
+{
+    ThreadID = value;
+}
+int
+Threading::GetThreadId()
+{
+    return ThreadID;
+}
+bool
+Threading::IsWorkerThread()
+{
+    return (ThreadID >= 0);
+}
+bool
+Threading::IsMasterThread()
+{
+    return (ThreadID == MASTER_ID);
+}
 
 //============================================================================//
 
-bool Threading::SetPinAffinity(int cpu, NativeThread& aT)
+bool
+Threading::SetPinAffinity(int cpu, NativeThread& aT)
 {
 #if defined(__linux__) || defined(_AIX)
     cpu_set_t* aset = new cpu_set_t;
@@ -80,7 +98,7 @@ bool Threading::SetPinAffinity(int cpu, NativeThread& aT)
     CPU_SET(cpu, aset);
     pthread_t& _aT = (pthread_t&) (aT);
     return (pthread_setaffinity_np(_aT, sizeof(cpu_set_t), aset) == 0);
-#else //Not available for Mac, WIN,...
+#else  // Not available for Mac, WIN,...
     ConsumeParameters(cpu, aT);
     return true;
 #endif
@@ -88,8 +106,20 @@ bool Threading::SetPinAffinity(int cpu, NativeThread& aT)
 
 //============================================================================//
 
-int Threading::WorkerThreadLeavesPool() { return numActThreads--; }
-int Threading::WorkerThreadJoinsPool() { return numActThreads++;}
-int Threading::GetNumberOfRunningWorkerThreads() { return numActThreads.load(); }
+int
+Threading::WorkerThreadLeavesPool()
+{
+    return numActThreads--;
+}
+int
+Threading::WorkerThreadJoinsPool()
+{
+    return numActThreads++;
+}
+int
+Threading::GetNumberOfRunningWorkerThreads()
+{
+    return numActThreads.load();
+}
 
 //============================================================================//

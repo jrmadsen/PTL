@@ -19,82 +19,107 @@
 // ---------------------------------------------------------------
 //  Tasking class implementation
 //
-// Class Description:
-//
-// This file creates a class for handling the wrapping of functions
-// into task objects and submitting to thread pool
+// Threading.cc
 //
 // ---------------------------------------------------------------
-// Author: Jonathan Madsen (Feb 13th 2018)
+// Author: Andrea Dotti (15 Feb 2013): First Implementation
 // ---------------------------------------------------------------
 
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
+#include "PTL/Threading.hh"
+#include "PTL/AutoLock.hh"
+#include "PTL/Globals.hh"
+
+#if defined(WIN32)
+#include <Windows.h>
+#else
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+#include <atomic>
 
 //============================================================================//
 
-TaskManager*&
-TaskManager::fgInstance()
+namespace
 {
-    ThreadLocalStatic TaskManager* _instance = nullptr;
-    return _instance;
+ThreadLocal int ThreadID = Threading::MASTER_ID;
+std::atomic_int numActThreads(0);
 }
 
 //============================================================================//
 
-TaskManager*
-TaskManager::GetInstance()
+Pid_t
+Threading::GetPidId()
 {
-    if(!fgInstance())
-    {
-        auto nthreads = std::thread::hardware_concurrency();
-        std::cout << "Allocating mad::TaskManager with " << nthreads
-                  << " thread(s)..." << std::endl;
-        new TaskManager(TaskRunManager::GetMasterRunManager()->GetThreadPool());
-    }
-    return fgInstance();
+    // In multithreaded mode return Thread ID
+    return std::this_thread::get_id();
 }
 
 //============================================================================//
 
-TaskManager*
-TaskManager::GetInstanceIfExists()
+unsigned
+Threading::GetNumberOfCores()
 {
-    return fgInstance();
+    return std::thread::hardware_concurrency();
 }
 
 //============================================================================//
 
-TaskManager::TaskManager(ThreadPool* _pool) : m_pool(_pool)
+void
+Threading::SetThreadId(int value)
 {
-    if(!fgInstance())
-        fgInstance() = this;
+    ThreadID = value;
+}
+int
+Threading::GetThreadId()
+{
+    return ThreadID;
+}
+bool
+Threading::IsWorkerThread()
+{
+    return (ThreadID >= 0);
+}
+bool
+Threading::IsMasterThread()
+{
+    return (ThreadID == MASTER_ID);
 }
 
 //============================================================================//
 
-TaskManager::~TaskManager()
+bool
+Threading::SetPinAffinity(int cpu, NativeThread& aT)
 {
-    finalize();
-    if(fgInstance() == this)
-        fgInstance() = nullptr;
+#if defined(__linux__) || defined(_AIX)
+    cpu_set_t* aset = new cpu_set_t;
+    CPU_ZERO(aset);
+    CPU_SET(cpu, aset);
+    pthread_t& _aT = (pthread_t&) (aT);
+    return (pthread_setaffinity_np(_aT, sizeof(cpu_set_t), aset) == 0);
+#else  // Not available for Mac, WIN,...
+    ConsumeParameters(cpu, aT);
+    return true;
+#endif
 }
 
 //============================================================================//
 
-TaskManager::TaskManager(const TaskManager& rhs) : m_pool(rhs.m_pool) {}
-
-//============================================================================//
-
-TaskManager&
-TaskManager::operator=(const TaskManager& rhs)
+int
+Threading::WorkerThreadLeavesPool()
 {
-    if(this == &rhs)
-        return *this;
-
-    m_pool = rhs.m_pool;
-
-    return *this;
+    return numActThreads--;
+}
+int
+Threading::WorkerThreadJoinsPool()
+{
+    return numActThreads++;
+}
+int
+Threading::GetNumberOfRunningWorkerThreads()
+{
+    return numActThreads.load();
 }
 
 //============================================================================//
