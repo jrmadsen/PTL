@@ -475,7 +475,7 @@ endmacro()
 #          existence of the variable <NAME>, to the list of enabled/disabled
 #          features, plus a docstring describing the feature
 #
-function(ADD_FEATURE _var _description)
+FUNCTION(ADD_FEATURE _var _description)
   set(EXTRA_DESC "")
   foreach(currentArg ${ARGN})
       if(NOT "${currentArg}" STREQUAL "${_var}" AND
@@ -488,7 +488,7 @@ function(ADD_FEATURE _var _description)
   #set(${_var} ${${_var}} CACHE INTERNAL "${_description}${EXTRA_DESC}")
 
   set_property(GLOBAL PROPERTY ${_var}_DESCRIPTION "${_description}${EXTRA_DESC}")
-endfunction()
+ENDFUNCTION()
 
 #------------------------------------------------------------------------------#
 # function add_subfeature(<ROOT_OPTION> <NAME> <DOCSTRING>)
@@ -496,7 +496,7 @@ endfunction()
 #          existence of the variable <NAME>, to the list of enabled/disabled
 #          features, plus a docstring describing the feature
 #
-function(ADD_SUBFEATURE _root _var _description)
+FUNCTION(ADD_SUBFEATURE _root _var _description)
     set(EXTRA_DESC "")
     foreach(currentArg ${ARGN})
         if(NOT "${currentArg}" STREQUAL "${_var}" AND
@@ -507,24 +507,21 @@ function(ADD_SUBFEATURE _root _var _description)
 
     set_property(GLOBAL APPEND PROPERTY ${_root}_FEATURES ${_var})
     set_property(GLOBAL PROPERTY ${_root}_${_var}_DESCRIPTION "${_description}${EXTRA_DESC}")
-    #set(${_var} ${${_var}} CACHE INTERNAL "${_description}${EXTRA_DESC}")
-
-endfunction()
-
+ENDFUNCTION()
 
 #------------------------------------------------------------------------------#
 # function add_option(<OPTION_NAME> <DOCSRING> <DEFAULT_SETTING> [NO_FEATURE])
 #          Add an option and add as a feature if NO_FEATURE is not provided
 #
-MACRO(ADD_OPTION _NAME _MESSAGE _DEFAULT)
-    SET(_FEATURE ${ARGN})
+FUNCTION(ADD_OPTION _NAME _MESSAGE _DEFAULT)
+    SET(__FEATURE ${ARGN})
     OPTION(${_NAME} "${_MESSAGE}" ${_DEFAULT})
-    IF(NOT "${_FEATURE}" STREQUAL "NO_FEATURE")
+    IF(NOT "${__FEATURE}" STREQUAL "NO_FEATURE")
         ADD_FEATURE(${_NAME} "${_MESSAGE}")
     ELSE()
         MARK_AS_ADVANCED(${_NAME})
     ENDIF()
-ENDMACRO(ADD_OPTION _NAME _MESSAGE _DEFAULT)
+ENDFUNCTION(ADD_OPTION _NAME _MESSAGE _DEFAULT)
 
 
 #------------------------------------------------------------------------------#
@@ -533,7 +530,7 @@ ENDMACRO(ADD_OPTION _NAME _MESSAGE _DEFAULT)
 #                               <DEFAULT_SETTING> [NO_FEATURE])
 #          Add an option and add as a feature if NO_FEATURE is not provided
 #
-MACRO(ADD_DEPENDENT_OPTION _NAME _MESSAGE _COND_SETTING _COND _DEFAULT)
+FUNCTION(ADD_DEPENDENT_OPTION _NAME _MESSAGE _COND_SETTING _COND _DEFAULT)
     SET(_FEATURE ${ARGN})
     IF(DEFINED ${_NAME} AND NOT ${_COND})
         OPTION(${_NAME} "${_MESSAGE}" ${_DEFAULT})
@@ -547,7 +544,7 @@ MACRO(ADD_DEPENDENT_OPTION _NAME _MESSAGE _COND_SETTING _COND _DEFAULT)
     ELSE()
         MARK_AS_ADVANCED(${_NAME})
     ENDIF()
-ENDMACRO(ADD_DEPENDENT_OPTION _NAME _MESSAGE _DEFAULT _COND _COND_SETTING)
+ENDFUNCTION(ADD_DEPENDENT_OPTION _NAME _MESSAGE _DEFAULT _COND _COND_SETTING)
 
 
 #------------------------------------------------------------------------------#
@@ -903,7 +900,7 @@ macro(BUILD_LIBRARY)
             LANGUAGE                    CXX
             LINKER_LANGUAGE             CXX
             POSITION_INDEPENDENT_CODE   ON
-            COMPILE_FLAGS               ${PROJECT_CXX_FLAGS}
+            COMPILE_FLAGS               ${${PROJECT_NAME}_CXX_FLAGS}
             ${LIB_EXTRA_ARGS})
 
     list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})

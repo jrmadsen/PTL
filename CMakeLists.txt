@@ -14,6 +14,12 @@ endif()
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0042 NEW)
 
+# Check if pybind11 is being used directly or via add_subdirectory
+set(PTL_MASTER_PROJECT ON)
+if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(PTL_MASTER_PROJECT OFF)
+endif()
+
 
 ################################################################################
 #   version
@@ -29,7 +35,10 @@ message(STATUS "PTL version ${PTL_VERSION}")
 #   project
 #
 project(PTL LANGUAGES C CXX VERSION ${PTL_VERSION})
-
+if(NOT PTL_MASTER_PROJECT)
+    unset(${PROJECT_NAME}_C_FLAGS CACHE)
+    unset(${PROJECT_NAME}_CXX_FLAGS CACHE)
+endif()
 
 ################################################################################
 #
@@ -63,14 +72,6 @@ include(Packages)
 add_subdirectory(source)
 
 ################################################################################
-#   Testing
-################################################################################
-
-if(BUILD_TESTING)
-    include(CTest)
-endif(BUILD_TESTING)
-
-################################################################################
 #   Installation and info
 ################################################################################
 
@@ -81,4 +82,12 @@ if(PTL_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-print_features()
+if(PTL_MASTER_PROJECT)
+    print_features()
+else()
+    set(${PROJECT_NAME}_C_FLAGS ${${PROJECT_NAME}_C_FLAGS} CACHE STRING
+        "C compiler flags for ${PROJECT_NAME}")
+    set(${PROJECT_NAME}_CXX_FLAGS ${${PROJECT_NAME}_CXX_FLAGS} CACHE STRING
+        "CXX compiler flags for ${PROJECT_NAME}")
+endif()
+
