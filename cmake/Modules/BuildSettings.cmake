@@ -84,12 +84,6 @@ else("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_definitions(-DNDEBUG)
 endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    include(Coverage)
-    add_c_flag_if_avail("${CMAKE_C_FLAGS_COVERAGE}")
-    add_cxx_flag_if_avail("${CMAKE_CXX_FLAGS_COVERAGE}")
-endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-
 # ---------------------------------------------------------------------------- #
 # set the compiler flags
 #
