@@ -90,9 +90,6 @@ public:
     typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
     typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
     typedef std::function<void()>         initialize_func_t;
-    // TBB types
-    typedef ThreadData::tbb_task_group_t     tbb_task_group_t;
-    typedef ThreadData::tbb_task_scheduler_t tbb_task_scheduler_t;
     // functions
     typedef std::function<intmax_t(intmax_t)> affinity_func_t;
 
@@ -329,7 +326,7 @@ ThreadPool::notify(size_type ntasks)
 }
 //----------------------------------------------------------------------------//
 // local function for getting the tbb task scheduler
-inline ThreadPool::tbb_task_scheduler_t*&
+inline tbb_task_scheduler_t*&
 ThreadPool::tbb_task_scheduler()
 {
     ThreadLocalStatic tbb_task_scheduler_t* _instance = nullptr;

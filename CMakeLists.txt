@@ -78,7 +78,7 @@ add_subdirectory(source)
 include(ConfigurePackage)
 
 if(PTL_BUILD_EXAMPLES)
-    set(PTL_DIR ${PROJECT_BINARY_DIR})
+    set(PTL_DIR ${CMAKE_BINARY_DIR})
     add_subdirectory(examples)
 endif()
 

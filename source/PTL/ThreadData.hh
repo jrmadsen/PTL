@@ -31,16 +31,13 @@
 
 //----------------------------------------------------------------------------//
 
-#ifdef PTL_USE_TBB
+#if defined(PTL_USE_TBB)
 
 #    include <tbb/task_group.h>
 #    include <tbb/task_scheduler_init.h>
 
-namespace tbb
-{
-typedef ::tbb::task_group          task_group;
-typedef ::tbb::task_scheduler_init task_scheduler_init;
-}  // namespace tbb
+typedef tbb::task_group          tbb_task_group_t;
+typedef tbb::task_scheduler_init tbb_task_scheduler_t;
 
 #else
 
@@ -70,6 +67,9 @@ public:
 
 }  // namespace tbb
 
+typedef tbb::task_group          tbb_task_group_t;
+typedef tbb::task_scheduler_init tbb_task_scheduler_t;
+
 #endif
 
 //----------------------------------------------------------------------------//
@@ -83,8 +83,6 @@ class ThreadData
 {
 public:
     template <typename _Tp> using TaskStack = std::deque<_Tp>;
-    typedef ::tbb::task_group          tbb_task_group_t;
-    typedef ::tbb::task_scheduler_init tbb_task_scheduler_t;
 
     ThreadData(ThreadPool* tp);
     ~ThreadData();

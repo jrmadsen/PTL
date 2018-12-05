@@ -86,9 +86,8 @@ matrix:
             - clang++-4.0
             - build-essential
             - cmake3
-            - libtbb-dev
       env:
-        - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0"
+        - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0 && NOTBB=1"
     # Clang 5.0
     - os: linux
       dist: trusty
@@ -99,17 +98,22 @@ matrix:
             - llvm-toolchain-trusty-5.0
             - ubuntu-toolchain-r-test
           packages:
+            - clang
+            - clang++
             - clang-5.0
             - clang++-5.0
             - build-essential
             - cmake3
-            - libtbb-dev
+            - libc++-dev
+            - libc++abi-dev
       env:
         - MATRIX_EVAL="CC=$(which clang-5.0) && CXX=$(which clang++-5.0) && COVERAGE=0"
          
          
 before_install:
     - eval "${MATRIX_EVAL}"
+    - apt-get update
+    - apt-get dist-upgrade
     - export CC=${CC}
     - export CXX=${CXX}
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -122,14 +126,13 @@ before_install:
 install:
     - env
     - conda install pyctest
-    - if [ "${COVERAGE}" -gt 0 ]; then
-        python ./pyctest_PTL.py --coverage --tbb --num-tasks=64
-          --pyctest-submit --pyctest-clean-first --pyctest-model=Continuous
-          --pyctest-site=Travis;
+    - export ARGS="--pyctest-submit --pyctest-clean-first --pyctest-model=Continuous --pyctest-site=Travis"
+    - if [ -z "${NOTBB}" ]; then ARGS="${ARGS} --tbb"; fi
+    - if [ -n "${COVERAGE}" ]; then
+        ARGS="${ARGS} --coverage --num-tasks=64";
       else
-        python ./pyctest_PTL.py --tbb --num-tasks=256
-          --pyctest-submit --pyctest-clean-first
-          --pyctest-model=Continuous --pyctest-build-type=RelWithDebInfo
-          --pyctest-site=Travis;
+        ARGS="${ARGS} --num-tasks=256 --pyctest-build-type=RelWithDebInfo";
       fi
+    - echo "ARGUMENTS: ${ARGS}"
+    - python ./pyctest_PTL.py ${ARGS};
     

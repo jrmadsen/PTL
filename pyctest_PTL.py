@@ -80,6 +80,8 @@ def run_pyctest():
     #--------------------------------------------------------------------------#
     # Compiler version
     #
+    if os.environ.get("CXX") is None:
+        os.environ["CXX"] = "c++"
     cmd = pyctest.command([os.environ["CXX"], "-dumpversion"])
     cmd.SetOutputStripTrailingWhitespace(True)
     cmd.Execute()
