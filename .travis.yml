@@ -88,24 +88,6 @@ matrix:
             - cmake
       env:
         - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0 && NOTBB=1"
-    # Clang 5.0
-    - os: linux
-      dist: xenial
-      sudo: false
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-xenial-5.0
-            - ubuntu-toolchain-r-test
-          packages:
-            - clang
-            - clang++
-            - build-essential
-            - cmake
-            - libc++-dev
-            - libc++abi-dev
-      env:
-        - MATRIX_EVAL="CC=$(which clang) && CXX=$(which clang++) && COVERAGE=0"
 
 
 before_install:
