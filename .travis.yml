@@ -131,3 +131,5 @@ install:
       fi
     - python ./pyctest_PTL.py ${ARGS};
 
+script:
+    - eval "${MATRIX_EVAL}"
