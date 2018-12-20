@@ -28,7 +28,7 @@ install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     ${PROJECT_SOURCE_DIR}/cmake/Modules/MacroUtilities.cmake
     ${PROJECT_SOURCE_DIR}/cmake/Modules/Packages.cmake
-    ${PROJECT_SOURCE_DIR}/cmake/Modules/FindGooglePerf.cmake
+    ${PROJECT_SOURCE_DIR}/cmake/Modules/FindGPerfTools.cmake
     ${PROJECT_SOURCE_DIR}/cmake/Modules/FindTBB.cmake
     ${PROJECT_SOURCE_DIR}/cmake/Modules/Findittnotify.cmake
     ${PROJECT_SOURCE_DIR}/cmake/Modules/CudaConfig.cmake

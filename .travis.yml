@@ -10,7 +10,7 @@ matrix:
   include:
     # GCC 4.9
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: false
       addons:
         apt:
@@ -20,13 +20,13 @@ matrix:
             - gcc-4.9
             - g++-4.9
             - build-essential
-            - cmake3
+            - cmake
             - libtbb-dev
       env:
         - MATRIX_EVAL="CC=$(which gcc-4.9) && CXX=$(which g++-4.9) && COVERAGE=1"
     # GCC 5
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: false
       addons:
         apt:
@@ -36,13 +36,13 @@ matrix:
             - gcc-5
             - g++-5
             - build-essential
-            - cmake3
+            - cmake
             - libtbb-dev
       env:
         - MATRIX_EVAL="CC=$(which gcc-5) && CXX=$(which g++-5) && COVERAGE=0"
     # GCC 6
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: false
       addons:
         apt:
@@ -52,13 +52,13 @@ matrix:
             - gcc-6
             - g++-6
             - build-essential
-            - cmake3
+            - cmake
             - libtbb-dev
       env:
         - MATRIX_EVAL="CC=$(which gcc-6) && CXX=$(which g++-6) && COVERAGE=0"
     # GCC 7
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: false
       addons:
         apt:
@@ -68,46 +68,28 @@ matrix:
             - gcc-7
             - g++-7
             - build-essential
-            - cmake3
+            - cmake
             - libtbb-dev
       env:
         - MATRIX_EVAL="CC=$(which gcc-7) && CXX=$(which g++-7) && COVERAGE=0"
     # Clang 4.0
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: false
       addons:
         apt:
           sources:
-            - llvm-toolchain-trusty-4.0
+            - llvm-toolchain-xenial-4.0
             - ubuntu-toolchain-r-test
           packages:
             - clang-4.0
             - clang++-4.0
             - build-essential
-            - cmake3
-            - libtbb-dev
+            - cmake
       env:
-        - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0"
-    # Clang 5.0
-    - os: linux
-      dist: trusty
-      sudo: false
-      addons:
-        apt:
-          sources:
-            - llvm-toolchain-trusty-5.0
-            - ubuntu-toolchain-r-test
-          packages:
-            - clang-5.0
-            - clang++-5.0
-            - build-essential
-            - cmake3
-            - libtbb-dev
-      env:
-        - MATRIX_EVAL="CC=$(which clang-5.0) && CXX=$(which clang++-5.0) && COVERAGE=0"
-         
-         
+        - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0 && NOTBB=1"
+
+
 before_install:
     - eval "${MATRIX_EVAL}"
     - export CC=${CC}
@@ -122,14 +104,14 @@ before_install:
 install:
     - env
     - conda install pyctest
-    - if [ "${COVERAGE}" -gt 0 ]; then
-        python ./pyctest_PTL.py --coverage --tbb --num-tasks=64
-          --pyctest-submit --pyctest-clean-first --pyctest-model=Continuous
-          --pyctest-site=Travis;
+    - export ARGS="--pyctest-submit --pyctest-clean-first --pyctest-model=Continuous --pyctest-site=Travis"
+    - if [ -z "${NOTBB}" ]; then ARGS="${ARGS} --tbb"; fi
+    - if [ -n "${COVERAGE}" ]; then
+        ARGS="${ARGS} --coverage --num-tasks=64";
       else
-        python ./pyctest_PTL.py --tbb --num-tasks=256
-          --pyctest-submit --pyctest-clean-first
-          --pyctest-model=Continuous --pyctest-build-type=RelWithDebInfo
-          --pyctest-site=Travis;
+        ARGS="${ARGS} --num-tasks=256 --pyctest-build-type=RelWithDebInfo";
       fi
-    
+    - python ./pyctest_PTL.py ${ARGS};
+
+script:
+    - eval "${MATRIX_EVAL}"
