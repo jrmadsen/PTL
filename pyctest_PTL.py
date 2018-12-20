@@ -5,12 +5,10 @@
 PyCTest driver for Parallel Tasking Library (PTL)
 """
 
-import os, sys, shutil, platform, argparse, traceback, warnings
+import os, sys, platform, traceback, warnings, shutil
 import multiprocessing as mp
 import pyctest.pyctest as pyctest
-import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
-from pyctest.cmake import CMake
 
 
 #------------------------------------------------------------------------------#
@@ -43,13 +41,26 @@ def configure():
     args = parser.parse_args()
 
     if os.path.exists(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")):
-        CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
+        from pyctest import cmake_executable as cm
+        from pyctest import version_info as _pyctest_version
+        if (_pyctest_version[0] == 0 and
+                _pyctest_version[1] == 0 and
+                _pyctest_version[2] < 11):
+            cmd = pyctest.command(
+                [cm, "--build", pyctest.BINARY_DIRECTORY, "--target", "clean"])
+            cmd.SetWorkingDirectory(pyctest.BINARY_DIRECTORY)
+            cmd.SetOutputQuiet(True)
+            cmd.SetErrorQuiet(True)
+            cmd.Execute()
+        else:
+            from pyctest.cmake import CMake
+            CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
         helpers.RemovePath(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
 
     if args.gperf:
         pyctest.copy_files(["gperf_cpu_profile.sh", "gperf_heap_profile.sh"],
-            os.path.join(pyctest.SOURCE_DIRECTORY, ".scripts"),
-            pyctest.BINARY_DIRECTORY)
+                           os.path.join(pyctest.SOURCE_DIRECTORY, ".scripts"),
+                           pyctest.BINARY_DIRECTORY)
 
     return args
 
@@ -67,7 +78,7 @@ def run_pyctest():
     # Compiler version
     #
     if os.environ.get("CXX") is None:
-        os.environ["CXX"] = "c++"
+        os.environ["CXX"] = helpers.FindExePath("c++")
     cmd = pyctest.command([os.environ["CXX"], "-dumpversion"])
     cmd.SetOutputStripTrailingWhitespace(True)
     cmd.Execute()
@@ -81,7 +92,7 @@ def run_pyctest():
         platform.uname()[0],
         helpers.GetSystemVersionInfo(),
         platform.uname()[4],
-        os.path.basename(os.environ["CXX"]),
+        os.path.basename(os.path.realpath(os.environ["CXX"])),
         compiler_version)
 
     #--------------------------------------------------------------------------#
@@ -201,11 +212,11 @@ def run_pyctest():
     def test_env_settings(prof_fname, clobber=False, extra=""):
         if args.gperf:
             pyctest.add_note(pyctest.BINARY_DIRECTORY,
-                            "{}.txt".format(prof_fname),
-                            clobber=clobber)
+                             "{}.txt".format(prof_fname),
+                             clobber=clobber)
             pyctest.add_note(pyctest.BINARY_DIRECTORY,
-                            "{}.cum.txt".format(prof_fname),
-                            clobber=False)
+                             "{}.cum.txt".format(prof_fname),
+                             clobber=False)
         return "PTL_NUM_THREADS={};CPUPROFILE={};{}".format(
             mp.cpu_count(), prof_fname, extra)
 
@@ -217,7 +228,7 @@ def run_pyctest():
     #
     tasking_suffix = ""
     if args.num_tasks != 65536:
-        tasking_suffix="_{}".format(args.num_tasks)
+        tasking_suffix = "_{}".format(args.num_tasks)
     test = pyctest.test()
     test.SetName("tasking{}".format(tasking_suffix))
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
