@@ -46,7 +46,7 @@ endif(PTL_USE_TBB)
 #
 add_executable(recursive_tasking recursive_tasking.cc ${headers} ${common_headers})
 target_link_libraries(recursive_tasking ${EXTERNAL_LIBRARIES})
-set_target_properties(tbb_tasking PROPERTIES COMPILE_FLAGS ${PTL_CXX_FLAGS})
+set_target_properties(recursive_tasking PROPERTIES COMPILE_FLAGS ${PTL_CXX_FLAGS})
 
 if(PTL_USE_TBB)
     add_executable(recursive_tbb_tasking recursive_tasking.cc ${headers} ${common_headers})

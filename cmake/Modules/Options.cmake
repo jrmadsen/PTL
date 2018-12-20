@@ -22,7 +22,6 @@ add_feature(PROJECT_CXX_FLAGS "C++ flags for project")
 # options (always available)
 add_option(BUILD_STATIC_LIBS "Build static library" ON)
 add_option(BUILD_SHARED_LIBS "Build shared library" ON)
-add_option(PTL_BUILD_TESTING "Enable testing" OFF)
 add_option(PTL_BUILD_EXAMPLES "Build examples" OFF)
 add_option(PTL_BUILD_DOCS "Build documentation with Doxygen" OFF)
 

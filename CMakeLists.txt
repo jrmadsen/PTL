@@ -55,20 +55,13 @@ include(GNUInstallDirs)
 include(ProjectSettings)
 include(BuildSettings)
 include(Packages)
+include(ClangFormat)
 
 ################################################################################
 #   PTL source
 ################################################################################
 
 add_subdirectory(source)
-
-################################################################################
-#   Testing
-################################################################################
-
-if(BUILD_TESTING)
-    include(CTest)
-endif(BUILD_TESTING)
 
 ################################################################################
 #   Installation and info

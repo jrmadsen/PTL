@@ -5,18 +5,12 @@
 PyCTest driver for Parallel Tasking Library (PTL)
 """
 
-import os
-import sys
-import shutil
-import platform
-import argparse
-import traceback
-import warnings
+import os, sys, shutil, platform, argparse, traceback, warnings
 import multiprocessing as mp
-
 import pyctest.pyctest as pyctest
 import pyctest.pycmake as pycmake
 import pyctest.helpers as helpers
+from pyctest.cmake import CMake
 
 
 #------------------------------------------------------------------------------#
@@ -26,10 +20,8 @@ def configure():
     parser = helpers.ArgumentParser(project_name="PTL",
                                     source_dir=os.getcwd(),
                                     binary_dir=os.path.join(os.getcwd(), "build-PTL"),
-                                    python_exe=sys.executable,
                                     build_type="Release",
-                                    vcs_type="git",
-                                    submit=False)
+                                    vcs_type="git")
 
     parser.add_argument("--arch", help="PTL_USE_ARCH=ON",
                         default=False, action='store_true')
@@ -51,14 +43,8 @@ def configure():
     args = parser.parse_args()
 
     if os.path.exists(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")):
-        cm = helpers.FindExePath("cmake")
-        cmd = pyctest.command([cm, "--build", pyctest.BINARY_DIRECTORY, "--target", "clean"])
-        cmd.SetWorkingDirectory(pyctest.BINARY_DIRECTORY)
-        cmd.SetOutputQuiet(True)
-        cmd.SetErrorQuiet(True)
-        cmd.Execute()
-        for f in [ "CMakeCache.txt", "CMakeFiles" ]:
-            helpers.RemovePath(os.path.join(pyctest.BINARY_DIRECTORY, f))
+        CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
+        helpers.RemovePath(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
 
     if args.gperf:
         pyctest.copy_files(["gperf_cpu_profile.sh", "gperf_heap_profile.sh"],
