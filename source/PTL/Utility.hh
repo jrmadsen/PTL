@@ -130,9 +130,20 @@ GetEnv(const std::string& env_id, bool _default)
     char* env_var = std::getenv(env_id.c_str());
     if(env_var)
     {
+        std::string var = std::string(env_var);
+        bool        val = true;
+        if(var.find_first_not_of("0123456789") == std::string::npos)
+            val = (bool) atoi(var.c_str());
+        else
+        {
+            for(auto& itr : var)
+                itr = tolower(itr);
+            if(var == "off" || var == "false")
+                val = false;
+        }
         // record value defined by environment
-        EnvSettings::GetInstance()->insert<bool>(env_id, true);
-        return true;
+        EnvSettings::GetInstance()->insert<bool>(env_id, val);
+        return val;
     }
     // record default value
     EnvSettings::GetInstance()->insert<bool>(env_id, false);

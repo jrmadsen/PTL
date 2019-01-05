@@ -189,7 +189,8 @@ inline UserTaskQueue::size_type
 UserTaskQueue::true_size() const
 {
     size_type _n = 0;
-    for(const auto& itr : *m_subqueues) _n += itr->size();
+    for(const auto& itr : *m_subqueues)
+        _n += itr->size();
     return _n;
 }
 

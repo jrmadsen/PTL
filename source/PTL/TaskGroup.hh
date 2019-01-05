@@ -257,7 +257,8 @@ public:
     void join()
     {
         this->wait();
-        for(auto itr = begin(); itr != end(); ++itr) this->get(*itr);
+        for(auto itr = begin(); itr != end(); ++itr)
+            this->get(*itr);
 
         if(m_clear_freq.load() > 0 &&
            (++m_clear_count) % m_clear_freq.load() == 0)

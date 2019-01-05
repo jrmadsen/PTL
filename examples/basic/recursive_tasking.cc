@@ -416,7 +416,8 @@ main(int argc, char** argv)
     Timer del_timer;
     del_timer.Start();
 
-    for(uint64_t i = 0; i < task_groups.size(); ++i) del(task_groups[i]);
+    for(uint64_t i = 0; i < task_groups.size(); ++i)
+        del(task_groups[i]);
 
     del_timer.Stop();
     cout << cprefix << std::setw(_w) << "Task group deletion time: "

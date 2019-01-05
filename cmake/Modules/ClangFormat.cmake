@@ -15,7 +15,7 @@ if(CLANG_FORMATTER)
     set(_Source_DIR     ${PROJECT_SOURCE_DIR}/source)
     set(_Example_DIR    ${PROJECT_SOURCE_DIR}/examples)
 
-    set(_Header_DIR     ${_Source_DIR}/source/PTL)
+    set(_Header_DIR     ${_Source_DIR}/PTL)
     set(_Basic_DIR      ${_Example_DIR}/basic)
     set(_Common_DIR     ${_Example_DIR}/common)
     set(_Gpu_DIR        ${_Example_DIR}/gpu)
@@ -30,7 +30,13 @@ if(CLANG_FORMATTER)
         ${_Basic_DIR}/*.cc  ${_Common_DIR}/*.cc
         ${_Gpu_DIR}/*.cc    ${_Gpu_DIR}/*.cu)
 
-    add_custom_target(format
+    # avoid conflicting format targets
+    set(FORMAT_NAME format)
+    if(TARGET format)
+        set(FORMAT_NAME format-ptl)
+    endif()
+
+    add_custom_target(${FORMAT_NAME}
         COMMAND ${CLANG_FORMATTER} -i ${headers} ${sources}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT "Running '${CLANG_FORMATTER}' on '${_Source_DIR}' and '${_Example_DIR}..."

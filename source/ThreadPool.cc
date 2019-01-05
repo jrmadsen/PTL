@@ -169,7 +169,8 @@ ThreadPool::~ThreadPool()
     if(m_pool_state.load() != state::STOPPED)
     {
         size_type ret = destroy_threadpool();
-        while(ret > 0) ret = stop_thread();
+        while(ret > 0)
+            ret = stop_thread();
     }
 
     // wait until thread pool is fully destroyed
@@ -477,7 +478,8 @@ ThreadPool::destroy_threadpool()
         //--------------------------------------------------------------------//
     }
 
-    for(auto& itr : m_main_threads) delete itr;
+    for(auto& itr : m_main_threads)
+        delete itr;
 
     m_main_threads.clear();
     m_is_joined.clear();
@@ -709,7 +711,8 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //----------------------------------------------------------------//
 
         // get the next task and execute the task (will return if nullptr)
-        while(!_task_queue->empty()) run(_task_queue->GetTask());
+        while(!_task_queue->empty())
+            run(_task_queue->GetTask());
         //----------------------------------------------------------------//
 
         // disable guard against recursive deadlock

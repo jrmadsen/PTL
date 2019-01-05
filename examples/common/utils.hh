@@ -259,7 +259,8 @@ inline void
 append(Array_t& lhs, TaskGroup_t* rhs)
 {
     if(rhs)
-        for(auto& itr : rhs->join()) lhs.push_back(itr);
+        for(auto& itr : rhs->join())
+            lhs.push_back(itr);
 }
 
 //============================================================================//

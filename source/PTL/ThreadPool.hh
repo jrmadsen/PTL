@@ -262,7 +262,8 @@ ThreadPool::add_tasks(_List_t& c)
 {
     if(!m_alive_flag)  // if we haven't built thread-pool, just execute
     {
-        for(auto& itr : c) run(itr);
+        for(auto& itr : c)
+            run(itr);
         c.clear();
         return 0;
     }
@@ -318,7 +319,8 @@ ThreadPool::notify(size_type ntasks)
         AutoLock l(m_task_lock);
         if(ntasks < this->size())
         {
-            for(size_type i = 0; i < ntasks; ++i) m_task_cond.notify_one();
+            for(size_type i = 0; i < ntasks; ++i)
+                m_task_cond.notify_one();
         }
         else
             m_task_cond.notify_all();

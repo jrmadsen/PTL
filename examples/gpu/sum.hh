@@ -137,7 +137,8 @@ inline cudaStream_t*
 create_streams(const uint64_t nstreams)
 {
     cudaStream_t* streams = new cudaStream_t[nstreams];
-    for(uint64_t i = 0; i < nstreams; ++i) cudaStreamCreate(&streams[i]);
+    for(uint64_t i = 0; i < nstreams; ++i)
+        cudaStreamCreate(&streams[i]);
     return streams;
 }
 
@@ -146,7 +147,8 @@ create_streams(const uint64_t nstreams)
 inline void
 destroy_streams(cudaStream_t* streams, const uint64_t nstreams)
 {
-    for(uint64_t i = 0; i < nstreams; ++i) cudaStreamDestroy(streams[i]);
+    for(uint64_t i = 0; i < nstreams; ++i)
+        cudaStreamDestroy(streams[i]);
     delete[] streams;
 }
 
