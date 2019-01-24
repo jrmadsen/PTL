@@ -687,7 +687,9 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
                 // Unlocks mutex while waiting, then locks it back when signaled
                 // use long duration wait_for to keep overhead low but
                 // spuriously wake up and check
-                m_task_cond.wait_for(_task_lock, std::chrono::seconds(10));
+                //m_task_cond.wait(_task_lock, [&]() { return _task_queue->true_size() != 0; });
+                while(_task_queue->true_size() == 0)
+                    m_task_cond.wait_for(_task_lock, std::chrono::seconds(2));
 
                 // unlock if owned
                 if(_task_lock.owns_lock())
