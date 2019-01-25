@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <sstream>
 #include <string>
 
@@ -61,7 +62,10 @@ public:
     {
         std::stringstream ss;
         ss << std::boolalpha << val;
+        static std::mutex _mtx;
+        _mtx.lock();
         m_env.insert(env_pair_t(env_id, ss.str()));
+        _mtx.unlock();
     }
 
     const env_map_t& get() const { return m_env; }
