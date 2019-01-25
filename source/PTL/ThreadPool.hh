@@ -67,10 +67,8 @@
 class ThreadPool
 {
 public:
-    template <typename _KeyType, typename _MappedType,
-              typename _HashType = _KeyType>
-    using uomap =
-        std::unordered_map<_KeyType, _MappedType, std::hash<_HashType>>;
+    template <typename _KeyType, typename _MappedType, typename _HashType = _KeyType>
+    using uomap = std::unordered_map<_KeyType, _MappedType, std::hash<_HashType>>;
 
     // pod-types
     typedef size_t                size_type;
@@ -145,15 +143,15 @@ public:
     // set the thread pool size
     void resize(size_type _n);
     // affinity assigns threads to cores, assignment at constructor
-    bool using_affinity() const { return m_use_affinity; }
-    bool is_alive() { return m_alive_flag.load(); }
-    void notify();
-    void notify_all();
-    void notify(size_type);
-    bool is_initialized() const;
-    int  get_active_threads_count() const { return m_thread_awake->load(); }
+    bool      using_affinity() const { return m_use_affinity; }
+    bool      is_alive() { return m_alive_flag.load(); }
+    void      notify();
+    void      notify_all();
+    void      notify(size_type);
+    bool      is_initialized() const;
+    int       get_active_threads_count() const { return m_thread_awake->load(); }
     size_type get_recursive_limit() const { return m_recursive_limit; }
-    void set_recursive_limit(const size_type& val) { m_recursive_limit = val; }
+    void      set_recursive_limit(const size_type& val) { m_recursive_limit = val; }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = f; }
     void set_affinity(intmax_t);
@@ -167,11 +165,8 @@ public:
     // read FORCE_NUM_THREADS environment variable
     static intmax_t                  GetEnvNumThreads(intmax_t _default = -1);
     static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
-    static const thread_index_map_t& GetThreadIndexes()
-    {
-        return f_thread_indexes;
-    }
-    static uintmax_t GetThisThreadID();
+    static const thread_index_map_t& GetThreadIndexes() { return f_thread_indexes; }
+    static uintmax_t                 GetThisThreadID();
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
@@ -240,13 +235,13 @@ private:
     ThreadPool& operator=(const ThreadPool&) { return *this; }
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 inline Thread*
 ThreadPool::get_thread(size_type _n) const
 {
     return (_n < m_main_threads.size()) ? m_main_threads[_n] : nullptr;
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 inline Thread*
 ThreadPool::get_thread(ThreadId id) const
 {
@@ -255,7 +250,7 @@ ThreadPool::get_thread(ThreadId id) const
             return itr;
     return nullptr;
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 template <typename _List_t>
 ThreadPool::size_type
 ThreadPool::add_tasks(_List_t& c)
@@ -287,7 +282,7 @@ ThreadPool::add_tasks(_List_t& c)
 
     return c_size;
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 inline void
 ThreadPool::notify()
 {
@@ -298,7 +293,7 @@ ThreadPool::notify()
         m_task_cond.notify_one();
     }
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 inline void
 ThreadPool::notify_all()
 {
@@ -306,7 +301,7 @@ ThreadPool::notify_all()
     AutoLock l(m_task_lock);
     m_task_cond.notify_all();
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 inline void
 ThreadPool::notify(size_type ntasks)
 {
@@ -326,7 +321,7 @@ ThreadPool::notify(size_type ntasks)
             m_task_cond.notify_all();
     }
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 // local function for getting the tbb task scheduler
 inline tbb_task_scheduler_t*&
 ThreadPool::tbb_task_scheduler()
@@ -334,7 +329,7 @@ ThreadPool::tbb_task_scheduler()
     ThreadLocalStatic tbb_task_scheduler_t* _instance = nullptr;
     return _instance;
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 // run directly or not
 inline bool
 ThreadPool::query_create_task() const
@@ -342,14 +337,13 @@ ThreadPool::query_create_task() const
     ThreadData* _data = ThreadData::GetInstance();
     if(!_data->is_master && _data->within_task)
     {
-        return (static_cast<uintmax_t>(_data->task_depth) <
-                get_recursive_limit())
+        return (static_cast<uintmax_t>(_data->task_depth) < get_recursive_limit())
                    ? true
                    : false;
     }
     return true;
 }
 
-//============================================================================//
+//======================================================================================//
 
 #endif

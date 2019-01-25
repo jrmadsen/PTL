@@ -41,8 +41,7 @@
 
 // Macro to put current thread to sleep
 //
-#define THREADSLEEP(tick)                                                      \
-    std::this_thread::sleep_for(std::chrono::seconds(tick))
+#define THREADSLEEP(tick) std::this_thread::sleep_for(std::chrono::seconds(tick))
 
 // will be used in the future when migrating threading to task-based style
 template <typename _Tp> using Future       = std::future<_Tp>;
@@ -77,14 +76,14 @@ typedef std::mutex           Mutex;
 typedef std::recursive_mutex RecursiveMutex;
 
 // mutex macros
-#define MUTEX_INITIALIZER                                                      \
-    {                                                                          \
+#define MUTEX_INITIALIZER                                                                \
+    {                                                                                    \
     }
-#define MUTEXINIT(mutex)                                                       \
-    ;                                                                          \
+#define MUTEXINIT(mutex)                                                                 \
+    ;                                                                                    \
     ;
-#define MUTEXDESTROY(mutex)                                                    \
-    ;                                                                          \
+#define MUTEXDESTROY(mutex)                                                              \
+    ;                                                                                    \
     ;
 
 // static functions: get_id(), sleep_for(...), sleep_until(...), yield(),
@@ -149,20 +148,20 @@ TypeRecursiveMutex(const unsigned int& _n = 0)
     return *(_mutexes[_n - 1]);
 }
 
-//============================================================================//
+//======================================================================================//
 
 // global thread types
 typedef std::thread                     Thread;
 typedef std::thread::native_handle_type NativeThread;
 
 // mutex macros
-#define MUTEXLOCK(mutex)                                                       \
-    {                                                                          \
-        (mutex)->lock();                                                       \
+#define MUTEXLOCK(mutex)                                                                 \
+    {                                                                                    \
+        (mutex)->lock();                                                                 \
     }
-#define MUTEXUNLOCK(mutex)                                                     \
-    {                                                                          \
-        (mutex)->unlock();                                                     \
+#define MUTEXUNLOCK(mutex)                                                               \
+    {                                                                                    \
+        (mutex)->unlock();                                                               \
     }
 
 // Macro to join thread
@@ -185,8 +184,8 @@ THREADCREATE(_Worker*& worker, _Func func, _Args... args)
 // See MTRunManager for example on how to use these
 //
 typedef std::condition_variable Condition;
-#define CONDITION_INITIALIZER                                                  \
-    {                                                                          \
+#define CONDITION_INITIALIZER                                                            \
+    {                                                                                    \
     }
 #define CONDITIONWAIT(cond, lock) (cond)->wait(*lock);
 #define CONDITIONWAITLAMBDA(cond, lock, lambda) (cond)->wait(*lock, lambda);
@@ -194,12 +193,12 @@ typedef std::condition_variable Condition;
 #define CONDITIONBROADCAST(cond) (cond)->notify_all();
 //
 
-//============================================================================//
+//======================================================================================//
 
 // Define here after Thread has been typedef
 typedef Thread::id ThreadId;
 
-//============================================================================//
+//======================================================================================//
 
 namespace Threading
 {

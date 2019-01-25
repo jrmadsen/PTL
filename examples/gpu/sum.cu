@@ -26,7 +26,7 @@
 
 #include "sum.hh"
 
-#define PRINT_HERE(extra)                                                      \
+#define PRINT_HERE(extra)                                                                \
     printf("> %s@'%s':%i %s\n", __FUNCTION__, __FILE__, __LINE__, extra)
 
 //============================================================================//
@@ -119,8 +119,8 @@ reduce(_Tp* _idata, _Tp* _odata, unsigned int n)
 
 template <typename _Tp>
 void
-compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
-                  int dimBlock, int smemSize, cudaStream_t stream)
+compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlock,
+                  int smemSize, cudaStream_t stream)
 {
     cudaStreamSynchronize(stream);
     CUDA_CHECK_LAST_ERROR();
@@ -128,44 +128,44 @@ compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
     switch(threads)
     {
         case 512:
-            reduce<512, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<512, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 256:
-            reduce<256, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<256, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 128:
-            reduce<128, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<128, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 64:
-            reduce<64, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<64, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 32:
-            reduce<32, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<32, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 16:
-            reduce<16, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<16, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 8:
-            reduce<8, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<8, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 4:
-            reduce<4, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<4, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 2:
-            reduce<2, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<2, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
         case 1:
-            reduce<1, _Tp><<<dimGrid, dimBlock, smemSize, stream>>>(
-                _idata, _odata, threads);
+            reduce<1, _Tp>
+                <<<dimGrid, dimBlock, smemSize, stream>>>(_idata, _odata, threads);
             break;
     }
     CUDA_CHECK_LAST_ERROR();
@@ -178,13 +178,13 @@ compute_reduction(int threads, _Tp* _idata, _Tp* _odata, int dimGrid,
 
 template <typename _Tp>
 void
-call_compute_reduction(int64_t& _i, uint64_t& _offset, int nthreads,
-                       _Tp* _idata, _Tp* _odata, int dimGrid, int dimBlock,
-                       int smemSize, cudaStream_t stream)
+call_compute_reduction(int64_t& _i, uint64_t& _offset, int nthreads, _Tp* _idata,
+                       _Tp* _odata, int dimGrid, int dimBlock, int smemSize,
+                       cudaStream_t stream)
 {
     // assumes nthreads < cuda_max_threads_per_block()
-    compute_reduction(nthreads, _idata + _offset, _odata + _offset, dimGrid,
-                      dimBlock, smemSize, stream);
+    compute_reduction(nthreads, _idata + _offset, _odata + _offset, dimGrid, dimBlock,
+                      smemSize, stream);
     _i -= nthreads;
     _offset += nthreads;
 }
@@ -192,8 +192,8 @@ call_compute_reduction(int64_t& _i, uint64_t& _offset, int nthreads,
 //============================================================================//
 
 float
-compute_sum_host(aligned_ptr<float>& data, cudaStream_t stream,
-                 bool with_thrust, float* buffer)
+compute_sum_host(aligned_ptr<float>& data, cudaStream_t stream, bool with_thrust,
+                 float* buffer)
 {
     float _sum;
 
@@ -202,9 +202,8 @@ compute_sum_host(aligned_ptr<float>& data, cudaStream_t stream,
         cudaStreamSynchronize(stream);
         CUDA_CHECK_LAST_ERROR();
 
-        _sum =
-            thrust::reduce(thrust::system::cuda::par.on(stream), data.ptr,
-                           data.ptr + data.size, 0.0f, thrust::plus<float>());
+        _sum = thrust::reduce(thrust::system::cuda::par.on(stream), data.ptr,
+                              data.ptr + data.size, 0.0f, thrust::plus<float>());
 
         CUDA_CHECK_LAST_ERROR();
 
@@ -243,15 +242,14 @@ compute_sum_host(aligned_ptr<float>& data, cudaStream_t stream,
             {
                 if(remain >= itr)
                 {
-                    call_compute_reduction(remain, offset, itr, _idata, _odata,
-                                           dimGrid, dimBlock, smemSize, stream);
+                    call_compute_reduction(remain, offset, itr, _idata, _odata, dimGrid,
+                                           dimBlock, smemSize, stream);
                     break;
                 }
             }
         }
 
-        cudaMemcpyAsync(&_sum, _odata, 1 * sizeof(float),
-                        cudaMemcpyDeviceToHost, stream);
+        cudaMemcpyAsync(&_sum, _odata, 1 * sizeof(float), cudaMemcpyDeviceToHost, stream);
         CUDA_CHECK_LAST_ERROR();
         cudaDeviceSynchronize();
         CUDA_CHECK_LAST_ERROR();

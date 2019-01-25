@@ -68,12 +68,11 @@ execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
     get_engine().seed(_seed);
 
     std::stringstream ss;
-    ss << cprefix << "Submitting " << num_iter
-       << " tasks computing \"fibonacci(" << n << ")\" to task manager "
+    ss << cprefix << "Submitting " << num_iter << " tasks computing \"fibonacci(" << n
+       << ")\" to task manager "
        << "(" << remaining << " iterations remaining)..." << std::flush;
 
-    TaskManager* taskManager =
-        TaskRunManager::GetMasterRunManager()->GetTaskManager();
+    TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
     Timer t;
     t.Start();
@@ -105,8 +104,8 @@ execute_gpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n)
     TaskManager* taskManager = GetGpuManager();
 
     std::stringstream ss;
-    ss << cprefix << "Submitting " << num_iter << " tasks computing \"run_gpu("
-       << n << ")\" to task manager "
+    ss << cprefix << "Submitting " << num_iter << " tasks computing \"run_gpu(" << n
+       << ")\" to task manager "
        << "..." << std::flush;
 
     Timer t;
@@ -151,22 +150,21 @@ main(int argc, char** argv)
     setenv("NUM_TASKS", std::to_string(hwthreads * hwthreads).c_str(), 0);
     setenv("NUM_TASK_GROUPS", std::to_string(default_tg).c_str(), 0);
 
-    rng_range = GetEnv<decltype(rng_range)>(
-        "RNG_RANGE", rng_range, "Setting RNG range to +/- this value");
+    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range,
+                                            "Setting RNG range to +/- this value");
     unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
                                            "Getting the number of threads");
-    uint64_t nfib =
-        GetEnv<uint64_t>("FIBONACCI", default_fib,
-                         "Setting the centerpoint of fib work distribution");
-    uint64_t ngpu = GetEnv<uint64_t>("GPU_RANGE", default_gpu,
-                                     "Setting the GPU range centerpoint");
+    uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
+                                     "Setting the centerpoint of fib work distribution");
+    uint64_t ngpu =
+        GetEnv<uint64_t>("GPU_RANGE", default_gpu, "Setting the GPU range centerpoint");
     uint64_t grainsize =
         GetEnv<uint64_t>("GRAINSIZE", numThreads,
                          "Dividing number of task into grain of this size");
-    uint64_t num_iter   = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
+    uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
                                          "Setting the number of total tasks");
-    uint64_t num_groups = GetEnv<uint64_t>("NUM_TASK_GROUPS", 4,
-                                           "Setting the number of task groups");
+    uint64_t num_groups =
+        GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
     PrintEnv();
 
     Timer total_timer;
@@ -204,8 +202,8 @@ main(int argc, char** argv)
     {
         fuint64_t fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
         uint64_t  fib_n     = fib_async.get();
-        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- "
-                  << rng_range << ") = " << fib_n << std::endl;
+        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- " << rng_range
+                  << ") = " << fib_n << std::endl;
         std::cout << std::endl;
     }
 
@@ -274,8 +272,7 @@ main(int argc, char** argv)
         cpu_create(cpu_task_groups[i]);
         gpu_create(gpu_task_groups[i]);
         // submit task with first task group
-        execute_cpu_iterations(hwthreads, cpu_task_groups[i], hwthreads,
-                               remaining);
+        execute_cpu_iterations(hwthreads, cpu_task_groups[i], hwthreads, remaining);
         execute_gpu_iterations(hwthreads, gpu_task_groups[i], hwthreads);
     }
     //------------------------------------------------------------------------//
@@ -320,8 +317,7 @@ main(int argc, char** argv)
             cpu_create(cpu_task_groups[i]);
             gpu_create(gpu_task_groups[i]);
             // submit task with first task group
-            execute_cpu_iterations(grainsize, cpu_task_groups[i], nfib,
-                                   remaining);
+            execute_cpu_iterations(grainsize, cpu_task_groups[i], nfib, remaining);
             execute_gpu_iterations(grainsize, gpu_task_groups[i], ngpu);
         }
     }
@@ -368,12 +364,10 @@ main(int argc, char** argv)
     ///                                                                      ///
     ///======================================================================///
 
-    std::cout << prefix << "[task group] fibonacci(" << nfib << " +/- "
-              << rng_range << ") * " << num_iter << " = " << cpu_answer
-              << std::endl;
-    std::cout << cprefix << "[task group] run_gpu(" << ngpu << " +/- "
-              << rng_range << ") * " << num_iter << " = " << gpu_answer
-              << std::endl;
+    std::cout << prefix << "[task group] fibonacci(" << nfib << " +/- " << rng_range
+              << ") * " << num_iter << " = " << cpu_answer << std::endl;
+    std::cout << cprefix << "[task group] run_gpu(" << ngpu << " +/- " << rng_range
+              << ") * " << num_iter << " = " << gpu_answer << std::endl;
     std::cout << cprefix << "[atomic]     gpu-tasking answer: " << true_answer
               << std::endl;
 
@@ -381,8 +375,7 @@ main(int argc, char** argv)
     fibprefix << "gpu-tasking(...) calculation time: ";
     int32_t _w = fibprefix.str().length() + 2;
 
-    std::cout << prefix << std::setw(_w) << fibprefix.str() << "\t" << timer
-              << std::endl;
+    std::cout << prefix << std::setw(_w) << fibprefix.str() << "\t" << timer << std::endl;
 
     // KNL hangs somewhere between finishing calculations and total_timer
     Timer del_timer;
@@ -404,8 +397,7 @@ main(int argc, char** argv)
 
     uintmax_t ret = (true_answer - cpu_answer);
     if(ret == 0 && num_iter == gpu_answer)
-        std::cout << prefix << "Successful MT gpu-tasking calculation"
-                  << std::endl;
+        std::cout << prefix << "Successful MT gpu-tasking calculation" << std::endl;
     else
         std::cout << prefix << "Failure combining MT gpu-tasking calculation "
                   << std::endl;

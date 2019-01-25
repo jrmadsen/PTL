@@ -31,7 +31,7 @@
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager*&
 TaskManager::fgInstance()
@@ -40,7 +40,7 @@ TaskManager::fgInstance()
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager*
 TaskManager::GetInstance()
@@ -48,14 +48,14 @@ TaskManager::GetInstance()
     if(!fgInstance())
     {
         auto nthreads = std::thread::hardware_concurrency();
-        std::cout << "Allocating mad::TaskManager with " << nthreads
-                  << " thread(s)..." << std::endl;
+        std::cout << "Allocating mad::TaskManager with " << nthreads << " thread(s)..."
+                  << std::endl;
         new TaskManager(TaskRunManager::GetMasterRunManager()->GetThreadPool());
     }
     return fgInstance();
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager*
 TaskManager::GetInstanceIfExists()
@@ -63,7 +63,7 @@ TaskManager::GetInstanceIfExists()
     return fgInstance();
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager::TaskManager(ThreadPool* _pool)
 : m_pool(_pool)
@@ -72,7 +72,7 @@ TaskManager::TaskManager(ThreadPool* _pool)
         fgInstance() = this;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager::~TaskManager()
 {
@@ -81,14 +81,14 @@ TaskManager::~TaskManager()
         fgInstance() = nullptr;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager::TaskManager(const TaskManager& rhs)
 : m_pool(rhs.m_pool)
 {
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager&
 TaskManager::operator=(const TaskManager& rhs)
@@ -101,4 +101,4 @@ TaskManager::operator=(const TaskManager& rhs)
     return *this;
 }
 
-//============================================================================//
+//======================================================================================//

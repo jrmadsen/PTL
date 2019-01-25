@@ -38,7 +38,7 @@ class ThreadPool;
 
 #    include <tbb/tbb.h>
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 template <typename _Tp, typename _Arg = _Tp>
 class TBBTaskGroup : public TaskGroup<_Tp, _Arg>
@@ -57,8 +57,7 @@ public:
 
 public:
     // Constructor
-    template <typename _Func>
-    TBBTaskGroup(_Func _join, ThreadPool* tp = nullptr);
+    template <typename _Func> TBBTaskGroup(_Func _join, ThreadPool* tp = nullptr);
     template <typename _Func>
     TBBTaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
     // Destructor
@@ -116,7 +115,7 @@ protected:
     using base_type::m_tot_task_count;
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 // specialization for void type
 template <> class TBBTaskGroup<void, void> : public TaskGroup<void, void>
 {
@@ -196,18 +195,17 @@ protected:
     using TaskGroup<void, void>::m_task_set;
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 #else
 
-template <typename _Tp, typename _Arg = _Tp>
-using TBBTaskGroup = TaskGroup<_Tp, _Arg>;
+template <typename _Tp, typename _Arg = _Tp> using TBBTaskGroup = TaskGroup<_Tp, _Arg>;
 
 #endif
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #include "PTL/TBBTaskGroup.icc"
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #endif

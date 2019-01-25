@@ -76,10 +76,8 @@ task_fibonacci(const uint64_t& n, const uint64_t& cutoff, TaskManager* taskMan)
         ++task_group_counter();
         if(n >= cutoff)
         {
-            taskMan->exec(
-                tg, [&]() { x = task_fibonacci(n - 1, cutoff, taskMan); });
-            taskMan->exec(
-                tg, [&]() { y = task_fibonacci(n - 2, cutoff, taskMan); });
+            taskMan->exec(tg, [&]() { x = task_fibonacci(n - 1, cutoff, taskMan); });
+            taskMan->exec(tg, [&]() { y = task_fibonacci(n - 2, cutoff, taskMan); });
         }
         else
         {
@@ -109,12 +107,11 @@ execute_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
     uint32_t                     _seed = get_seed() + (++_counter * 10000);
     get_engine().seed(_seed);
 
-    cout << cprefix << "Submitting " << num_iter
-         << " tasks computing \"fibonacci(" << n << ")\" to task manager "
+    cout << cprefix << "Submitting " << num_iter << " tasks computing \"fibonacci(" << n
+         << ")\" to task manager "
          << "(" << remaining << " iterations remaining)..." << std::flush;
 
-    TaskManager* taskManager =
-        TaskRunManager::GetMasterRunManager()->GetTaskManager();
+    TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
     Timer t;
     t.Start();
@@ -166,20 +163,19 @@ main(int argc, char** argv)
     setenv("NUM_TASKS", std::to_string(default_ntasks).c_str(), 0);
     setenv("NUM_TASK_GROUPS", std::to_string(default_tg).c_str(), 0);
 
-    rng_range = GetEnv<decltype(rng_range)>(
-        "RNG_RANGE", rng_range, "Setting RNG range to +/- this value");
+    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range,
+                                            "Setting RNG range to +/- this value");
     unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
                                            "Getting the number of threads");
-    uint64_t nfib =
-        GetEnv<uint64_t>("FIBONACCI", default_fib,
-                         "Setting the centerpoint of fib work distribution");
+    uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
+                                     "Setting the centerpoint of fib work distribution");
     uint64_t grainsize =
         GetEnv<uint64_t>("GRAINSIZE", numThreads,
                          "Dividing number of task into grain of this size");
-    uint64_t num_iter   = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
+    uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
                                          "Setting the number of total tasks");
-    uint64_t num_groups = GetEnv<uint64_t>("NUM_TASK_GROUPS", 4,
-                                           "Setting the number of task groups");
+    uint64_t num_groups =
+        GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
 
     cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_high);
     cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
@@ -217,8 +213,7 @@ main(int argc, char** argv)
         singleTimer.Stop();
 
         cout << prefix << "[async test] fibonacci(" << cutoff_value << ") * "
-             << cutoff_tasks << " = " << fib_async << " ... " << singleTimer
-             << endl;
+             << cutoff_tasks << " = " << fib_async << " ... " << singleTimer << endl;
     }
 
     std::vector<int> cutoffs;
@@ -230,8 +225,7 @@ main(int argc, char** argv)
 #if defined(USE_TBB_TASKS)
         taskManager->exec(fib_tmp, tbb_fibonacci, cutoff_value, cutoff);
 #else
-        taskManager->exec(fib_tmp, task_fibonacci, cutoff_value, cutoff,
-                          taskManager);
+        taskManager->exec(fib_tmp, task_fibonacci, cutoff_value, cutoff, taskManager);
 #endif
     };
     //------------------------------------------------------------------------//
@@ -242,8 +236,7 @@ main(int argc, char** argv)
     measureTimer.Start();
     for(int i = 0; i < cutoff_tasks; ++i)
     {
-        cout << cprefix << "iteration #" << i << " of " << cutoff_tasks << "..."
-             << endl;
+        cout << cprefix << "iteration #" << i << " of " << cutoff_tasks << "..." << endl;
         for(auto cutoff : cutoffs)
         {
             int64_t fib_recur = 0;
@@ -274,17 +267,16 @@ main(int argc, char** argv)
                 measurement = measurements.find(cutoff)->second;
             if(!measurement)
             {
-                measurement          = new Measurement(cutoff, num_task_groups,
-                                              taskManager->size());
+                measurement =
+                    new Measurement(cutoff, num_task_groups, taskManager->size());
                 measurements[cutoff] = measurement;
             }
 
             *measurement += singleTimer;
 
-            cout << cprefix << "[recur test] fibonacci(" << cutoff_value
-                 << ") * " << cutoff_tasks << " = " << fib_recur << " ... "
-                 << singleTimer << " ... [# task grp] " << num_task_groups
-                 << " (cutoff = " << cutoff
+            cout << cprefix << "[recur test] fibonacci(" << cutoff_value << ") * "
+                 << cutoff_tasks << " = " << fib_recur << " ... " << singleTimer
+                 << " ... [# task grp] " << num_task_groups << " (cutoff = " << cutoff
                  << ") "
                  //<< measurement->real
                  << endl;
@@ -295,8 +287,7 @@ main(int argc, char** argv)
         }
     }
     measureTimer.Stop();
-    std::cout << prefix << "Total measurement time: " << measureTimer
-              << std::endl;
+    std::cout << prefix << "Total measurement time: " << measureTimer << std::endl;
     std::stringstream ss;
     ss << argv[0] << "_recursive.dat";
     std::ofstream ofs(ss.str().c_str());
@@ -406,8 +397,7 @@ main(int argc, char** argv)
          << ") = " << true_answer << endl;
 
     std::stringstream fibprefix;
-    fibprefix << "fibonacci(" << nfib << " +/- " << rng_range
-              << ") calculation time: ";
+    fibprefix << "fibonacci(" << nfib << " +/- " << rng_range << ") calculation time: ";
     int32_t _w = static_cast<int32_t>(fibprefix.str().length()) + 2;
 
     cout << prefix << std::setw(_w) << fibprefix.str() << "\t" << timer << endl;

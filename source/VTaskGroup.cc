@@ -35,7 +35,7 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTask.hh"
 
-//============================================================================//
+//======================================================================================//
 
 std::atomic_uintmax_t&
 vtask_group_counter()
@@ -44,7 +44,7 @@ vtask_group_counter()
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 VTaskGroup::VTaskGroup(ThreadPool* tp)
 : m_clear_count(0)
@@ -67,11 +67,11 @@ VTaskGroup::VTaskGroup(ThreadPool* tp)
 #endif
 }
 
-//============================================================================//
+//======================================================================================//
 
 VTaskGroup::~VTaskGroup() {}
 
-//============================================================================//
+//======================================================================================//
 
 void
 VTaskGroup::execute_this_threads_tasks()
@@ -79,12 +79,10 @@ VTaskGroup::execute_this_threads_tasks()
     // for internal threads
     ThreadData* data = ThreadData::GetInstance();
 
-    ThreadPool* _tpool =
-        (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
+    ThreadPool* _tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
 
-    VUserTaskQueue* _taskq = (m_pool)
-                                 ? m_pool->get_queue()
-                                 : ((data) ? data->current_queue : nullptr);
+    VUserTaskQueue* _taskq =
+        (m_pool) ? m_pool->get_queue() : ((data) ? data->current_queue : nullptr);
 
     // for external threads
     bool ext_is_master   = (data) ? data->is_master : false;
@@ -113,9 +111,8 @@ VTaskGroup::execute_this_threads_tasks()
     {
         if(!_taskq)
             return;
-        int        bin = static_cast<int>(_taskq->GetThreadBin());
-        const auto nitr =
-            (_tpool) ? _tpool->size() : Thread::hardware_concurrency();
+        int        bin  = static_cast<int>(_taskq->GetThreadBin());
+        const auto nitr = (_tpool) ? _tpool->size() : Thread::hardware_concurrency();
         while(this->pending() > 0)
         {
             task_pointer _task = _taskq->GetTask(bin, static_cast<int>(nitr));
@@ -125,7 +122,7 @@ VTaskGroup::execute_this_threads_tasks()
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 VTaskGroup::wait()
@@ -159,8 +156,7 @@ VTaskGroup::wait()
     // return;
 
     auto is_active_state = [&]() {
-        return static_cast<int>(m_pool->state()) !=
-               static_cast<int>(state::STOPPED);
+        return static_cast<int>(m_pool->state()) != static_cast<int>(state::STOPPED);
     };
 
     intmax_t _pool_size = m_pool->size();
@@ -207,4 +203,4 @@ VTaskGroup::wait()
     }
 }
 
-//============================================================================//
+//======================================================================================//

@@ -40,6 +40,8 @@
 
 #include "PTL/TaskAllocatorPool.hh"
 
+//--------------------------------------------------------------------------------------//
+
 class TaskAllocatorBase
 {
 public:
@@ -52,6 +54,8 @@ public:
     virtual void        IncreasePageSize(unsigned int sz) = 0;
     virtual const char* GetPoolType() const               = 0;
 };
+
+//--------------------------------------------------------------------------------------//
 
 template <class Type> class TaskAllocator : public TaskAllocatorBase
 {
@@ -157,19 +161,9 @@ private:
     // Type name identifier
 };
 
-// ------------------------------------------------------------
+//--------------------------------------------------------------------------------------//
 // Inline implementation
-// ------------------------------------------------------------
 
-// Initialization of the static pool
-//
-// template <class Type> TaskAllocatorPool
-// TaskAllocator<Type>::mem(sizeof(Type));
-
-// ************************************************************
-// TaskAllocator constructor
-// ************************************************************
-//
 template <class Type>
 TaskAllocator<Type>::TaskAllocator()
 : mem(sizeof(Type))

@@ -33,17 +33,16 @@
 #include <cstring>
 #include <iterator>
 
-//============================================================================//
+//======================================================================================//
 
 TaskRunManager*&
 TaskRunManager::GetPrivateMasterRunManager(bool init, bool useTBB)
 {
-    static TaskRunManager* _instance =
-        (init) ? new TaskRunManager(useTBB) : nullptr;
+    static TaskRunManager* _instance = (init) ? new TaskRunManager(useTBB) : nullptr;
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskRunManager*&
 TaskRunManager::GetMasterRunManager(bool useTBB)
@@ -52,7 +51,7 @@ TaskRunManager::GetMasterRunManager(bool useTBB)
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskRunManager*
 TaskRunManager::GetInstance(bool useTBB)
@@ -60,7 +59,7 @@ TaskRunManager::GetInstance(bool useTBB)
     return GetMasterRunManager(useTBB);
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskRunManager::TaskRunManager(bool useTBB)
 : isInitialized(false)
@@ -93,11 +92,11 @@ TaskRunManager::TaskRunManager(bool useTBB)
     */
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskRunManager::~TaskRunManager() { Terminate(); }
 
-//============================================================================//
+//======================================================================================//
 
 void
 TaskRunManager::Initialize(uint64_t n)
@@ -108,12 +107,10 @@ TaskRunManager::Initialize(uint64_t n)
     if(!threadPool)
     {
         if(verbose > 0)
-            std::cout << "TaskRunManager :: Creating thread pool..."
-                      << std::endl;
+            std::cout << "TaskRunManager :: Creating thread pool..." << std::endl;
         threadPool = new ThreadPool(nworkers, taskQueue);
         if(verbose > 0)
-            std::cout << "TaskRunManager :: Creating task manager..."
-                      << std::endl;
+            std::cout << "TaskRunManager :: Creating task manager..." << std::endl;
         taskManager = new TaskManager(threadPool);
     }
     // or resize
@@ -121,8 +118,8 @@ TaskRunManager::Initialize(uint64_t n)
     {
         if(verbose > 0)
             std::cout << "TaskRunManager :: Resizing thread pool from "
-                      << threadPool->size() << " to " << nworkers
-                      << " threads ..." << std::endl;
+                      << threadPool->size() << " to " << nworkers << " threads ..."
+                      << std::endl;
         threadPool->resize(nworkers);
     }
 
@@ -157,7 +154,7 @@ TaskRunManager::Initialize(uint64_t n)
     */
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 TaskRunManager::Terminate()
@@ -178,7 +175,7 @@ TaskRunManager::Terminate()
     threadPool       = nullptr;
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 TaskRunManager::Wait()
@@ -191,7 +188,7 @@ TaskRunManager::Wait()
         workTaskGroup->join();
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
@@ -217,4 +214,4 @@ TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
 #endif
 }
 
-//============================================================================//
+//======================================================================================//

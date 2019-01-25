@@ -30,7 +30,7 @@
 
 #include <cassert>
 
-//============================================================================//
+//======================================================================================//
 
 UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
 : VUserTaskQueue(nworkers)
@@ -51,8 +51,8 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
     {
         RecursiveAutoLock l(TypeRecursiveMutex<decltype(std::cout)>());
         std::stringstream ss;
-        ss << ThreadPool::GetThisThreadID() << "> " << ThisThread::get_id()
-           << " [" << __FUNCTION__ << ":" << __LINE__ << "] "
+        ss << ThreadPool::GetThisThreadID() << "> " << ThisThread::get_id() << " ["
+           << __FUNCTION__ << ":" << __LINE__ << "] "
            << "this = " << this << ", "
            << "clone = " << std::boolalpha << m_is_clone << ", "
            << "thread = " << m_thread_bin << ", "
@@ -67,7 +67,7 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
 #endif
 }
 
-//============================================================================//
+//======================================================================================//
 
 UserTaskQueue::~UserTaskQueue()
 {
@@ -85,7 +85,7 @@ UserTaskQueue::~UserTaskQueue()
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 UserTaskQueue::resize(intmax_t n)
@@ -110,14 +110,14 @@ UserTaskQueue::resize(intmax_t n)
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 VUserTaskQueue*
 UserTaskQueue::clone()
 {
     return new UserTaskQueue(workers(), this);
 }
-//============================================================================//
+//======================================================================================//
 
 intmax_t
 UserTaskQueue::GetThreadBin() const
@@ -128,7 +128,7 @@ UserTaskQueue::GetThreadBin() const
     return tl_bin;
 }
 
-//============================================================================//
+//======================================================================================//
 
 intmax_t
 UserTaskQueue::GetInsertBin() const
@@ -139,7 +139,7 @@ UserTaskQueue::GetInsertBin() const
     return ++m_insert_bin;
 }
 
-//============================================================================//
+//======================================================================================//
 
 UserTaskQueue::VTaskPtr
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
@@ -211,7 +211,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     return _task;
 }
 
-//============================================================================//
+//======================================================================================//
 
 intmax_t
 UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
@@ -278,7 +278,7 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
     return GetThreadBin();
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
@@ -329,8 +329,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         };
         //--------------------------------------------------------------------//
 
-        VTaskPtr _task =
-            tg->store(task_pointer(new task_type(tg, thread_specific_func)));
+        VTaskPtr _task = tg->store(task_pointer(new task_type(tg, thread_specific_func)));
         //++(*this);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
@@ -350,7 +349,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
     ReleaseHold();
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
@@ -407,8 +406,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         if(i == GetThreadBin())
             continue;
 
-        VTaskPtr _task =
-            tg->store(task_pointer(new task_type(tg, thread_specific_func)));
+        VTaskPtr _task = tg->store(task_pointer(new task_type(tg, thread_specific_func)));
         //++(*this);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
@@ -427,7 +425,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
     ReleaseHold();
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 UserTaskQueue::AcquireHold()
@@ -440,7 +438,7 @@ UserTaskQueue::AcquireHold()
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 UserTaskQueue::ReleaseHold()
@@ -453,4 +451,4 @@ UserTaskQueue::ReleaseHold()
     }
 }
 
-//============================================================================//
+//======================================================================================//

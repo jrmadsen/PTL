@@ -29,8 +29,8 @@
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C                                                 \
-            extern "C"                                                         \
+#        define BEGIN_EXTERN_C                                                           \
+            extern "C"                                                                   \
             {
 #    endif
 #    ifndef END_EXTERN_C
@@ -68,23 +68,21 @@
 
 #    if !defined(CUDA_CHECK_LAST_ERROR)
 #        if defined(DEBUG)
-#            define CUDA_CHECK_LAST_ERROR()                                    \
-                {                                                              \
-                    cudaError err = cudaGetLastError();                        \
-                    if(cudaSuccess != err)                                     \
-                    {                                                          \
-                        fprintf(                                               \
-                            stderr,                                            \
-                            "cudaCheckError() failed at %s@'%s':%i : %s\n",    \
-                            __FUNCTION__, __FILE__, __LINE__,                  \
-                            cudaGetErrorString(err));                          \
-                        exit(-1);                                              \
-                    }                                                          \
+#            define CUDA_CHECK_LAST_ERROR()                                              \
+                {                                                                        \
+                    cudaError err = cudaGetLastError();                                  \
+                    if(cudaSuccess != err)                                               \
+                    {                                                                    \
+                        fprintf(stderr, "cudaCheckError() failed at %s@'%s':%i : %s\n",  \
+                                __FUNCTION__, __FILE__, __LINE__,                        \
+                                cudaGetErrorString(err));                                \
+                        exit(-1);                                                        \
+                    }                                                                    \
                 }
 #        else
-#            define CUDA_CHECK_LAST_ERROR()                                    \
-                {                                                              \
-                    ;                                                          \
+#            define CUDA_CHECK_LAST_ERROR()                                              \
+                {                                                                        \
+                    ;                                                                    \
                 }
 #        endif
 #    endif
@@ -93,9 +91,9 @@
 #        define cudaStream_t int
 #    endif
 #    if !defined(CUDA_CHECK_LAST_ERROR)
-#        define CUDA_CHECK_LAST_ERROR()                                        \
-            {                                                                  \
-                ;                                                              \
+#        define CUDA_CHECK_LAST_ERROR()                                                  \
+            {                                                                            \
+                ;                                                                        \
             }
 #    endif
 #endif

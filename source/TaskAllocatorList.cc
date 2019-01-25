@@ -25,7 +25,7 @@
 #include "PTL/TaskAllocator.hh"
 #include "PTL/TaskAllocatorList.hh"
 
-//============================================================================//
+//======================================================================================//
 
 TaskAllocatorList*&
 TaskAllocatorList::fAllocatorList()
@@ -34,7 +34,7 @@ TaskAllocatorList::fAllocatorList()
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskAllocatorList*
 TaskAllocatorList::GetAllocatorList()
@@ -46,7 +46,7 @@ TaskAllocatorList::GetAllocatorList()
     return fAllocatorList();
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskAllocatorList*
 TaskAllocatorList::GetAllocatorListIfExist()
@@ -54,15 +54,15 @@ TaskAllocatorList::GetAllocatorListIfExist()
     return fAllocatorList();
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskAllocatorList::TaskAllocatorList() {}
 
-//============================================================================//
+//======================================================================================//
 
 TaskAllocatorList::~TaskAllocatorList() { fAllocatorList() = nullptr; }
 
-//============================================================================//
+//======================================================================================//
 
 void
 TaskAllocatorList::Register(TaskAllocatorBase* alloc)
@@ -70,7 +70,7 @@ TaskAllocatorList::Register(TaskAllocatorBase* alloc)
     fList.push_back(alloc);
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 TaskAllocatorList::Destroy(int nStat, int verboseLevel)
@@ -79,9 +79,8 @@ TaskAllocatorList::Destroy(int nStat, int verboseLevel)
     double mem = 0, tmem = 0;
     if(verboseLevel > 0)
     {
-        std::cout
-            << "================== Deleting memory pools ==================="
-            << std::endl;
+        std::cout << "================== Deleting memory pools ==================="
+                  << std::endl;
     }
     for(auto itr = fList.begin(); itr != fList.end(); ++itr)
     {
@@ -109,17 +108,15 @@ TaskAllocatorList::Destroy(int nStat, int verboseLevel)
         std::cout << "Number of memory pools allocated: " << Size()
                   << "; of which, static: " << i << std::endl;
         std::cout << "Dynamic pools deleted: " << j
-                  << " / Total memory freed: " << std::setprecision(2)
-                  << tmem / 1048576 << std::setprecision(6) << " MB"
+                  << " / Total memory freed: " << std::setprecision(2) << tmem / 1048576
+                  << std::setprecision(6) << " MB" << std::endl;
+        std::cout << "============================================================"
                   << std::endl;
-        std::cout
-            << "============================================================"
-            << std::endl;
     }
     fList.clear();
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 TaskAllocatorList::Size() const
@@ -127,4 +124,4 @@ TaskAllocatorList::Size() const
     return fList.size();
 }
 
-//============================================================================//
+//======================================================================================//

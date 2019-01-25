@@ -46,32 +46,31 @@
 
 class ThreadPool;
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 template <typename _Tp, typename _Arg = _Tp> class TaskGroup : public VTaskGroup
 {
 public:
-    typedef typename std::remove_const<
-        typename std::remove_reference<_Arg>::type>::type ArgTp;
-    typedef _Tp                                           result_type;
-    typedef TaskGroup<_Tp, _Arg>                          this_type;
-    typedef std::promise<ArgTp>                           promise_type;
-    typedef std::future<ArgTp>                            future_type;
-    typedef std::packaged_task<ArgTp()>                   packaged_task_type;
-    typedef std::tuple<bool, future_type, ArgTp>          data_type;
-    typedef list_type<data_type>                          task_list_t;
-    typedef map_type<tid_type, task_list_t>               task_map_t;
-    typedef std::function<_Tp(_Tp&, _Arg)>                function_type;
-    typedef typename task_list_t::iterator                iterator;
-    typedef typename task_list_t::reverse_iterator        reverse_iterator;
-    typedef typename task_list_t::const_iterator          const_iterator;
+    typedef typename std::remove_const<typename std::remove_reference<_Arg>::type>::type
+                                                         ArgTp;
+    typedef _Tp                                          result_type;
+    typedef TaskGroup<_Tp, _Arg>                         this_type;
+    typedef std::promise<ArgTp>                          promise_type;
+    typedef std::future<ArgTp>                           future_type;
+    typedef std::packaged_task<ArgTp()>                  packaged_task_type;
+    typedef std::tuple<bool, future_type, ArgTp>         data_type;
+    typedef list_type<data_type>                         task_list_t;
+    typedef map_type<tid_type, task_list_t>              task_map_t;
+    typedef std::function<_Tp(_Tp&, _Arg)>               function_type;
+    typedef typename task_list_t::iterator               iterator;
+    typedef typename task_list_t::reverse_iterator       reverse_iterator;
+    typedef typename task_list_t::const_iterator         const_iterator;
     typedef typename task_list_t::const_reverse_iterator const_reverse_iterator;
 
 public:
     // Constructor
     template <typename _Func> TaskGroup(_Func _join, ThreadPool* tp = nullptr);
-    template <typename _Func>
-    TaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
+    template <typename _Func> TaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
     // Destructor
     virtual ~TaskGroup();
 
@@ -160,7 +159,7 @@ protected:
     function_type m_join_function;
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 // specialization for void type
 template <> class TaskGroup<void, void> : public VTaskGroup
 {
@@ -260,8 +259,7 @@ public:
         for(auto itr = begin(); itr != end(); ++itr)
             this->get(*itr);
 
-        if(m_clear_freq.load() > 0 &&
-           (++m_clear_count) % m_clear_freq.load() == 0)
+        if(m_clear_freq.load() > 0 && (++m_clear_count) % m_clear_freq.load() == 0)
             this->clear();
     }
     //------------------------------------------------------------------------//
@@ -289,7 +287,7 @@ protected:
     mutable task_list_t m_task_set;
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #include "PTL/TaskGroup.icc"
 

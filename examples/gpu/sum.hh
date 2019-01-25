@@ -26,8 +26,8 @@
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
-#        define BEGIN_EXTERN_C                                                 \
-            extern "C"                                                         \
+#        define BEGIN_EXTERN_C                                                           \
+            extern "C"                                                                   \
             {
 #    endif
 #    ifndef END_EXTERN_C
@@ -177,9 +177,7 @@ template <typename _Tp, uintmax_t _AlignWidth = 512> struct aligned_pointer
         size(_size)
     ,
         // extra padding aligning to "_AlignWidth" byte width
-        padding((_size % _AlignWidth == 0)
-                    ? 0
-                    : (_AlignWidth - (size % _AlignWidth)))
+        padding((_size % _AlignWidth == 0) ? 0 : (_AlignWidth - (size % _AlignWidth)))
     ,
         // size of allocation
         storage_size(size + padding)
@@ -270,22 +268,18 @@ memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t _size)
 
 template <typename _Tp>
 void
-async_gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t _size,
-                 cudaStream_t _stream)
+async_gpu_memcpy(_Tp* _gpu, const _Tp* _cpu, uintmax_t _size, cudaStream_t _stream)
 {
-    cudaMemcpyAsync(_gpu, _cpu, _size * sizeof(_Tp), cudaMemcpyHostToDevice,
-                    _stream);
+    cudaMemcpyAsync(_gpu, _cpu, _size * sizeof(_Tp), cudaMemcpyHostToDevice, _stream);
 }
 
 //----------------------------------------------------------------------------//
 
 template <typename _Tp>
 void
-async_cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t _size,
-                 cudaStream_t _stream)
+async_cpu_memcpy(const _Tp* _gpu, _Tp* _cpu, uintmax_t _size, cudaStream_t _stream)
 {
-    cudaMemcpyAsync(_cpu, _gpu, _size * sizeof(_Tp), cudaMemcpyDeviceToHost,
-                    _stream);
+    cudaMemcpyAsync(_cpu, _gpu, _size * sizeof(_Tp), cudaMemcpyDeviceToHost, _stream);
 }
 
 //----------------------------------------------------------------------------//
@@ -316,8 +310,7 @@ async_malloc_and_memcpy(const _Tp* _cpu, uintmax_t _size, cudaStream_t _stream)
 {
     _Tp* _gpu;
     cudaMalloc((void**) &_gpu, _size * sizeof(_Tp));
-    cudaMemcpyAsync(_gpu, _cpu, _size * sizeof(_Tp), cudaMemcpyHostToDevice,
-                    _stream);
+    cudaMemcpyAsync(_gpu, _cpu, _size * sizeof(_Tp), cudaMemcpyHostToDevice, _stream);
     return _gpu;
 }
 
@@ -325,8 +318,7 @@ async_malloc_and_memcpy(const _Tp* _cpu, uintmax_t _size, cudaStream_t _stream)
 
 template <typename _Tp, uintmax_t _Align = 512>
 aligned_pointer<_Tp, _Align>
-aligned_async_malloc_and_memcpy(const _Tp* _cpu, uintmax_t _size,
-                                cudaStream_t _stream)
+aligned_async_malloc_and_memcpy(const _Tp* _cpu, uintmax_t _size, cudaStream_t _stream)
 {
     aligned_pointer<_Tp, _Align> _gpu(_size);
 
@@ -334,8 +326,7 @@ aligned_async_malloc_and_memcpy(const _Tp* _cpu, uintmax_t _size,
     _gpu.allocate();
 
     // copy "_size" values from CPU to GPU
-    cudaMemcpyAsync(_gpu.ptr, _cpu, _size * sizeof(_Tp), cudaMemcpyHostToDevice,
-                    _stream);
+    cudaMemcpyAsync(_gpu.ptr, _cpu, _size * sizeof(_Tp), cudaMemcpyHostToDevice, _stream);
 
     // zero initialize extra padding
     cudaMemsetAsync(_gpu.ptr + _size, 0, _gpu.padding * sizeof(_Tp), _stream);
@@ -350,8 +341,7 @@ template <typename _Tp>
 void
 async_memcpy_and_free(_Tp* _cpu, _Tp* _gpu, uintmax_t size, cudaStream_t stream)
 {
-    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost,
-                    stream);
+    cudaMemcpyAsync(_cpu, _gpu, size * sizeof(_Tp), cudaMemcpyDeviceToHost, stream);
     cudaFree(_gpu);
 }
 
@@ -467,8 +457,8 @@ compute_sum(farray_t& data);
 //----------------------------------------------------------------------------//
 
 float
-compute_sum_host(aligned_ptr<float>& data, cudaStream_t stream,
-                 bool with_thrust, float* buffer);
+compute_sum_host(aligned_ptr<float>& data, cudaStream_t stream, bool with_thrust,
+                 float* buffer);
 
 //----------------------------------------------------------------------------//
 

@@ -22,20 +22,18 @@
 #ifndef ThreadLocalStatic_hh_
 #define ThreadLocalStatic_hh_
 
-#if(defined(__MACH__) && defined(__clang__) && defined(__x86_64__)) ||         \
+#if(defined(__MACH__) && defined(__clang__) && defined(__x86_64__)) ||                   \
     (defined(__linux__) && defined(__clang__))
 #    define ThreadLocalStatic static thread_local
 #    define ThreadLocal thread_local
 
-#elif((defined(__linux__) || defined(__MACH__)) &&                             \
-      !defined(__INTEL_COMPILER) && defined(__GNUC__) &&                       \
-      (__GNUC__ >= 4 && __GNUC_MINOR__ < 9))
+#elif((defined(__linux__) || defined(__MACH__)) && !defined(__INTEL_COMPILER) &&         \
+      defined(__GNUC__) && (__GNUC__ >= 4 && __GNUC_MINOR__ < 9))
 #    define ThreadLocalStatic static __thread
 #    define ThreadLocal thread_local
 
-#elif((defined(__linux__) || defined(__MACH__)) &&                             \
-          !defined(__INTEL_COMPILER) && defined(__GNUC__) &&                   \
-          (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9) ||                            \
+#elif((defined(__linux__) || defined(__MACH__)) && !defined(__INTEL_COMPILER) &&         \
+          defined(__GNUC__) && (__GNUC__ >= 4 && __GNUC_MINOR__ >= 9) ||                 \
       __GNUC__ >= 5)
 #    define ThreadLocalStatic static thread_local
 #    define ThreadLocal thread_local

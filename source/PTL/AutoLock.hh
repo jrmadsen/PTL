@@ -144,7 +144,7 @@
 ///
 /***
 
-//============================================================================//
+//======================================================================================//
 
 typedef std::unique_lock<std::mutex> unique_lock_t;
 // functions for casting AutoLock to std::unique_lock to demonstrate
@@ -152,7 +152,7 @@ typedef std::unique_lock<std::mutex> unique_lock_t;
 void as_unique_lock(unique_lock_t* lock) { lock->lock(); }
 void as_unique_unlock(unique_lock_t* lock) { lock->unlock(); }
 
-//============================================================================//
+//======================================================================================//
 
 void run(const uint64_t& n)
 {
@@ -173,7 +173,7 @@ void run(const uint64_t& n)
     std::cout << "Running iteration " << n << "..." << std::endl;
 }
 
-//============================================================================//
+//======================================================================================//
 // execute some work
 template <typename thread_type = std::thread>
 void exec(uint64_t n)
@@ -225,7 +225,7 @@ void exec(uint64_t n)
     threads.clear();
 }
 
-//============================================================================//
+//======================================================================================//
 
 int main()
 {
@@ -254,8 +254,7 @@ int main()
 // Note: Note that TemplateAutoLock by itself is not thread-safe and
 //       cannot be shared among threads due to the locked switch
 //
-template <typename _Mutex_t>
-class TemplateAutoLock : public std::unique_lock<_Mutex_t>
+template <typename _Mutex_t> class TemplateAutoLock : public std::unique_lock<_Mutex_t>
 {
 public:
     //------------------------------------------------------------------------//
@@ -286,9 +285,8 @@ public:
     // _timeout_duration has elapsed or the lock is acquired, whichever comes
     // first. May block for longer than _timeout_duration.
     template <typename Rep, typename Period>
-    TemplateAutoLock(
-        mutex_type&                               _mutex,
-        const std::chrono::duration<Rep, Period>& _timeout_duration)
+    TemplateAutoLock(mutex_type&                               _mutex,
+                     const std::chrono::duration<Rep, Period>& _timeout_duration)
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
@@ -300,9 +298,8 @@ public:
     // been reached or the lock is acquired, whichever comes first. May block
     // for longer than until _timeout_time has been reached.
     template <typename Clock, typename Duration>
-    TemplateAutoLock(
-        mutex_type&                                     _mutex,
-        const std::chrono::time_point<Clock, Duration>& _timeout_time)
+    TemplateAutoLock(mutex_type&                                     _mutex,
+                     const std::chrono::time_point<Clock, Duration>& _timeout_time)
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
@@ -361,21 +358,21 @@ private:
 #define _is_recur_mutex(_Tp) (std::is_same<_Tp, RecursiveMutex>::value)
 #define _is_other_mutex(_Tp) (!_is_stand_mutex(_Tp) && !_is_recur_mutex(_Tp))
 
-    template <typename _Tp = _Mutex_t,
+    template <typename _Tp                                             = _Mutex_t,
               typename std::enable_if<_is_stand_mutex(_Tp), int>::type = 0>
     std::string GetTypeString()
     {
         return "AutoLock<Mutex>";
     }
 
-    template <typename _Tp = _Mutex_t,
+    template <typename _Tp                                             = _Mutex_t,
               typename std::enable_if<_is_recur_mutex(_Tp), int>::type = 0>
     std::string GetTypeString()
     {
         return "AutoLock<RecursiveMutex>";
     }
 
-    template <typename _Tp = _Mutex_t,
+    template <typename _Tp                                             = _Mutex_t,
               typename std::enable_if<_is_other_mutex(_Tp), int>::type = 0>
     std::string GetTypeString()
     {
@@ -428,8 +425,7 @@ private:
     // _timeout_duration has elapsed or the lock is acquired, whichever comes
     // first. May block for longer than _timeout_duration.
     template <typename Rep, typename Period>
-    void _lock_deferred(
-        const std::chrono::duration<Rep, Period>& _timeout_duration)
+    void _lock_deferred(const std::chrono::duration<Rep, Period>& _timeout_duration)
     {
         try
         {
@@ -447,8 +443,7 @@ private:
     // been reached or the lock is acquired, whichever comes first. May block
     // for longer than until _timeout_time has been reached.
     template <typename Clock, typename Duration>
-    void _lock_deferred(
-        const std::chrono::time_point<Clock, Duration>& _timeout_time)
+    void _lock_deferred(const std::chrono::time_point<Clock, Duration>& _timeout_time)
     {
         try
         {
@@ -475,8 +470,7 @@ private:
              << "If the app is terminating, Tasking failed to "
              << "delete an allocated resource and a Tasking destructor is "
              << "being called after the statics were destroyed. \n\t--> "
-             << "Exception: [code: " << e.code() << "] caught: " << e.what()
-             << std::endl;
+             << "Exception: [code: " << e.code() << "] caught: " << e.what() << std::endl;
 #else
         suppress_unused_variable(e);
 #endif

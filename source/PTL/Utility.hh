@@ -32,7 +32,7 @@
 #include <sstream>
 #include <string>
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 // use this function to get rid of "unused parameter" warnings
 //
 template <typename _Tp, typename... _Args>
@@ -41,11 +41,12 @@ ConsumeParameters(_Tp, _Args...)
 {
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 class EnvSettings
 {
 public:
+    typedef std::mutex                        mutex_t;
     typedef std::string                       string_t;
     typedef std::multimap<string_t, string_t> env_map_t;
     typedef std::pair<string_t, string_t>     env_pair_t;
@@ -62,13 +63,13 @@ public:
     {
         std::stringstream ss;
         ss << std::boolalpha << val;
-        static std::mutex _mtx;
-        _mtx.lock();
+        m_mutex.lock();
         m_env.insert(env_pair_t(env_id, ss.str()));
-        _mtx.unlock();
+        m_mutex.unlock();
     }
 
     const env_map_t& get() const { return m_env; }
+    mutex_t&         mutex() const { return m_mutex; }
 
     friend std::ostream& operator<<(std::ostream& os, const EnvSettings& env)
     {
@@ -77,21 +78,24 @@ public:
         filler << std::setw(90) << "";
         std::stringstream ss;
         ss << filler.str() << "\n# Environment settings:\n";
+        env.mutex().lock();
         for(const auto& itr : env.get())
         {
             ss << "# " << std::setw(35) << std::right << itr.first << "\t = \t"
                << std::left << itr.second << "\n";
         }
+        env.mutex().unlock();
         ss << filler.str();
         os << ss.str() << std::endl;
         return os;
     }
 
 private:
-    env_map_t m_env;
+    env_map_t       m_env;
+    mutable mutex_t m_mutex;
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 //  use this function to get an environment variable setting +
 //  a default if not defined, e.g.
 //      int num_threads =
@@ -120,7 +124,7 @@ GetEnv(const std::string& env_id, _Tp _default = _Tp())
     return _default;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 //  use this function to get an environment variable setting +
 //  a default if not defined, e.g.
 //      int num_threads =
@@ -156,7 +160,7 @@ GetEnv(const std::string& env_id, bool _default)
     return _default;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 //  use this function to get an environment variable setting +
 //  a default if not defined and a message about the setting, e.g.
 //      int num_threads =
@@ -188,7 +192,7 @@ GetEnv(const std::string& env_id, _Tp _default, const std::string& msg)
     return _default;
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 inline void
 PrintEnv(std::ostream& os = std::cout)
@@ -196,6 +200,6 @@ PrintEnv(std::ostream& os = std::cout)
     os << (*EnvSettings::GetInstance());
 }
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #endif /* UTILITY_HH_ */

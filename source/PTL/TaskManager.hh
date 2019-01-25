@@ -44,7 +44,7 @@
 #include <cstdint>
 #include <iomanip>
 
-//============================================================================//
+//======================================================================================//
 
 class TaskManager
 {
@@ -160,7 +160,7 @@ public:
         typedef PackagedTask<_Ret, _Ret, _Args...> task_type;
         typedef std::shared_ptr<task_type>         task_pointer;
 
-        task_pointer _ptask(new task_type(func, std::forward<_Args>(args)...));
+        task_pointer      _ptask(new task_type(func, std::forward<_Args>(args)...));
         std::future<_Ret> _f = _ptask->get_future();
         m_pool->add_task(_ptask);
         return _f;
@@ -189,13 +189,12 @@ public:
         typedef Task<_Ret, _Arg, _Args...> task_type;
         typedef std::shared_ptr<task_type> task_pointer;
 
-        return tg.store(task_pointer(
-            new task_type(tg, func, std::forward<_Args>(args)...)));
+        return tg.store(
+            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...)));
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func>
-    std::shared_ptr<Task<_Ret, _Arg>> wrap(TaskGroup<_Ret, _Arg>& tg,
-                                           _Func                  func)
+    std::shared_ptr<Task<_Ret, _Arg>> wrap(TaskGroup<_Ret, _Arg>& tg, _Func func)
     {
         typedef Task<_Ret, _Arg>           task_type;
         typedef std::shared_ptr<task_type> task_pointer;
@@ -213,8 +212,8 @@ public:
         typedef Task<_Ret, _Arg, _Args...> task_type;
         typedef std::shared_ptr<task_type> task_pointer;
 
-        m_pool->add_task(tg.store(task_pointer(
-            new task_type(tg, func, std::forward<_Args>(args)...))));
+        m_pool->add_task(tg.store(
+            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func>
@@ -233,13 +232,12 @@ public:
         typedef std::shared_ptr<task_type> task_pointer;
 
         if(m_pool->query_create_task())
-            m_pool->add_task(tg.store(task_pointer(
-                new task_type(tg, func, std::forward<_Args>(args)...))));
+            m_pool->add_task(tg.store(
+                task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
         else
         {
-            PackagedTask<_Ret, _Arg, _Args...> _ptask(
-                func, std::forward<_Args>(args)...);
-            auto _f = _ptask.get_future();
+            PackagedTask<_Ret, _Arg, _Args...> _ptask(func, std::forward<_Args>(args)...);
+            auto                               _f = _ptask.get_future();
             tg.add(std::move(_f));
             _ptask();
         }
@@ -266,8 +264,8 @@ public:
         typedef std::shared_ptr<task_type> task_pointer;
 
         if(m_pool->query_create_task())
-            m_pool->add_task(tg.store(task_pointer(
-                new task_type(tg, func, std::forward<_Args>(args)...))));
+            m_pool->add_task(tg.store(
+                task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
         else
             func(std::forward<_Args>(args)...);
     }
@@ -289,19 +287,18 @@ public:
     // public wrap functions using TBB tasks
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    std::shared_ptr<TBBTask<_Ret, _Arg, _Args...>> wrap(
-        TBBTaskGroup<_Ret, _Arg>& tg, _Func func, _Args... args)
+    std::shared_ptr<TBBTask<_Ret, _Arg, _Args...>> wrap(TBBTaskGroup<_Ret, _Arg>& tg,
+                                                        _Func func, _Args... args)
     {
         typedef TBBTask<_Ret, _Arg, _Args...> task_type;
         typedef std::shared_ptr<task_type>    task_pointer;
 
-        return tg.store(task_pointer(
-            new task_type(tg, func, std::forward<_Args>(args)...)));
+        return tg.store(
+            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...)));
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func>
-    std::shared_ptr<TBBTask<_Ret, _Arg>> wrap(TBBTaskGroup<_Ret, _Arg>& tg,
-                                              _Func                     func)
+    std::shared_ptr<TBBTask<_Ret, _Arg>> wrap(TBBTaskGroup<_Ret, _Arg>& tg, _Func func)
     {
         typedef TBBTask<_Ret, _Arg>        task_type;
         typedef std::shared_ptr<task_type> task_pointer;
@@ -318,8 +315,8 @@ public:
         typedef TBBTask<_Ret, _Arg, _Args...> task_type;
         typedef std::shared_ptr<task_type>    task_pointer;
 
-        m_pool->add_task(tg.store(task_pointer(
-            new task_type(tg, func, std::forward<_Args>(args)...))));
+        m_pool->add_task(tg.store(
+            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
     }
     //------------------------------------------------------------------------//
     template <typename _Ret, typename _Arg, typename _Func>
@@ -346,6 +343,6 @@ private:
     static TaskManager*& fgInstance();
 };
 
-//============================================================================//
+//======================================================================================//
 
 #endif

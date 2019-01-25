@@ -28,7 +28,7 @@
 #include "PTL/VUserTaskQueue.hh"
 #include "PTL/TaskRunManager.hh"
 
-//============================================================================//
+//======================================================================================//
 
 VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)
 : m_workers(nworkers)
@@ -36,18 +36,17 @@ VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)
     if(m_workers < 0)
     {
         TaskRunManager* rm = TaskRunManager::GetMasterRunManager();
-        m_workers          = (rm)
-                        ? rm->GetNumberOfThreads() + 1  // number of threads + 1
-                        : (2 * std::thread::hardware_concurrency()) + 1;
+        m_workers          = (rm) ? rm->GetNumberOfThreads() + 1  // number of threads + 1
+                         : (2 * std::thread::hardware_concurrency()) + 1;
         // hyperthreads + 1
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 VUserTaskQueue::~VUserTaskQueue() {}
 
-//============================================================================//
+//======================================================================================//
 /*
 intmax_t& VUserTaskQueue::ThisThreadNumber() const
 {
@@ -56,4 +55,4 @@ intmax_t& VUserTaskQueue::ThisThreadNumber() const
     return _tid;
 }
 */
-//============================================================================//
+//======================================================================================//

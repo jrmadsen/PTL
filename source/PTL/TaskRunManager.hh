@@ -38,7 +38,7 @@
 class ThreadPool;
 class TaskManager;
 
-//============================================================================//
+//======================================================================================//
 
 class TaskRunManager
 {
@@ -84,8 +84,7 @@ public:  // with description
     static TaskRunManager*& GetMasterRunManager(bool useTBB = false);
 
 private:
-    static TaskRunManager*& GetPrivateMasterRunManager(bool init,
-                                                       bool useTBB = false);
+    static TaskRunManager*& GetPrivateMasterRunManager(bool init, bool useTBB = false);
 
 protected:
     // Barriers: synch points between master and workers
@@ -99,8 +98,7 @@ protected:
     RunTaskGroupTBB* workTaskGroupTBB;
 
 public:
-    virtual void TiMemoryReport(std::string fname       = "",
-                                bool        echo_stdout = true) const;
+    virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
 };
 
 #endif  // TaskRunManager_h

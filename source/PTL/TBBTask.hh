@@ -41,14 +41,12 @@
 #    include <functional>
 #    include <stdexcept>
 
-#    define _forward_args_t(_Args, _args)                                      \
-        std::forward<_Args>(std::move(_args))...
+#    define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
 
-//============================================================================//
+//======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <typename _Ret, typename _Arg, typename... _Args>
-class TBBTask : public VTask
+template <typename _Ret, typename _Arg, typename... _Args> class TBBTask : public VTask
 {
 public:
     typedef TBBTask<_Ret, _Arg, _Args...>                this_type;
@@ -113,8 +111,7 @@ private:
     static allocator_type* get_allocator()
     {
         typedef std::unique_ptr<allocator_type> allocator_ptr;
-        static thread_local allocator_ptr       _allocator =
-            allocator_ptr(new allocator_type);
+        static thread_local allocator_ptr _allocator = allocator_ptr(new allocator_type);
         return _allocator.get();
     }
 
@@ -122,7 +119,7 @@ private:
     packaged_task_type m_ptask;
 };
 
-//============================================================================//
+//======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
 template <> class TBBTask<void, void> : public VTask
@@ -189,8 +186,7 @@ private:
     static allocator_type* get_allocator()
     {
         typedef std::unique_ptr<allocator_type> allocator_ptr;
-        static thread_local allocator_ptr       _allocator =
-            allocator_ptr(new allocator_type);
+        static thread_local allocator_ptr _allocator = allocator_ptr(new allocator_type);
         return _allocator.get();
     }
 
@@ -198,14 +194,14 @@ private:
     packaged_task_type m_ptask;
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 #else
 
 template <typename _Tp, typename _Arg = _Tp> using TBBTask = Task<_Tp, _Arg>;
 
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 // don't pollute
 #undef _forward_args_t

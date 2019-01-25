@@ -41,7 +41,7 @@
 #    include <gperftools/profiler.h>
 #endif
 
-//============================================================================//
+//======================================================================================//
 
 inline intmax_t
 ncores()
@@ -49,21 +49,22 @@ ncores()
     return static_cast<intmax_t>(Thread::hardware_concurrency());
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::thread_id_map_t    ThreadPool::f_thread_ids;
 ThreadPool::thread_index_map_t ThreadPool::f_thread_indexes;
 
-//============================================================================//
+//======================================================================================//
 
 namespace state
 {
 static const int STARTED = 0;
-static const int STOPPED = 1;
-static const int NONINIT = 2;
+static const int PARTIAL = 1;
+static const int STOPPED = 2;
+static const int NONINIT = 3;
 }
 
-//============================================================================//
+//======================================================================================//
 
 namespace
 {
@@ -74,11 +75,11 @@ thread_data()
 }
 }
 
-//============================================================================//
+//======================================================================================//
 
 bool ThreadPool::f_use_tbb = false;
 
-//============================================================================//
+//======================================================================================//
 // static member function that calls the member function we want the thread to
 // run
 void
@@ -91,13 +92,12 @@ ThreadPool::start_thread(ThreadPool* tp)
         f_thread_indexes[_idx]                   = std::this_thread::get_id();
         // tp->get_queue()->ThisThreadNumber() = _idx;
     }
-    static thread_local std::unique_ptr<ThreadData> _unique_data(
-        new ThreadData(tp));
+    static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
     thread_data() = _unique_data.get();
     tp->execute_thread(thread_data()->current_queue);
 }
 
-//============================================================================//
+//======================================================================================//
 // static member function that initialized tbb library
 void
 ThreadPool::set_use_tbb(bool enable)
@@ -109,7 +109,7 @@ ThreadPool::set_use_tbb(bool enable)
 #endif
 }
 
-//============================================================================//
+//======================================================================================//
 
 uintmax_t
 ThreadPool::GetThisThreadID()
@@ -127,7 +127,7 @@ ThreadPool::GetThisThreadID()
     return f_thread_ids[_tid];
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
                        bool _use_affinity, affinity_func_t _affinity_func)
@@ -160,7 +160,7 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
     this->initialize_threadpool(pool_size);
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::~ThreadPool()
 {
@@ -191,7 +191,7 @@ ThreadPool::~ThreadPool()
     // delete m_task_queue;
 }
 
-//============================================================================//
+//======================================================================================//
 
 bool
 ThreadPool::is_initialized() const
@@ -199,7 +199,7 @@ ThreadPool::is_initialized() const
     return !(m_pool_state.load() == state::NONINIT);
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 ThreadPool::resize(size_type _n)
@@ -210,7 +210,7 @@ ThreadPool::resize(size_type _n)
     m_task_queue->resize(static_cast<intmax_t>(_n));
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 ThreadPool::set_affinity(intmax_t i)
@@ -226,8 +226,8 @@ ThreadPool::set_affinity(intmax_t i)
         intmax_t     _pin          = m_affinity_func(i);
         if(m_verbose > 0)
         {
-            std::cout << "Setting pin affinity for thread " << _thread->get_id()
-                      << " to " << _pin << std::endl;
+            std::cout << "Setting pin affinity for thread " << _thread->get_id() << " to "
+                      << _pin << std::endl;
         }
         Threading::SetPinAffinity(_pin, native_thread);
     }
@@ -238,7 +238,7 @@ ThreadPool::set_affinity(intmax_t i)
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::size_type
 ThreadPool::initialize_threadpool(size_type proposed_size)
@@ -316,15 +316,15 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             while(stop_thread() > proposed_size)
                 ;
             if(m_verbose > 0)
-                std::cout << "ThreadPool initialized with " << m_pool_size
-                          << " threads." << std::endl;
+                std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
+                          << std::endl;
             return m_pool_size;
         }
         else if(m_pool_size == proposed_size)
         {
             if(m_verbose > 0)
-                std::cout << "ThreadPool initialized with " << m_pool_size
-                          << " threads." << std::endl;
+                std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
+                          << std::endl;
             return m_pool_size;
         }
     }
@@ -375,21 +375,20 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     {
         std::stringstream ss;
         ss << "ThreadPool::initialize_threadpool - boolean is_joined vector "
-           << "is a different size than threads vector: " << m_is_joined.size()
-           << " vs. " << m_main_threads.size()
-           << " (tid: " << std::this_thread::get_id() << ")";
+           << "is a different size than threads vector: " << m_is_joined.size() << " vs. "
+           << m_main_threads.size() << " (tid: " << std::this_thread::get_id() << ")";
 
         throw std::runtime_error(ss.str());
     }
 
     if(m_verbose > 0)
-        std::cout << "ThreadPool initialized with " << m_pool_size
-                  << " threads." << std::endl;
+        std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
+                  << std::endl;
 
     return m_main_threads.size();
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::size_type
 ThreadPool::destroy_threadpool()
@@ -434,9 +433,8 @@ ThreadPool::destroy_threadpool()
     {
         std::stringstream ss;
         ss << "   ThreadPool::destroy_thread_pool - boolean is_joined vector "
-           << "is a different size than threads vector: " << m_is_joined.size()
-           << " vs. " << m_main_threads.size()
-           << " (tid: " << std::this_thread::get_id() << ")";
+           << "is a different size than threads vector: " << m_is_joined.size() << " vs. "
+           << m_main_threads.size() << " (tid: " << std::this_thread::get_id() << ")";
 
         throw std::runtime_error(ss.str());
     }
@@ -491,7 +489,7 @@ ThreadPool::destroy_threadpool()
     return 0;
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::size_type
 ThreadPool::stop_thread()
@@ -519,8 +517,7 @@ ThreadPool::stop_thread()
         // remove from stopped
         m_stop_threads.pop_back();
         // remove from main
-        for(auto itr = m_main_threads.begin(); itr != m_main_threads.end();
-            ++itr)
+        for(auto itr = m_main_threads.begin(); itr != m_main_threads.end(); ++itr)
             if((*itr)->get_id() == t->get_id())
             {
                 m_main_threads.erase(itr);
@@ -536,7 +533,7 @@ ThreadPool::stop_thread()
     return m_main_threads.size();
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 ThreadPool::run(task_pointer task)
@@ -549,7 +546,7 @@ ThreadPool::run(task_pointer task)
     (*task)();
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 ThreadPool::run_on_this(task_pointer task)
@@ -569,7 +566,7 @@ ThreadPool::run_on_this(task_pointer task)
     return 0;
 }
 
-//============================================================================//
+//======================================================================================//
 
 int
 ThreadPool::insert(task_pointer task, int bin)
@@ -582,7 +579,7 @@ ThreadPool::insert(task_pointer task, int bin)
     return ibin;
 }
 
-//============================================================================//
+//======================================================================================//
 
 ThreadPool::size_type
 ThreadPool::add_task(task_pointer task, int bin)
@@ -598,7 +595,7 @@ ThreadPool::add_task(task_pointer task, int bin)
     return static_cast<size_type>(insert(task, bin));
 }
 
-//============================================================================//
+//======================================================================================//
 
 intmax_t
 ThreadPool::GetEnvNumThreads(intmax_t _default)
@@ -606,7 +603,7 @@ ThreadPool::GetEnvNumThreads(intmax_t _default)
     return GetEnv<intmax_t>("PTL_NUM_THREADS", _default);
 }
 
-//============================================================================//
+//======================================================================================//
 
 void
 ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
@@ -614,6 +611,9 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 #if defined(PTL_USE_GPERF)
     ProfilerRegisterThread();
 #endif
+
+    // how long the thread waits on condition variable
+    // static int wait_time = GetEnv<int>("PTL_POOL_WAIT_TIME", 5);
 
     ++(*m_thread_awake);
 
@@ -650,28 +650,40 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //    actually true!
         while(_task_queue->empty())
         {
+            auto _state = [&]() { return static_cast<int>(m_pool_state.load()); };
+            auto _size  = [&]() { return _task_queue->true_size(); };
+            auto _empty = [&]() { return _task_queue->empty(); };
+            auto _wake  = [&]() { return (!_empty() || _size() > 0 || _state() > 0); };
+
             // If the thread was waked to notify process shutdown, return from
             // here
-            if(m_pool_state.load() == state::STOPPED)
+            auto _pool_state = _state();
+            if(_pool_state > 0)
             {
-                // has exited.
-                if(_task_lock.owns_lock())
-                    _task_lock.unlock();
-                return;
-            }
-
-            // single thread stoppage
-            if(m_is_stopped.size() > 0)
-            {
-                if(!_task_lock.owns_lock())
-                    _task_lock.lock();
-                if(m_is_stopped.back())
-                    m_stop_threads.push_back(get_thread(tid));
-                m_is_stopped.pop_back();
-                if(_task_lock.owns_lock())
-                    _task_lock.unlock();
-                // exit entire function
-                return;
+                // stop whole pool
+                if(_pool_state == state::STOPPED)
+                {
+                    if(_task_lock.owns_lock())
+                        _task_lock.unlock();
+                    return;
+                }
+                // single thread stoppage
+                else if(_pool_state == state::PARTIAL)
+                {
+                    if(!_task_lock.owns_lock())
+                        _task_lock.lock();
+                    if(m_is_stopped.size() > 0 && m_is_stopped.back())
+                    {
+                        m_stop_threads.push_back(get_thread(tid));
+                        m_is_stopped.pop_back();
+                        if(_task_lock.owns_lock())
+                            _task_lock.unlock();
+                        // exit entire function
+                        return;
+                    }
+                    if(_task_lock.owns_lock())
+                        _task_lock.unlock();
+                }
             }
 
             if(_task_queue->true_size() == 0)
@@ -685,11 +697,8 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 
                 // Wait until there is a task in the queue
                 // Unlocks mutex while waiting, then locks it back when signaled
-                // use long duration wait_for to keep overhead low but
-                // spuriously wake up and check
-                //m_task_cond.wait(_task_lock, [&]() { return _task_queue->true_size() != 0; });
-                while(_task_queue->true_size() == 0)
-                    m_task_cond.wait_for(_task_lock, std::chrono::seconds(2));
+                // use lambda to control waking
+                m_task_cond.wait(_task_lock, _wake);
 
                 // unlock if owned
                 if(_task_lock.owns_lock())
@@ -728,4 +737,4 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     }
 }
 
-//============================================================================//
+//======================================================================================//

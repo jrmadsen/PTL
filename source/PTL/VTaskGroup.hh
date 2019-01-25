@@ -130,10 +130,7 @@ public:
 
     //------------------------------------------------------------------------//
     // get the number of join calls before clear
-    virtual uintmax_t get_clear_frequency() const
-    {
-        return m_clear_freq.load();
-    }
+    virtual uintmax_t get_clear_frequency() const { return m_clear_freq.load(); }
 
     //------------------------------------------------------------------------//
     // check if any tasks are still pending
@@ -175,7 +172,7 @@ protected:
     };
 };
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 inline VTaskGroup::task_pointer
 VTaskGroup::store(task_pointer ptr)
 {
@@ -186,6 +183,6 @@ VTaskGroup::store(task_pointer ptr)
     // return reference
     return vtask_list.back();
 }
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #endif

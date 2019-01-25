@@ -68,10 +68,8 @@ task_fibonacci(const uint64_t& n, const uint64_t& cutoff, TaskManager* taskMan)
         ++task_group_counter();
         if(n >= cutoff)
         {
-            taskMan->exec(
-                tg, [&]() { x = task_fibonacci(n - 1, cutoff, taskMan); });
-            taskMan->exec(
-                tg, [&]() { y = task_fibonacci(n - 2, cutoff, taskMan); });
+            taskMan->exec(tg, [&]() { x = task_fibonacci(n - 1, cutoff, taskMan); });
+            taskMan->exec(tg, [&]() { y = task_fibonacci(n - 2, cutoff, taskMan); });
         }
         else
         {
@@ -103,12 +101,11 @@ execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
 
     std::stringstream ss;
     if(verbose)
-        ss << cprefix << "Submitting " << num_iter
-           << " tasks computing \"fibonacci(" << n << ")\" to task manager "
+        ss << cprefix << "Submitting " << num_iter << " tasks computing \"fibonacci(" << n
+           << ")\" to task manager "
            << "(" << remaining << " iterations remaining)..." << std::flush;
 
-    TaskManager* taskManager =
-        TaskRunManager::GetMasterRunManager()->GetTaskManager();
+    TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
     Timer t;
     t.Start();
@@ -160,20 +157,19 @@ main(int argc, char** argv)
     setenv("NUM_TASKS", std::to_string(default_ntasks).c_str(), 0);
     setenv("NUM_TASK_GROUPS", std::to_string(default_tg).c_str(), 0);
 
-    rng_range = GetEnv<decltype(rng_range)>(
-        "RNG_RANGE", rng_range, "Setting RNG range to +/- this value");
+    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range,
+                                            "Setting RNG range to +/- this value");
     unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
                                            "Getting the number of threads");
-    uint64_t nfib =
-        GetEnv<uint64_t>("FIBONACCI", default_fib,
-                         "Setting the centerpoint of fib work distribution");
+    uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
+                                     "Setting the centerpoint of fib work distribution");
     uint64_t grainsize =
         GetEnv<uint64_t>("GRAINSIZE", numThreads,
                          "Dividing number of task into grain of this size");
-    uint64_t num_iter   = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
+    uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
                                          "Setting the number of total tasks");
-    uint64_t num_groups = GetEnv<uint64_t>("NUM_TASK_GROUPS", 4,
-                                           "Setting the number of task groups");
+    uint64_t num_groups =
+        GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
 
     cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_high);
     cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
@@ -203,8 +199,8 @@ main(int argc, char** argv)
     {
         fuint64_t fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
         uint64_t  fib_n     = fib_async.get();
-        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- "
-                  << rng_range << ") = " << fib_n << std::endl;
+        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- " << rng_range
+                  << ") = " << fib_n << std::endl;
         std::cout << std::endl;
     }
 
@@ -260,8 +256,7 @@ main(int argc, char** argv)
         // create the task group
         cpu_create(cpu_task_groups[i]);
         // submit task with first task group
-        execute_cpu_iterations(hwthreads, cpu_task_groups[i], 10, remaining,
-                               false);
+        execute_cpu_iterations(hwthreads, cpu_task_groups[i], 10, remaining, false);
     }
     //------------------------------------------------------------------------//
     // make sure all task groups finished (does join)
@@ -303,8 +298,7 @@ main(int argc, char** argv)
             // create the task group
             cpu_create(cpu_task_groups[i]);
             // submit task with first task group
-            execute_cpu_iterations(grainsize, cpu_task_groups[i], nfib,
-                                   remaining);
+            execute_cpu_iterations(grainsize, cpu_task_groups[i], nfib, remaining);
             // make sure all task groups finished (does join)
             append(cpu_results[i], cpu_task_groups[i]);
         }
@@ -345,8 +339,7 @@ main(int argc, char** argv)
          << ") = " << true_answer << endl;
 
     std::stringstream fibprefix;
-    fibprefix << "fibonacci(" << nfib << " +/- " << rng_range
-              << ") calculation time: ";
+    fibprefix << "fibonacci(" << nfib << " +/- " << rng_range << ") calculation time: ";
     int32_t _w = static_cast<int32_t>(fibprefix.str().length()) + 2;
 
     cout << prefix << std::setw(_w) << fibprefix.str() << "\t" << timer << endl;

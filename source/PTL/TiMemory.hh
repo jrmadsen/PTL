@@ -27,7 +27,7 @@
 
 #include "Globals.hh"
 
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 #ifdef PTL_USE_TIMEMORY
 
 #    include <timemory/timemory.hpp>
@@ -44,13 +44,13 @@ InitializeTiMemory()
 #else
 
 #    define TIMEMORY_AUTO_TIMER(str)
-#    define TIMEMORY_AUTO_TIMER_OBJ(str)                                       \
-        {                                                                      \
+#    define TIMEMORY_AUTO_TIMER_OBJ(str)                                                 \
+        {                                                                                \
         }
 
 #    define TIMEMORY_BASIC_AUTO_TIMER(str)
-#    define TIMEMORY_BASIC_AUTO_TIMER_OBJ(str)                                 \
-        {                                                                      \
+#    define TIMEMORY_BASIC_AUTO_TIMER_OBJ(str)                                           \
+        {                                                                                \
         }
 
 #    define TIMEMORY_DEBUG_BASIC_AUTO_TIMER(str)
@@ -62,6 +62,6 @@ InitializeTiMemory()
 }
 
 #endif
-//----------------------------------------------------------------------------//
+//--------------------------------------------------------------------------------------//
 
 #endif

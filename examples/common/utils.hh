@@ -164,9 +164,9 @@ struct Measurement
 
     friend std::ostream& operator<<(std::ostream& os, const Measurement& m)
     {
-        os << m.cutoff << ", " << m.num_task_groups << ", "
-           << (m.real / m.ncount) << ", " << (m.cpu / m.ncount) << ", "
-           << (m.cpu_per_thread / m.ncount) << ", " << (m.cpu_util / m.ncount);
+        os << m.cutoff << ", " << m.num_task_groups << ", " << (m.real / m.ncount) << ", "
+           << (m.cpu / m.ncount) << ", " << (m.cpu_per_thread / m.ncount) << ", "
+           << (m.cpu_util / m.ncount);
         return os;
     }
 };
@@ -198,8 +198,7 @@ get_seed()
 inline random_engine_t&
 get_engine()
 {
-    ThreadLocalStatic random_engine_t* _engine =
-        new random_engine_t(get_seed());
+    ThreadLocalStatic random_engine_t* _engine = new random_engine_t(get_seed());
     return (*_engine);
 }
 
@@ -209,8 +208,7 @@ template <typename _Tp = double>
 _Tp
 get_random()
 {
-    return std::generate_canonical<_Tp, std::numeric_limits<_Tp>::digits>(
-        get_engine());
+    return std::generate_canonical<_Tp, std::numeric_limits<_Tp>::digits>(get_engine());
 }
 
 //============================================================================//

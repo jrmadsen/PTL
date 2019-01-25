@@ -70,8 +70,7 @@ public:
     //      2. int - sub-queue to inserting into
     // return:
     //      int - subqueue inserted into
-    virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr,
-                                intmax_t subq = -1) = 0;
+    virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr, intmax_t subq = -1) = 0;
 
     // Overload this function to hold threads
     virtual void     Wait()               = 0;

@@ -121,9 +121,8 @@ TaskAllocatorPool::Grow()
     char*     last  = &start[(nelem - 1) * esize];
     for(char* p = start; p < last; p += esize)
     {
-        reinterpret_cast<PoolLink*>(p)->next =
-            reinterpret_cast<PoolLink*>(p + esize);
+        reinterpret_cast<PoolLink*>(p)->next = reinterpret_cast<PoolLink*>(p + esize);
     }
     reinterpret_cast<PoolLink*>(last)->next = nullptr;
-    head = reinterpret_cast<PoolLink*>(start);
+    head                                    = reinterpret_cast<PoolLink*>(start);
 }
