@@ -65,8 +65,7 @@
 // 21.08.95 P.Kent
 // 29.04.97 G.Cosmo Added timings for Windows/NT
 
-#ifndef TIMER_HH
-#define TIMER_HH
+#pragma once
 
 #ifndef WIN32
 #    include <sys/times.h>
@@ -126,5 +125,3 @@ std::ostream&
 operator<<(std::ostream& os, const Timer& t);
 
 #include "PTL/Timer.icc"
-
-#endif

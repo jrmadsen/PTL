@@ -23,8 +23,7 @@
 //  Author: Jonathan Madsen
 //  ---------------------------------------------------------------
 
-#ifndef g4usertaskqueue_hh_
-#define g4usertaskqueue_hh_
+#pragma once
 
 #include "PTL/Globals.hh"
 #include "PTL/Threading.hh"
@@ -88,7 +87,8 @@ public:
     virtual intmax_t GetThreadBin() const override;
 
 protected:
-    template <typename _Tp> class binner
+    template <typename _Tp>
+    class binner
     {
     public:
         binner(_Tp tot, _Tp n)
@@ -195,5 +195,3 @@ UserTaskQueue::true_size() const
 }
 
 //======================================================================================//
-
-#endif

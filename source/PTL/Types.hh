@@ -19,8 +19,7 @@
 // Tasking native types
 //
 
-#ifndef TYPES_HH
-#define TYPES_HH
+#pragma once
 
 #ifdef WIN32
 // Disable warning C4786 on WIN32 architectures:
@@ -69,5 +68,3 @@
 // persistency to define fake default constructors
 //
 class __void__;
-
-#endif /* TYPES_HH */

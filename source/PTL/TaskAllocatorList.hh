@@ -26,8 +26,7 @@
 //
 // ------------------------------------------------------------
 
-#ifndef TaskAllocatorList_h
-#define TaskAllocatorList_h 1
+#pragma once
 
 #include "PTL/Globals.hh"
 #include "PTL/ThreadLocalStatic.hh"
@@ -54,5 +53,3 @@ private:
     static TaskAllocatorList*&      fAllocatorList();
     std::vector<TaskAllocatorBase*> fList;
 };
-
-#endif

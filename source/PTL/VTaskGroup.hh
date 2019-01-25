@@ -28,8 +28,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef VTaskGroup_hh_
-#define VTaskGroup_hh_
+#pragma once
 
 #include "PTL/AutoLock.hh"
 #include "PTL/Threading.hh"
@@ -51,8 +50,10 @@ class ThreadPool;
 class VTaskGroup
 {
 public:
-    template <typename _Tp> using container_type = std::list<_Tp>;
-    template <typename _Tp> using list_type      = std::list<_Tp>;
+    template <typename _Tp>
+    using container_type = std::list<_Tp>;
+    template <typename _Tp>
+    using list_type = std::list<_Tp>;
     template <typename _Key, typename _Mapped>
     using map_type = std::unordered_map<_Key, _Mapped>;
 
@@ -173,6 +174,7 @@ protected:
 };
 
 //--------------------------------------------------------------------------------------//
+
 inline VTaskGroup::task_pointer
 VTaskGroup::store(task_pointer ptr)
 {
@@ -183,6 +185,5 @@ VTaskGroup::store(task_pointer ptr)
     // return reference
     return vtask_list.back();
 }
-//--------------------------------------------------------------------------------------//
 
-#endif
+//--------------------------------------------------------------------------------------//

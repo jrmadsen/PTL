@@ -19,8 +19,7 @@
 // Global utility functions
 //
 
-#ifndef UTILITY_HH_
-#define UTILITY_HH_ 1
+#pragma once
 
 #include "PTL/Types.hh"
 
@@ -59,7 +58,8 @@ public:
     }
 
 public:
-    template <typename _Tp> void insert(const std::string& env_id, _Tp val)
+    template <typename _Tp>
+    void insert(const std::string& env_id, _Tp val)
     {
         std::stringstream ss;
         ss << std::boolalpha << val;
@@ -201,5 +201,3 @@ PrintEnv(std::ostream& os = std::cout)
 }
 
 //--------------------------------------------------------------------------------------//
-
-#endif /* UTILITY_HH_ */

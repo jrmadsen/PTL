@@ -59,7 +59,10 @@ TaskGroup<_Tp, _Arg>::TaskGroup(int _freq, _Func _join, ThreadPool* _tp)
 
 //======================================================================================//
 
-template <typename _Tp, typename _Arg> TaskGroup<_Tp, _Arg>::~TaskGroup() {}
+template <typename _Tp, typename _Arg>
+TaskGroup<_Tp, _Arg>::~TaskGroup()
+{
+}
 
 //======================================================================================//
 

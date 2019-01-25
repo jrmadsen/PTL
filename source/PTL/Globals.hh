@@ -17,8 +17,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef GLOBALS_HH
-#define GLOBALS_HH
+#pragma once
 
 #ifndef FALSE
 #    define FALSE 0
@@ -35,5 +34,3 @@
 
 // Global utility functions
 #include "PTL/Utility.hh"
-
-#endif /* GLOBALS_HH */

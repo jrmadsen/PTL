@@ -23,11 +23,7 @@
 //
 // This file defines types and macros used to expose Tasking threading model.
 
-// ---------------------------------------------------------------
-// Author: Andrea Dotti (15 Feb 2013): First Implementation
-// ---------------------------------------------------------------
-#ifndef Threading_hh
-#define Threading_hh
+#pragma once
 
 #include "PTL/Globals.hh"
 #include "PTL/Types.hh"
@@ -44,9 +40,12 @@
 #define THREADSLEEP(tick) std::this_thread::sleep_for(std::chrono::seconds(tick))
 
 // will be used in the future when migrating threading to task-based style
-template <typename _Tp> using Future       = std::future<_Tp>;
-template <typename _Tp> using SharedFuture = std::shared_future<_Tp>;
-template <typename _Tp> using Promise      = std::promise<_Tp>;
+template <typename _Tp>
+using Future = std::future<_Tp>;
+template <typename _Tp>
+using SharedFuture = std::shared_future<_Tp>;
+template <typename _Tp>
+using Promise = std::promise<_Tp>;
 
 //
 //          NOTE ON Tasking SERIAL BUILDS AND MUTEX/UNIQUE_LOCK
@@ -94,9 +93,12 @@ using namespace std::this_thread;
 
 // will be used in the future when migrating threading to task-based style
 // and are currently used in unit tests
-template <typename _Tp> using Promise      = std::promise<_Tp>;
-template <typename _Tp> using Future       = std::future<_Tp>;
-template <typename _Tp> using SharedFuture = std::shared_future<_Tp>;
+template <typename _Tp>
+using Promise = std::promise<_Tp>;
+template <typename _Tp>
+using Future = std::future<_Tp>;
+template <typename _Tp>
+using SharedFuture = std::shared_future<_Tp>;
 
 // Some useful types
 typedef void* ThreadFunReturnType;
@@ -231,5 +233,3 @@ WorkerThreadJoinsPool();
 int
 GetNumberOfRunningWorkerThreads();
 }
-
-#endif  // Threading_hh

@@ -28,8 +28,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef ThreadPool_hh_
-#define ThreadPool_hh_
+#pragma once
 
 // C
 #include <cstdint>
@@ -118,7 +117,8 @@ public:
     size_type add_task(task_pointer task, int bin = -1);
     // size_type add_thread_task(ThreadId id, task_pointer&& task);
     // add a generic container with iterator
-    template <typename _List_t> size_type add_tasks(_List_t&);
+    template <typename _List_t>
+    size_type add_tasks(_List_t&);
 
     Thread* get_thread(size_type _n) const;
     Thread* get_thread(std::thread::id id) const;
@@ -345,5 +345,3 @@ ThreadPool::query_create_task() const
 }
 
 //======================================================================================//
-
-#endif

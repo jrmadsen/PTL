@@ -28,8 +28,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef Task_hh_
-#define Task_hh_
+#pragma once
 
 #include "TaskAllocator.hh"
 #include "TaskGroup.hh"
@@ -104,7 +103,8 @@ private:
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <typename _Ret, typename _Arg, typename... _Args> class Task : public VTask
+template <typename _Ret, typename _Arg, typename... _Args>
+class Task : public VTask
 {
 public:
     typedef Task<_Ret, _Arg, _Args...>                   this_type;
@@ -180,7 +180,8 @@ private:
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <> class Task<void, void> : public VTask
+template <>
+class Task<void, void> : public VTask
 {
 public:
     typedef Task<void, void>                             this_type;
@@ -256,5 +257,3 @@ private:
 
 // don't pollute
 #undef _forward_args_t
-
-#endif

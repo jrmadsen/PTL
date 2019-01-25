@@ -27,8 +27,7 @@
 // Author: Jonathan Madsen (Jun 21st 2018)
 // ---------------------------------------------------------------
 
-#ifndef g4tbbtaskgroup_hh_
-#define g4tbbtaskgroup_hh_
+#pragma once
 
 #include "PTL/TaskGroup.hh"
 
@@ -57,7 +56,8 @@ public:
 
 public:
     // Constructor
-    template <typename _Func> TBBTaskGroup(_Func _join, ThreadPool* tp = nullptr);
+    template <typename _Func>
+    TBBTaskGroup(_Func _join, ThreadPool* tp = nullptr);
     template <typename _Func>
     TBBTaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
     // Destructor
@@ -117,7 +117,8 @@ protected:
 
 //--------------------------------------------------------------------------------------//
 // specialization for void type
-template <> class TBBTaskGroup<void, void> : public TaskGroup<void, void>
+template <>
+class TBBTaskGroup<void, void> : public TaskGroup<void, void>
 {
 public:
     typedef TBBTaskGroup<void, void>               this_type;
@@ -198,7 +199,8 @@ protected:
 //--------------------------------------------------------------------------------------//
 #else
 
-template <typename _Tp, typename _Arg = _Tp> using TBBTaskGroup = TaskGroup<_Tp, _Arg>;
+template <typename _Tp, typename _Arg = _Tp>
+using TBBTaskGroup = TaskGroup<_Tp, _Arg>;
 
 #endif
 
@@ -207,5 +209,3 @@ template <typename _Tp, typename _Arg = _Tp> using TBBTaskGroup = TaskGroup<_Tp,
 #include "PTL/TBBTaskGroup.icc"
 
 //--------------------------------------------------------------------------------------//
-
-#endif

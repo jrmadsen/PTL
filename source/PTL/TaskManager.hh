@@ -28,8 +28,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef TaskManager_hh_
-#define TaskManager_hh_
+#pragma once
 
 #include "PTL/TBBTask.hh"
 #include "PTL/TBBTaskGroup.hh"
@@ -132,7 +131,8 @@ public:
     //------------------------------------------------------------------------//
     // direct insertion of a task
     //------------------------------------------------------------------------//
-    template <typename... _Args> void exec(Task<_Args...>* _task)
+    template <typename... _Args>
+    void exec(Task<_Args...>* _task)
     {
         typedef Task<_Args...>             task_type;
         typedef std::shared_ptr<task_type> task_pointer;
@@ -141,7 +141,8 @@ public:
     }
 #if defined(PTL_USE_TBB)
     //------------------------------------------------------------------------//
-    template <typename... _Args> void exec(TBBTask<_Args...>* _task)
+    template <typename... _Args>
+    void exec(TBBTask<_Args...>* _task)
     {
         typedef TBBTask<_Args...>          task_type;
         typedef std::shared_ptr<task_type> task_pointer;
@@ -166,7 +167,8 @@ public:
         return _f;
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Func> std::future<_Ret> async(_Func func)
+    template <typename _Ret, typename _Func>
+    std::future<_Ret> async(_Func func)
     {
         typedef PackagedTask<_Ret, _Ret>   task_type;
         typedef std::shared_ptr<task_type> task_pointer;
@@ -270,7 +272,8 @@ public:
             func(std::forward<_Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Func> void rexec(TaskGroup<void, void>& tg, _Func func)
+    template <typename _Func>
+    void rexec(TaskGroup<void, void>& tg, _Func func)
     {
         typedef Task<void, void>           task_type;
         typedef std::shared_ptr<task_type> task_pointer;
@@ -344,5 +347,3 @@ private:
 };
 
 //======================================================================================//
-
-#endif

@@ -23,8 +23,7 @@
 //   Users initializes an instance of this class instead of RunManager
 //   to start a multi-threaded simulation.
 
-#ifndef TaskRunManager_h
-#define TaskRunManager_h 1
+#pragma once
 
 #include "PTL/TBBTaskGroup.hh"
 #include "PTL/TaskGroup.hh"
@@ -100,5 +99,3 @@ protected:
 public:
     virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
 };
-
-#endif  // TaskRunManager_h

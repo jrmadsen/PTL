@@ -27,8 +27,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef VTask_hh_
-#define VTask_hh_
+#pragma once
 
 #include "PTL/AutoLock.hh"
 #include "PTL/TaskAllocator.hh"
@@ -102,5 +101,3 @@ protected:
 };
 
 //======================================================================================//
-
-#endif

@@ -88,7 +88,8 @@ END_EXTERN_C
 
 //============================================================================//
 
-template <typename _Tp> using cuda_device_info = std::unordered_map<int, _Tp>;
+template <typename _Tp>
+using cuda_device_info = std::unordered_map<int, _Tp>;
 
 //============================================================================//
 
@@ -158,7 +159,8 @@ destroy_streams(cudaStream_t* streams, const uint64_t nstreams)
 //
 //============================================================================//
 
-template <typename _Tp, uintmax_t _AlignWidth = 512> struct aligned_pointer
+template <typename _Tp, uintmax_t _AlignWidth = 512>
+struct aligned_pointer
 {
     typedef aligned_pointer<_Tp, _AlignWidth> this_type;
     typedef _Tp                               value_type;
@@ -194,7 +196,8 @@ template <typename _Tp, uintmax_t _AlignWidth = 512> struct aligned_pointer
     void free() { cudaFree((void*) ptr); }
 };
 
-template <typename _Tp> using aligned_ptr = aligned_pointer<_Tp, 512>;
+template <typename _Tp>
+using aligned_ptr = aligned_pointer<_Tp, 512>;
 
 //============================================================================//
 //
@@ -446,7 +449,8 @@ private:
 
 //============================================================================//
 
-template <typename _Tp> using aligned_ptr = aligned_pointer<_Tp, 512>;
+template <typename _Tp>
+using aligned_ptr = aligned_pointer<_Tp, 512>;
 typedef std::vector<float> farray_t;
 
 //----------------------------------------------------------------------------//

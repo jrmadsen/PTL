@@ -22,8 +22,7 @@
 // Provides empty macros when Tasking is compiled with TiMemory disabled
 // ----------------------------------------------------------------------
 
-#ifndef tasking_timemory_hh_
-#define tasking_timemory_hh_
+#pragma once
 
 #include "Globals.hh"
 
@@ -63,5 +62,3 @@ InitializeTiMemory()
 
 #endif
 //--------------------------------------------------------------------------------------//
-
-#endif

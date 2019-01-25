@@ -34,8 +34,7 @@
 // Author: G.Cosmo (CERN), November 2000
 // -------------------------------------------------------------------
 
-#ifndef TaskAllocatorPool_h
-#define TaskAllocatorPool_h 1
+#pragma once
 
 class TaskAllocatorPool
 {
@@ -168,5 +167,3 @@ TaskAllocatorPool::GrowPageSize(unsigned int sz)
 {
     csize = (sz) ? sz * csize : csize;
 }
-
-#endif

@@ -23,8 +23,7 @@
 //  Author: Jonathan Madsen
 //  ---------------------------------------------------------------
 
-#ifndef ThreadData_hh_
-#define ThreadData_hh_
+#pragma once
 
 #include <cstdint>
 #include <deque>
@@ -51,9 +50,17 @@ public:
     // dummy wait
     inline void wait() {}
     // run function
-    template <typename _Func> inline void run(_Func f) { f(); }
+    template <typename _Func>
+    inline void run(_Func f)
+    {
+        f();
+    }
     // run and wait
-    template <typename _Func> inline void run_and_wait(_Func f) { f(); }
+    template <typename _Func>
+    inline void run_and_wait(_Func f)
+    {
+        f();
+    }
 };
 
 class task_scheduler_init
@@ -82,7 +89,8 @@ class VUserTaskQueue;
 class ThreadData
 {
 public:
-    template <typename _Tp> using TaskStack = std::deque<_Tp>;
+    template <typename _Tp>
+    using TaskStack = std::deque<_Tp>;
 
     ThreadData(ThreadPool* tp);
     ~ThreadData();
@@ -101,5 +109,3 @@ public:
 };
 
 //--------------------------------------------------------------------------------------//
-
-#endif

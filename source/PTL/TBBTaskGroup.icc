@@ -66,7 +66,8 @@ TBBTaskGroup<_Tp, _Arg>::TBBTaskGroup(int _freq, _Func _join, ThreadPool* _tp)
 
 //======================================================================================//
 
-template <typename _Tp, typename _Arg> TBBTaskGroup<_Tp, _Arg>::~TBBTaskGroup()
+template <typename _Tp, typename _Arg>
+TBBTaskGroup<_Tp, _Arg>::~TBBTaskGroup()
 {
     delete m_tbb_task_group;
 }

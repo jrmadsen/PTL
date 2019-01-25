@@ -25,8 +25,7 @@
 //  Author: Jonathan Madsen
 //  ---------------------------------------------------------------
 
-#ifndef VUSERTASKQUEUE_HH_
-#define VUSERTASKQUEUE_HH_
+#pragma once
 
 #include "PTL/Globals.hh"
 #include "PTL/Threading.hh"
@@ -110,5 +109,3 @@ public:
 protected:
     intmax_t m_workers;
 };
-
-#endif

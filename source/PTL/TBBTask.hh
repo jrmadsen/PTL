@@ -27,8 +27,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef TBBTask_hh_
-#define TBBTask_hh_
+#pragma once
 
 #include "PTL/TBBTaskGroup.hh"
 #include "PTL/Task.hh"
@@ -46,7 +45,8 @@
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <typename _Ret, typename _Arg, typename... _Args> class TBBTask : public VTask
+template <typename _Ret, typename _Arg, typename... _Args>
+class TBBTask : public VTask
 {
 public:
     typedef TBBTask<_Ret, _Arg, _Args...>                this_type;
@@ -122,7 +122,8 @@ private:
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <> class TBBTask<void, void> : public VTask
+template <>
+class TBBTask<void, void> : public VTask
 {
 public:
     typedef TBBTask<void, void>                          this_type;
@@ -197,7 +198,8 @@ private:
 //--------------------------------------------------------------------------------------//
 #else
 
-template <typename _Tp, typename _Arg = _Tp> using TBBTask = Task<_Tp, _Arg>;
+template <typename _Tp, typename _Arg = _Tp>
+using TBBTask = Task<_Tp, _Arg>;
 
 #endif
 
@@ -205,5 +207,3 @@ template <typename _Tp, typename _Arg = _Tp> using TBBTask = Task<_Tp, _Arg>;
 
 // don't pollute
 #undef _forward_args_t
-
-#endif

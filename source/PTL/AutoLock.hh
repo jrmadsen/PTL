@@ -241,8 +241,7 @@ int main()
 
 ***/
 
-#ifndef AUTOLOCK_HH
-#define AUTOLOCK_HH
+#pragma once
 
 #include "PTL/Threading.hh"
 
@@ -254,7 +253,8 @@ int main()
 // Note: Note that TemplateAutoLock by itself is not thread-safe and
 //       cannot be shared among threads due to the locked switch
 //
-template <typename _Mutex_t> class TemplateAutoLock : public std::unique_lock<_Mutex_t>
+template <typename _Mutex_t>
+class TemplateAutoLock : public std::unique_lock<_Mutex_t>
 {
 public:
     //------------------------------------------------------------------------//
@@ -385,7 +385,10 @@ private:
 #undef _is_other_mutex
 
     // used in _lock_deferred chrono variants to avoid ununsed-variable warning
-    template <typename _Tp> void suppress_unused_variable(const _Tp&) {}
+    template <typename _Tp>
+    void suppress_unused_variable(const _Tp&)
+    {
+    }
 
     //========================================================================//
     // NOTE on _lock_deferred(...) variants:
@@ -490,6 +493,5 @@ typedef TemplateAutoLock<RecursiveMutex> RecursiveAutoLock;
 
 // provide abbriviated type if another mutex type is desired to be used
 // aside from above
-template <typename _Tp> using TAutoLock = TemplateAutoLock<_Tp>;
-
-#endif  // AUTOLOCK_HH
+template <typename _Tp>
+using TAutoLock = TemplateAutoLock<_Tp>;

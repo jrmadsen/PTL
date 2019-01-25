@@ -32,8 +32,7 @@
 // Author: G.Cosmo (CERN), November 2000
 // ------------------------------------------------------------
 
-#ifndef TaskAllocator_h
-#define TaskAllocator_h 1
+#pragma once
 
 #include <cstddef>
 #include <typeinfo>
@@ -57,7 +56,8 @@ public:
 
 //--------------------------------------------------------------------------------------//
 
-template <class Type> class TaskAllocator : public TaskAllocatorBase
+template <class Type>
+class TaskAllocator : public TaskAllocatorBase
 {
 public:  // with description
     TaskAllocator();
@@ -147,7 +147,8 @@ public:  // without description
         return 2147483647 / sizeof(Type);
     }
 
-    template <class U> struct rebind
+    template <class U>
+    struct rebind
     {
         typedef TaskAllocator<U> other;
     };
@@ -175,7 +176,10 @@ TaskAllocator<Type>::TaskAllocator()
 // TaskAllocator destructor
 // ************************************************************
 //
-template <class Type> TaskAllocator<Type>::~TaskAllocator() {}
+template <class Type>
+TaskAllocator<Type>::~TaskAllocator()
+{
+}
 
 // ************************************************************
 // MallocSingle
@@ -291,5 +295,3 @@ operator!=(const TaskAllocator<T1>&, const TaskAllocator<T2>&) throw()
 {
     return false;
 }
-
-#endif

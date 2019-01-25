@@ -19,8 +19,7 @@
 //
 // Thread Local Storage typedefs
 
-#ifndef ThreadLocalStatic_hh_
-#define ThreadLocalStatic_hh_
+#pragma once
 
 #if(defined(__MACH__) && defined(__clang__) && defined(__x86_64__)) ||                   \
     (defined(__linux__) && defined(__clang__))
@@ -59,7 +58,5 @@
 // just assume at this point
 #    define ThreadLocalStatic static __thread
 #    define ThreadLocal __thread
-
-#endif
 
 #endif

@@ -29,8 +29,7 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef TaskGroup_hh_
-#define TaskGroup_hh_
+#pragma once
 
 #include "PTL/VTaskGroup.hh"
 
@@ -48,7 +47,8 @@ class ThreadPool;
 
 //--------------------------------------------------------------------------------------//
 
-template <typename _Tp, typename _Arg = _Tp> class TaskGroup : public VTaskGroup
+template <typename _Tp, typename _Arg = _Tp>
+class TaskGroup : public VTaskGroup
 {
 public:
     typedef typename std::remove_const<typename std::remove_reference<_Arg>::type>::type
@@ -69,8 +69,10 @@ public:
 
 public:
     // Constructor
-    template <typename _Func> TaskGroup(_Func _join, ThreadPool* tp = nullptr);
-    template <typename _Func> TaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
+    template <typename _Func>
+    TaskGroup(_Func _join, ThreadPool* tp = nullptr);
+    template <typename _Func>
+    TaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
     // Destructor
     virtual ~TaskGroup();
 
@@ -101,7 +103,8 @@ public:
 public:
     //------------------------------------------------------------------------//
     // set the join function
-    template <typename _Func> void set_join_function(_Func);
+    template <typename _Func>
+    void set_join_function(_Func);
 
 protected:
     //------------------------------------------------------------------------//
@@ -161,7 +164,8 @@ protected:
 
 //--------------------------------------------------------------------------------------//
 // specialization for void type
-template <> class TaskGroup<void, void> : public VTaskGroup
+template <>
+class TaskGroup<void, void> : public VTaskGroup
 {
 public:
     typedef void                                         ArgTp;
@@ -290,5 +294,3 @@ protected:
 //--------------------------------------------------------------------------------------//
 
 #include "PTL/TaskGroup.icc"
-
-#endif
