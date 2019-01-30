@@ -110,7 +110,7 @@
 #        define NVTX_RANGE_PUSH(obj) nvtxRangePushEx(obj)
 #    endif
 #    ifndef NVTX_RANGE_POP
-#        define NVTX_RANGE_POP(obj) nvtxRangePop()
+#        define NVTX_RANGE_POP(obj) cudaStreamSynchronize(obj); nvtxRangePop()
 #    endif
 
 void

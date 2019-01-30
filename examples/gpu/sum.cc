@@ -463,7 +463,7 @@ compute_sum(farray_t& cpu_data)
 
     cudaFree(buffer);
 
-    NVTX_RANGE_POP(&nvtx_cuda_sum);
+    NVTX_RANGE_POP(stream);
 
     return _sum;
 }
@@ -486,7 +486,7 @@ compute_sum(thrust::host_vector<float>& cpu_data)
                                                     stream);
     float _sum = compute_sum_host(gpu_data, stream, true, buffer);
 
-    NVTX_RANGE_POP(&nvtx_thrust_sum);
+    NVTX_RANGE_POP(stream);
 
     return _sum;
 }
