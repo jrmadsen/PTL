@@ -65,54 +65,6 @@ public:
     static TaskManager* GetInstanceIfExists();
     static unsigned     ncores() { return std::thread::hardware_concurrency(); }
 
-    /*
-    /// function for returning the thread id
-    template <typename _Tp>
-    static long id(_Tp thread_self)
-    {
-        long _id = -1;
-        static mad::mutex _mtx;
-        auto_lock l(_mtx);
-        TaskManager* _tm = TaskManager::Instance();
-        if(!_tm)
-            return _id;
-        if(_tm->m_pool->GetThreadIDs().find(thread_self) !=
-           _tm->m_pool->GetThreadIDs().end())
-            _id = _tm->m_pool->GetThreadIDs().find(thread_self)->second;
-        return _id;
-    }
-
-    /// function for returning the thread id in string format
-    template <typename _Tp>
-    static std::string sid(_Tp thread_self)
-    {
-        long _id = TaskManager::id(thread_self);
-        if(_id < 0)
-            return "";
-        std::stringstream ss;
-        ss.fill('0');
-        ss << "[" << std::setw(4) << _id << "] ";
-        return ss.str();
-    }
-
-    /// function for returning the thread id in string format
-    template <typename _Tp>
-    static std::string id_string(_Tp thread_self)
-    {
-        long _id = TaskManager::id(thread_self);
-        if(_id < 0)
-            return "";
-        TaskManager* _tm = TaskManager::Instance();
-        if(!_tm)
-            return "";
-        short _w = 4;
-        _w = std::min(_w, (short) std::ceil(std::log10(_tm->size())));
-        std::stringstream ss;
-        ss.fill('0');
-        ss << std::setw(_w) << _id;
-        return ss.str();
-    }*/
-
 public:
     //------------------------------------------------------------------------//
     // return the thread pool

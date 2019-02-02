@@ -84,7 +84,9 @@ VTask::operator--()
             catch(std::system_error& e)
             {
                 auto     tid = ThreadPool::GetThisThreadID();
-                AutoLock l(TypeMutex<decltype(std::cerr)>());
+                AutoLock l(TypeMutex<decltype(std::cerr)>(), std::defer_lock);
+                if(!l.owns_lock())
+                    l.lock();
                 std::cerr << "[" << tid << "] Caught system error: " << e.what()
                           << std::endl;
             }
