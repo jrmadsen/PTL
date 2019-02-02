@@ -89,7 +89,7 @@ ThreadPool::start_thread(ThreadPool* tp)
         AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
         if(!lock.owns_lock())
             lock.lock();
-        auto     _idx                            = f_thread_ids.size();
+        auto _idx                                = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
         f_thread_indexes[_idx]                   = std::this_thread::get_id();
         // tp->get_queue()->ThisThreadNumber() = _idx;

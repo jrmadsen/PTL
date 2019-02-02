@@ -93,12 +93,17 @@ public:
 public:
     // Constructor and Destructors
     ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-               bool _use_affinity = false, affinity_func_t = [](intmax_t i) {
+               bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               affinity_func_t    = [](intmax_t i) {
                    return i % Thread::hardware_concurrency();
                });
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~ThreadPool();
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool&&)      = default;
+    ThreadPool& operator=(const ThreadPool&) = delete;
+    ThreadPool& operator=(ThreadPool&&) = default;
 
 public:
     // Public functions
@@ -215,24 +220,6 @@ private:
     static thread_id_map_t    f_thread_ids;
     static thread_index_map_t f_thread_indexes;
     static bool               f_use_tbb;
-
-private:
-    ThreadPool(const ThreadPool&)
-    : m_use_affinity(false)
-    , m_tbb_tp(false)
-    , m_alive_flag(false)
-    , m_pool_size(0)
-    , m_pool_state(0)
-    , m_task_lock()
-    , m_task_cond()
-    , m_is_joined(bool_list_t())
-    , m_is_stopped(bool_list_t())
-    , m_main_threads(thread_list_t())
-    , m_stop_threads(thread_list_t())
-    {
-    }
-
-    ThreadPool& operator=(const ThreadPool&) { return *this; }
 };
 
 //--------------------------------------------------------------------------------------//
