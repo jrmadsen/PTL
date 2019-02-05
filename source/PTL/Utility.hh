@@ -64,16 +64,18 @@ public:
     {
         std::stringstream ss;
         ss << std::boolalpha << val;
-        std::unique_lock<std::mutex> l(m_mutex, std::defer_lock);
-        if(!l.owns_lock())
-            l.lock();
+	m_mutex.lock();
         if(m_env.find(env_id) != m_env.end())
         {
             for(const auto& itr : m_env)
                 if(itr.first == env_id && itr.second == ss.str())
+		{
+		    m_mutex.unlock();
                     return;
+		}
         }
         m_env.insert(env_pair_t(env_id, ss.str()));
+	m_mutex.unlock();
     }
 
     const env_map_t& get() const { return m_env; }

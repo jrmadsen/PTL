@@ -55,14 +55,6 @@
 #    include <tbb/tbb.h>
 #endif
 
-#if !defined(TP_DEFAULT_USE_AFFINITY)
-#    if !defined(_WIN32) && !defined(__MACH__)
-#        define TP_DEFAULT_USE_AFFINITY true
-#    else
-#        define TP_DEFAULT_USE_AFFINITY false
-#    endif
-#endif
-
 class ThreadPool
 {
 public:
@@ -94,8 +86,10 @@ public:
     // Constructor and Destructors
     ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
                bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               affinity_func_t    = [](intmax_t i) {
-                   return i % Thread::hardware_concurrency();
+               affinity_func_t    = [](intmax_t) {
+                   static std::atomic<intmax_t> assigned;
+		   intmax_t _assign = assigned++;
+                   return _assign % Thread::hardware_concurrency();
                });
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
