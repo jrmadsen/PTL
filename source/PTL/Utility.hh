@@ -23,6 +23,7 @@
 
 #include "PTL/Types.hh"
 
+#include <chrono>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
@@ -63,9 +64,16 @@ public:
     {
         std::stringstream ss;
         ss << std::boolalpha << val;
-        m_mutex.lock();
+        std::unique_lock<std::mutex> l(m_mutex, std::defer_lock);
+        if(!l.owns_lock())
+            l.lock();
+        if(m_env.find(env_id) != m_env.end())
+        {
+            for(const auto& itr : m_env)
+                if(itr.first == env_id && itr.second == ss.str())
+                    return;
+        }
         m_env.insert(env_pair_t(env_id, ss.str()));
-        m_mutex.unlock();
     }
 
     const env_map_t& get() const { return m_env; }
@@ -125,11 +133,7 @@ GetEnv(const std::string& env_id, _Tp _default = _Tp())
 }
 
 //--------------------------------------------------------------------------------------//
-//  use this function to get an environment variable setting +
-//  a default if not defined, e.g.
-//      int num_threads =
-//          GetEnv<int>("FORCENUMBEROFTHREADS",
-//                          std::thread::hardware_concurrency());
+//  overload for boolean
 //
 template <>
 inline bool
@@ -161,12 +165,7 @@ GetEnv(const std::string& env_id, bool _default)
 }
 
 //--------------------------------------------------------------------------------------//
-//  use this function to get an environment variable setting +
-//  a default if not defined and a message about the setting, e.g.
-//      int num_threads =
-//          GetEnv<int>("FORCENUMBEROFTHREADS",
-//                          std::thread::hardware_concurrency(),
-//                          "Forcing number of threads");
+//  overload for GetEnv + message when set
 //
 template <typename _Tp>
 _Tp
