@@ -40,7 +40,7 @@ class ThreadPool;
 
 template <typename _Tp, typename _Arg>
 template <typename _Func>
-TaskGroup<_Tp, _Arg>::TaskGroup(_Func _join, ThreadPool* _tp)
+TaskGroup<_Tp, _Arg>::TaskGroup(const _Func& _join, ThreadPool* _tp)
 : VTaskGroup(_tp)
 {
     this->set_join_function<_Func>(_join);
@@ -50,7 +50,7 @@ TaskGroup<_Tp, _Arg>::TaskGroup(_Func _join, ThreadPool* _tp)
 
 template <typename _Tp, typename _Arg>
 template <typename _Func>
-TaskGroup<_Tp, _Arg>::TaskGroup(int _freq, _Func _join, ThreadPool* _tp)
+TaskGroup<_Tp, _Arg>::TaskGroup(int _freq, const _Func& _join, ThreadPool* _tp)
 : VTaskGroup(_tp)
 {
     this->set_join_function<_Func>(_join);
@@ -69,7 +69,7 @@ TaskGroup<_Tp, _Arg>::~TaskGroup()
 template <typename _Tp, typename _Arg>
 template <typename _Func>
 void
-TaskGroup<_Tp, _Arg>::set_join_function(_Func _join)
+TaskGroup<_Tp, _Arg>::set_join_function(const _Func& _join)
 {
     using std::placeholders::_1;
     using std::placeholders::_2;

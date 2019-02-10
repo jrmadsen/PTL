@@ -57,37 +57,21 @@ public:
 public:
     // Constructor
     template <typename _Func>
-    TBBTaskGroup(_Func _join, ThreadPool* tp = nullptr);
+    TBBTaskGroup(const _Func& _join, ThreadPool* tp = nullptr);
     template <typename _Func>
-    TBBTaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
+    TBBTaskGroup(int _freq, const _Func& _join, ThreadPool* tp = nullptr);
     // Destructor
     virtual ~TBBTaskGroup();
 
     // delete copy-construct
     TBBTaskGroup(const this_type&) = delete;
     // define move-construct
-    TBBTaskGroup(this_type&& rhs)
-    : m_tbb_task_group(std::move(rhs.m_tbb_task_group))
-    {
-        m_task_set      = std::move(rhs.m_task_set);
-        m_promise       = std::move(rhs.m_promise);
-        m_join_function = std::move(rhs.m_join_function);
-    }
+    TBBTaskGroup(this_type&& rhs) = default;
 
     // delete copy-assign
     this_type& operator=(const this_type& rhs) = delete;
     // define move-assign
-    this_type& operator=(this_type&& rhs)
-    {
-        if(this != &rhs)
-        {
-            m_task_set       = std::move(rhs.m_task_set);
-            m_promise        = std::move(rhs.m_promise);
-            m_join_function  = std::move(rhs.m_join_function);
-            m_tbb_task_group = std::move(rhs.m_tbb_task_group);
-        }
-        return *this;
-    }
+    this_type& operator=(this_type&& rhs) = default;
 
 public:
     //------------------------------------------------------------------------//
@@ -134,8 +118,14 @@ public:
 
 public:
     // Constructor
-    TBBTaskGroup(ThreadPool* _tp = nullptr)
+    explicit TBBTaskGroup(ThreadPool* _tp = nullptr)
     : base_type(_tp)
+    , m_tbb_task_group(new tbb_task_group_t())
+    {
+    }
+    template <typename _Func>
+    TBBTaskGroup(const _Func& _join, ThreadPool* tp = nullptr)
+    : base_type(_join, tp)
     , m_tbb_task_group(new tbb_task_group_t())
     {
     }
@@ -146,24 +136,12 @@ public:
     // delete copy-construct
     TBBTaskGroup(const this_type&) = delete;
     // define move-construct
-    TBBTaskGroup(this_type&& rhs)
-    : m_tbb_task_group(std::move(rhs.m_tbb_task_group))
-    {
-        m_task_set = std::move(rhs.m_task_set);
-    }
+    TBBTaskGroup(this_type&&) = default;
 
     // delete copy-assign
     this_type& operator=(const this_type& rhs) = delete;
     // define move-assign
-    this_type& operator=(this_type&& rhs)
-    {
-        if(this != &rhs)
-        {
-            m_task_set       = std::move(rhs.m_task_set);
-            m_tbb_task_group = std::move(rhs.m_tbb_task_group);
-        }
-        return *this;
-    }
+    this_type& operator=(this_type&& rhs) = default;
 
 public:
     //------------------------------------------------------------------------//

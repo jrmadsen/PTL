@@ -82,23 +82,3 @@ TaskManager::~TaskManager()
 }
 
 //======================================================================================//
-
-TaskManager::TaskManager(const TaskManager& rhs)
-: m_pool(rhs.m_pool)
-{
-}
-
-//======================================================================================//
-
-TaskManager&
-TaskManager::operator=(const TaskManager& rhs)
-{
-    if(this == &rhs)
-        return *this;
-
-    m_pool = rhs.m_pool;
-
-    return *this;
-}
-
-//======================================================================================//

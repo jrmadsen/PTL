@@ -22,7 +22,6 @@
 //
 //============================================================================//
 
-#include "PTL/TBBTask.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"

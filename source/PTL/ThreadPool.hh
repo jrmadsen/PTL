@@ -88,7 +88,7 @@ public:
                bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
                affinity_func_t    = [](intmax_t) {
                    static std::atomic<intmax_t> assigned;
-		   intmax_t _assign = assigned++;
+                   intmax_t                     _assign = assigned++;
                    return _assign % Thread::hardware_concurrency();
                });
     // Virtual destructors are required by abstract classes

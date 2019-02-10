@@ -47,6 +47,8 @@
 
 class ThreadPool;
 
+#define _MOVE_MEMBER(_member) _member = std::move(rhs._member)
+
 class VTaskGroup
 {
 public:
@@ -71,10 +73,42 @@ public:
 
 public:
     // Constructor and Destructors
-    VTaskGroup(ThreadPool* tp = nullptr);
+    explicit VTaskGroup(ThreadPool* tp = nullptr);
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~VTaskGroup();
+
+    VTaskGroup(const this_type&) = delete;
+    VTaskGroup(this_type&& rhs)
+    {
+        *this = std::move(rhs);
+        /*
+        m_clear_count.store(m_clear_count.load());
+        m_clear_freq.store(m_clear_freq.load());
+        m_tot_task_count.store(m_tot_task_count.load());
+        _MOVE_MEMBER(m_tid_task_count);
+        _MOVE_MEMBER(m_id);
+        _MOVE_MEMBER(m_pool);
+        _MOVE_MEMBER(m_main_tid);
+        _MOVE_MEMBER(vtask_list);*/
+    }
+
+    this_type& operator=(const this_type&) = delete;
+    this_type& operator                    =(this_type&& rhs)
+    {
+        if(this == &rhs)
+            return *this;
+
+        m_clear_count.store(m_clear_count.load());
+        m_clear_freq.store(m_clear_freq.load());
+        m_tot_task_count.store(m_tot_task_count.load());
+        _MOVE_MEMBER(m_tid_task_count);
+        _MOVE_MEMBER(m_id);
+        _MOVE_MEMBER(m_pool);
+        _MOVE_MEMBER(m_main_tid);
+        _MOVE_MEMBER(vtask_list);
+        return *this;
+    }
 
 public:
     //------------------------------------------------------------------------//
@@ -187,3 +221,6 @@ VTaskGroup::store(task_pointer ptr)
 }
 
 //--------------------------------------------------------------------------------------//
+
+// don't pollute
+#undef _MOVE_MEMBER

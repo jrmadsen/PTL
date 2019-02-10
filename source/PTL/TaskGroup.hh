@@ -70,9 +70,9 @@ public:
 public:
     // Constructor
     template <typename _Func>
-    TaskGroup(_Func _join, ThreadPool* tp = nullptr);
+    TaskGroup(const _Func& _join, ThreadPool* tp = nullptr);
     template <typename _Func>
-    TaskGroup(int _freq, _Func _join, ThreadPool* tp = nullptr);
+    TaskGroup(int _freq, const _Func& _join, ThreadPool* tp = nullptr);
     // Destructor
     virtual ~TaskGroup();
 
@@ -104,7 +104,7 @@ public:
     //------------------------------------------------------------------------//
     // set the join function
     template <typename _Func>
-    void set_join_function(_Func);
+    void set_join_function(const _Func&);
 
 protected:
     //------------------------------------------------------------------------//
@@ -177,6 +177,7 @@ public:
     typedef std::tuple<bool, future_type>                data_type;
     typedef list_type<data_type>                         task_list_t;
     typedef map_type<tid_type, task_list_t>              task_map_t;
+    typedef std::function<void()>                        function_type;
     typedef typename task_list_t::iterator               iterator;
     typedef typename task_list_t::reverse_iterator       reverse_iterator;
     typedef typename task_list_t::const_iterator         const_iterator;
@@ -184,9 +185,16 @@ public:
 
 public:
     // Constructor
-    TaskGroup(ThreadPool* tp = nullptr)
+    explicit TaskGroup(ThreadPool* tp = nullptr)
+    : VTaskGroup(tp)
+    , m_join_function([]() {})
+    {
+    }
+    template <typename _Func>
+    TaskGroup(const _Func& _join, ThreadPool* tp = nullptr)
     : VTaskGroup(tp)
     {
+        set_join_function(_join);
     }
     // Destructor
     virtual ~TaskGroup() {}
@@ -195,8 +203,11 @@ public:
     TaskGroup(const this_type&) = delete;
     // define move-construct
     TaskGroup(this_type&& rhs)
-    : m_task_set(std::move(rhs.m_task_set))
+    : VTaskGroup(std::move(rhs))
+    , m_task_set(std::move(rhs.m_task_set))
+    , m_join_function(std::move(rhs.m_join_function))
     {
+        // set_join_function(rhs.m_join_function);
     }
 
     // delete copy-assign
@@ -205,7 +216,11 @@ public:
     this_type& operator=(this_type&& rhs)
     {
         if(this != &rhs)
-            m_task_set = std::move(rhs.m_task_set);
+        {
+            VTaskGroup::operator=(std::move(rhs));
+            m_task_set          = std::move(rhs.m_task_set);
+            m_join_function     = std::move(rhs.m_join_function);
+        }
         return *this;
     }
 
@@ -239,6 +254,13 @@ public:
     critr_t rend() const { return m_task_set.rend(); }
 
     //------------------------------------------------------------------------//
+    // join function
+    template <typename _Func>
+    void set_join_function(_Func& _join)
+    {
+        m_join_function = std::bind<void>(_join);
+    }
+    //------------------------------------------------------------------------//
     // add task
     tid_type add(future_type&& _f)
     {
@@ -262,6 +284,7 @@ public:
         this->wait();
         for(auto itr = begin(); itr != end(); ++itr)
             this->get(*itr);
+        m_join_function();
 
         if(m_clear_freq.load() > 0 && (++m_clear_count) % m_clear_freq.load() == 0)
             this->clear();
@@ -289,6 +312,7 @@ protected:
 protected:
     // Private variables
     mutable task_list_t m_task_set;
+    function_type       m_join_function;
 };
 
 //--------------------------------------------------------------------------------------//
