@@ -5,6 +5,10 @@
 #
 ################################################################################
 
+if(NOT PTL_DEVELOPER_INSTALL)
+    return()
+endif()
+
 include(CMakePackageConfigHelpers)
 
 set(INCLUDE_INSTALL_DIR     ${CMAKE_INSTALL_INCLUDEDIR})
