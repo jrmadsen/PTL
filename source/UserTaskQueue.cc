@@ -43,8 +43,10 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
 {
     // create nthreads + 1 subqueues so there is always a subqueue available
     if(!parent)
+    {
         for(intmax_t i = 0; i < nworkers + 1; ++i)
             m_subqueues->push_back(new TaskSubQueue(m_ntasks));
+    }
 
 #if defined(DEBUG)
     if(GetEnv<int>("PTL_VERBOSE", 0) > 3)

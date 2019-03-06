@@ -85,8 +85,8 @@ public:
 public:
     // Constructor and Destructors
     ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-               bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               affinity_func_t    = [](intmax_t) {
+               bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               const affinity_func_t& = [](intmax_t) {
                    static std::atomic<intmax_t> assigned;
                    intmax_t                     _assign = assigned++;
                    return _assign % Thread::hardware_concurrency();
@@ -113,7 +113,7 @@ public:
 
 public:
     // add tasks for threads to process
-    size_type add_task(task_pointer task, int bin = -1);
+    size_type add_task(const task_pointer& task, int bin = -1);
     // size_type add_thread_task(ThreadId id, task_pointer&& task);
     // add a generic container with iterator
     template <typename _List_t>
@@ -169,9 +169,9 @@ public:
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
-    void run(task_pointer);
-    int  insert(task_pointer, int = -1);
-    int  run_on_this(task_pointer);
+    void run(const task_pointer&);
+    int  insert(const task_pointer&, int = -1);
+    int  run_on_this(const task_pointer&);
 
 protected:
     // called in THREAD INIT

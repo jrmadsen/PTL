@@ -82,25 +82,25 @@ TaskAllocatorList::Destroy(int nStat, int verboseLevel)
         std::cout << "================== Deleting memory pools ==================="
                   << std::endl;
     }
-    for(auto itr = fList.begin(); itr != fList.end(); ++itr)
+    for(auto& itr : fList)
     {
-        mem = (*itr)->GetAllocatedSize();
+        mem = itr->GetAllocatedSize();
         if(i < nStat)
         {
             i++;
             tmem += mem;
-            (*itr)->ResetStorage();
+            itr->ResetStorage();
             continue;
         }
         j++;
         tmem += mem;
         if(verboseLevel > 1)
         {
-            std::cout << "Pool ID '" << (*itr)->GetPoolType()
+            std::cout << "Pool ID '" << itr->GetPoolType()
                       << "', size : " << std::setprecision(3) << mem / 1048576
                       << std::setprecision(6) << " MB" << std::endl;
         }
-        (*itr)->ResetStorage();
+        itr->ResetStorage();
         // delete *itr;
     }
     if(verboseLevel > 0)

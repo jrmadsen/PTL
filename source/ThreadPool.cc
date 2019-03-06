@@ -134,7 +134,7 @@ ThreadPool::GetThisThreadID()
 //======================================================================================//
 
 ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
-                       bool _use_affinity, affinity_func_t _affinity_func)
+                       bool _use_affinity, const affinity_func_t& _affinity_func)
 : m_use_affinity(_use_affinity)
 , m_tbb_tp(false)
 , m_alive_flag(false)
@@ -540,7 +540,7 @@ ThreadPool::stop_thread()
 //======================================================================================//
 
 void
-ThreadPool::run(task_pointer task)
+ThreadPool::run(const task_pointer& task)
 {
     // check the task_pointer (std::shared_ptr) has a valid pointer
     if(!task.get())
@@ -553,7 +553,7 @@ ThreadPool::run(task_pointer task)
 //======================================================================================//
 
 int
-ThreadPool::run_on_this(task_pointer task)
+ThreadPool::run_on_this(const task_pointer& task)
 {
     auto _func = [=]() { this->run(task); };
     if(m_tbb_tp)
@@ -573,7 +573,7 @@ ThreadPool::run_on_this(task_pointer task)
 //======================================================================================//
 
 int
-ThreadPool::insert(task_pointer task, int bin)
+ThreadPool::insert(const task_pointer& task, int bin)
 {
     ThreadLocalStatic ThreadData* _data = thread_data();
 
@@ -586,7 +586,7 @@ ThreadPool::insert(task_pointer task, int bin)
 //======================================================================================//
 
 ThreadPool::size_type
-ThreadPool::add_task(task_pointer task, int bin)
+ThreadPool::add_task(const task_pointer& task, int bin)
 {
     // if not native (i.e. TBB) then return
     if(!task->is_native_task())
