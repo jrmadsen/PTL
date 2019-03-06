@@ -22,6 +22,7 @@ matrix:
             - build-essential
             - cmake
             - libtbb-dev
+            - clang-tidy
       env:
         - MATRIX_EVAL="CC=$(which gcc-4.9) && CXX=$(which g++-4.9) && COVERAGE=1"
     # GCC 5
@@ -38,6 +39,7 @@ matrix:
             - build-essential
             - cmake
             - libtbb-dev
+            - clang-tidy
       env:
         - MATRIX_EVAL="CC=$(which gcc-5) && CXX=$(which g++-5) && COVERAGE=0"
     # GCC 6
@@ -54,6 +56,7 @@ matrix:
             - build-essential
             - cmake
             - libtbb-dev
+            - clang-tidy
       env:
         - MATRIX_EVAL="CC=$(which gcc-6) && CXX=$(which g++-6) && COVERAGE=0"
     # GCC 7
@@ -70,6 +73,7 @@ matrix:
             - build-essential
             - cmake
             - libtbb-dev
+            - clang-tidy
       env:
         - MATRIX_EVAL="CC=$(which gcc-7) && CXX=$(which g++-7) && COVERAGE=0"
     # Clang 4.0
@@ -86,6 +90,7 @@ matrix:
             - clang++-4.0
             - build-essential
             - cmake
+            - clang-tidy
       env:
         - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0 && NOTBB=1"
 
@@ -104,7 +109,7 @@ before_install:
 install:
     - env
     - conda install pyctest
-    - export ARGS="--pyctest-submit --pyctest-clean-first --pyctest-model=Continuous --pyctest-site=Travis"
+    - export ARGS="--static-analysis --pyctest-submit --pyctest-clean-first --pyctest-model=Continuous --pyctest-site=Travis"
     - if [ -z "${NOTBB}" ]; then ARGS="${ARGS} --tbb"; fi
     - if [ -n "${COVERAGE}" ]; then
         ARGS="${ARGS} --coverage --num-tasks=64";
