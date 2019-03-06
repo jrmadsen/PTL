@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //  ---------------------------------------------------------------
 //  Tasking class header
@@ -26,12 +25,11 @@
 //  Author: Jonathan Madsen
 //  ---------------------------------------------------------------
 
-#ifndef VUSERTASKQUEUE_HH_
-#define VUSERTASKQUEUE_HH_
+#pragma once
 
 #include "PTL/Globals.hh"
-#include "PTL/Types.hh"
 #include "PTL/Threading.hh"
+#include "PTL/Types.hh"
 
 #include <set>
 
@@ -43,11 +41,11 @@ class ThreadData;
 class VUserTaskQueue
 {
 public:
-    typedef std::shared_ptr<VTask>    VTaskPtr;
-    typedef std::atomic<intmax_t>       AtomicInt;
-    typedef uintmax_t                   size_type;
-    typedef std::function<void()>       function_type;
-    typedef std::set<ThreadId>        ThreadIdSet;
+    typedef std::shared_ptr<VTask> VTaskPtr;
+    typedef std::atomic<intmax_t>  AtomicInt;
+    typedef uintmax_t              size_type;
+    typedef std::function<void()>  function_type;
+    typedef std::set<ThreadId>     ThreadIdSet;
 
 public:
     // Constructor - accepting the number of workers
@@ -74,27 +72,26 @@ public:
     virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr, intmax_t subq = -1) = 0;
 
     // Overload this function to hold threads
-    virtual void Wait() = 0;
+    virtual void     Wait()               = 0;
     virtual intmax_t GetThreadBin() const = 0;
 
     virtual void resize(intmax_t) = 0;
 
     // these are used for stanard checking
-    virtual size_type size() const = 0;
-    virtual bool empty() const = 0;
+    virtual size_type size() const  = 0;
+    virtual bool      empty() const = 0;
 
-    virtual size_type bin_size() const = 0;
-    virtual bool bin_empty() const = 0;
+    virtual size_type bin_size() const  = 0;
+    virtual bool      bin_empty() const = 0;
 
     // these are for slower checking, default to returning normal size()/empty
     virtual size_type true_size() const { return size(); }
-    virtual bool true_empty() const { return empty(); }
+    virtual bool      true_empty() const { return empty(); }
 
     // a method of executing a specific function on all threads
     virtual void ExecuteOnAllThreads(ThreadPool* tp, function_type f) = 0;
 
-    virtual void ExecuteOnSpecificThreads(ThreadIdSet tid_set,
-                                          ThreadPool* tp,
+    virtual void ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
                                           function_type f) = 0;
 
     intmax_t workers() const { return m_workers; }
@@ -103,16 +100,12 @@ public:
 
     // operator for number of tasks
     //      prefix versions
-    //virtual uintmax_t operator++() = 0;
-    //virtual uintmax_t operator--() = 0;
+    // virtual uintmax_t operator++() = 0;
+    // virtual uintmax_t operator--() = 0;
     //      postfix versions
-    //virtual uintmax_t operator++(int) = 0;
-    //virtual uintmax_t operator--(int) = 0;
+    // virtual uintmax_t operator++(int) = 0;
+    // virtual uintmax_t operator--(int) = 0;
 
 protected:
     intmax_t m_workers;
-
 };
-
-#endif
-

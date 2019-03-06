@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //
 // ---------------------------------------------------------------
@@ -92,7 +91,8 @@
 ///
 ///      - template <typename Rep, typename Period>
 ///        unique_lock(mutex_type& m,
-///                   const std::chrono::duration<Rep,Period>& timeout_duration);
+///                   const std::chrono::duration<Rep,Period>&
+///                   timeout_duration);
 ///
 ///      - template<typename Clock, typename Duration>
 ///        unique_lock(mutex_type& m,
@@ -144,7 +144,7 @@
 ///
 /***
 
-//============================================================================//
+//======================================================================================//
 
 typedef std::unique_lock<std::mutex> unique_lock_t;
 // functions for casting AutoLock to std::unique_lock to demonstrate
@@ -152,7 +152,7 @@ typedef std::unique_lock<std::mutex> unique_lock_t;
 void as_unique_lock(unique_lock_t* lock) { lock->lock(); }
 void as_unique_unlock(unique_lock_t* lock) { lock->unlock(); }
 
-//============================================================================//
+//======================================================================================//
 
 void run(const uint64_t& n)
 {
@@ -173,7 +173,7 @@ void run(const uint64_t& n)
     std::cout << "Running iteration " << n << "..." << std::endl;
 }
 
-//============================================================================//
+//======================================================================================//
 // execute some work
 template <typename thread_type = std::thread>
 void exec(uint64_t n)
@@ -225,7 +225,7 @@ void exec(uint64_t n)
     threads.clear();
 }
 
-//============================================================================//
+//======================================================================================//
 
 int main()
 {
@@ -241,15 +241,14 @@ int main()
 
 ***/
 
-#ifndef AUTOLOCK_HH
-#define AUTOLOCK_HH
+#pragma once
 
 #include "PTL/Threading.hh"
 
-#include <mutex>
 #include <chrono>
-#include <system_error>
 #include <iostream>
+#include <mutex>
+#include <system_error>
 
 // Note: Note that TemplateAutoLock by itself is not thread-safe and
 //       cannot be shared among threads due to the locked switch
@@ -261,9 +260,9 @@ public:
     //------------------------------------------------------------------------//
     // Some useful typedefs
     //------------------------------------------------------------------------//
-    typedef std::unique_lock<_Mutex_t>          unique_lock_t;
-    typedef TemplateAutoLock<_Mutex_t>        this_type;
-    typedef typename unique_lock_t::mutex_type  mutex_type;
+    typedef std::unique_lock<_Mutex_t>         unique_lock_t;
+    typedef TemplateAutoLock<_Mutex_t>         this_type;
+    typedef typename unique_lock_t::mutex_type mutex_type;
 
 public:
     //------------------------------------------------------------------------//
@@ -286,9 +285,8 @@ public:
     // _timeout_duration has elapsed or the lock is acquired, whichever comes
     // first. May block for longer than _timeout_duration.
     template <typename Rep, typename Period>
-    TemplateAutoLock(mutex_type& _mutex,
-                       const std::chrono::duration<Rep, Period>&
-                       _timeout_duration)
+    TemplateAutoLock(mutex_type&                               _mutex,
+                     const std::chrono::duration<Rep, Period>& _timeout_duration)
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
@@ -299,10 +297,9 @@ public:
     // m.try_lock_until(_timeout_time). Blocks until specified _timeout_time has
     // been reached or the lock is acquired, whichever comes first. May block
     // for longer than until _timeout_time has been reached.
-    template  <typename Clock, typename Duration>
-    TemplateAutoLock(mutex_type& _mutex,
-                       const std::chrono::time_point<Clock, Duration>&
-                       _timeout_time)
+    template <typename Clock, typename Duration>
+    TemplateAutoLock(mutex_type&                                     _mutex,
+                     const std::chrono::time_point<Clock, Duration>& _timeout_time)
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
@@ -312,19 +309,22 @@ public:
     // Does not lock the associated mutex.
     TemplateAutoLock(mutex_type& _mutex, std::defer_lock_t _lock) noexcept
     : unique_lock_t(_mutex, _lock)
-    { }
+    {
+    }
 
     // Tries to lock the associated mutex without blocking by calling
     // m.try_lock(). The behavior is undefined if the current thread already
     // owns the mutex except when the mutex is recursive.
     TemplateAutoLock(mutex_type& _mutex, std::try_to_lock_t _lock)
     : unique_lock_t(_mutex, _lock)
-    { }
+    {
+    }
 
     // Assumes the calling thread already owns m
     TemplateAutoLock(mutex_type& _mutex, std::adopt_lock_t _lock)
     : unique_lock_t(_mutex, _lock)
-    { }
+    {
+    }
 
 public:
     //------------------------------------------------------------------------//
@@ -339,42 +339,56 @@ public:
 
     TemplateAutoLock(mutex_type* _mutex, std::defer_lock_t _lock) noexcept
     : unique_lock_t(*_mutex, _lock)
-    { }
+    {
+    }
 
     TemplateAutoLock(mutex_type* _mutex, std::try_to_lock_t _lock)
     : unique_lock_t(*_mutex, _lock)
-    { }
+    {
+    }
 
     TemplateAutoLock(mutex_type* _mutex, std::adopt_lock_t _lock)
     : unique_lock_t(*_mutex, _lock)
-    { }
+    {
+    }
 
 private:
-    // helpful macros
-    #define _is_stand_mutex(_Tp) (std::is_same<_Tp, Mutex>::value)
-    #define _is_recur_mutex(_Tp) (std::is_same<_Tp, RecursiveMutex>::value)
-    #define _is_other_mutex(_Tp) (! _is_stand_mutex(_Tp) && ! _is_recur_mutex(_Tp) )
+// helpful macros
+#define _is_stand_mutex(_Tp) (std::is_same<_Tp, Mutex>::value)
+#define _is_recur_mutex(_Tp) (std::is_same<_Tp, RecursiveMutex>::value)
+#define _is_other_mutex(_Tp) (!_is_stand_mutex(_Tp) && !_is_recur_mutex(_Tp))
 
-    template <typename _Tp = _Mutex_t,
+    template <typename _Tp                                             = _Mutex_t,
               typename std::enable_if<_is_stand_mutex(_Tp), int>::type = 0>
-    std::string GetTypeString() { return "AutoLock<Mutex>"; }
+    std::string GetTypeString()
+    {
+        return "AutoLock<Mutex>";
+    }
 
-    template <typename _Tp = _Mutex_t,
+    template <typename _Tp                                             = _Mutex_t,
               typename std::enable_if<_is_recur_mutex(_Tp), int>::type = 0>
-    std::string GetTypeString() { return "AutoLock<RecursiveMutex>"; }
+    std::string GetTypeString()
+    {
+        return "AutoLock<RecursiveMutex>";
+    }
 
-    template <typename _Tp = _Mutex_t,
+    template <typename _Tp                                             = _Mutex_t,
               typename std::enable_if<_is_other_mutex(_Tp), int>::type = 0>
-    std::string GetTypeString() { return "AutoLock<UNKNOWN_MUTEX>"; }
+    std::string GetTypeString()
+    {
+        return "AutoLock<UNKNOWN_MUTEX>";
+    }
 
-    // pollution is bad
-    #undef _is_stand_mutex
-    #undef _is_recur_mutex
-    #undef _is_other_mutex
+// pollution is bad
+#undef _is_stand_mutex
+#undef _is_recur_mutex
+#undef _is_other_mutex
 
     // used in _lock_deferred chrono variants to avoid ununsed-variable warning
     template <typename _Tp>
-    void suppress_unused_variable(const _Tp&) { }
+    void suppress_unused_variable(const _Tp&)
+    {
+    }
 
     //========================================================================//
     // NOTE on _lock_deferred(...) variants:
@@ -398,8 +412,14 @@ private:
     // standard locking
     inline void _lock_deferred()
     {
-        try { this->unique_lock_t::lock(); }
-        catch (std::system_error& e) { PrintLockErrorMessage(e); }
+        try
+        {
+            this->unique_lock_t::lock();
+        }
+        catch(std::system_error& e)
+        {
+            PrintLockErrorMessage(e);
+        }
     }
 
     //========================================================================//
@@ -408,11 +428,16 @@ private:
     // _timeout_duration has elapsed or the lock is acquired, whichever comes
     // first. May block for longer than _timeout_duration.
     template <typename Rep, typename Period>
-    void _lock_deferred(const std::chrono::duration<Rep, Period>&
-                        _timeout_duration)
+    void _lock_deferred(const std::chrono::duration<Rep, Period>& _timeout_duration)
     {
-        try { this->unique_lock_t::try_lock_for(_timeout_duration); }
-        catch (std::system_error& e) { PrintLockErrorMessage(e); }
+        try
+        {
+            this->unique_lock_t::try_lock_for(_timeout_duration);
+        }
+        catch(std::system_error& e)
+        {
+            PrintLockErrorMessage(e);
+        }
     }
 
     //========================================================================//
@@ -420,12 +445,17 @@ private:
     // m.try_lock_until(_timeout_time). Blocks until specified _timeout_time has
     // been reached or the lock is acquired, whichever comes first. May block
     // for longer than until _timeout_time has been reached.
-    template<typename Clock, typename Duration>
-    void _lock_deferred(const std::chrono::time_point<Clock, Duration>&
-                        _timeout_time)
+    template <typename Clock, typename Duration>
+    void _lock_deferred(const std::chrono::time_point<Clock, Duration>& _timeout_time)
     {
-        try { this->unique_lock_t::try_lock_until(_timeout_time); }
-        catch (std::system_error& e) { PrintLockErrorMessage(e); }
+        try
+        {
+            this->unique_lock_t::try_lock_until(_timeout_time);
+        }
+        catch(std::system_error& e)
+        {
+            PrintLockErrorMessage(e);
+        }
     }
 
     //========================================================================//
@@ -437,19 +467,17 @@ private:
         using std::cout;
         using std::endl;
         // the error that comes from locking an unavailable mutex
-    #if defined(VERBOSE)
+#if defined(VERBOSE)
         cout << "Non-critical error: mutex lock failure in "
              << GetTypeString<mutex_type>() << ". "
              << "If the app is terminating, Tasking failed to "
              << "delete an allocated resource and a Tasking destructor is "
              << "being called after the statics were destroyed. \n\t--> "
-             << "Exception: [code: " << e.code() << "] caught: "
-             << e.what() << std::endl;
-    #else
+             << "Exception: [code: " << e.code() << "] caught: " << e.what() << std::endl;
+#else
         suppress_unused_variable(e);
-    #endif
+#endif
     }
-
 };
 
 // -------------------------------------------------------------------------- //
@@ -460,11 +488,10 @@ private:
 //
 // -------------------------------------------------------------------------- //
 
-typedef TemplateAutoLock<Mutex> AutoLock;
+typedef TemplateAutoLock<Mutex>          AutoLock;
 typedef TemplateAutoLock<RecursiveMutex> RecursiveAutoLock;
 
 // provide abbriviated type if another mutex type is desired to be used
 // aside from above
-template <typename _Tp> using TAutoLock = TemplateAutoLock<_Tp>;
-
-#endif //AUTOLOCK_HH
+template <typename _Tp>
+using TAutoLock = TemplateAutoLock<_Tp>;

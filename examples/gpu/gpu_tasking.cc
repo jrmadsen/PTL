@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //
@@ -28,13 +27,14 @@
 #include "sum.hh"
 
 #if defined(PTL_USE_TIMEMORY)
-#   include "timemory/auto_timer.hpp"
-#   include "timemory/manager.hpp"
+#    include "timemory/auto_timer.hpp"
+#    include "timemory/manager.hpp"
 #endif
 
 //============================================================================//
 
-ThreadPool*& GetGpuPool()
+ThreadPool*&
+GetGpuPool()
 {
     ThreadLocalStatic ThreadPool* _instance = nullptr;
     return _instance;
@@ -42,7 +42,8 @@ ThreadPool*& GetGpuPool()
 
 //============================================================================//
 
-TaskManager*& GetGpuManager()
+TaskManager*&
+GetGpuManager()
 {
     ThreadLocalStatic TaskManager* _instance = nullptr;
     return _instance;
@@ -50,10 +51,9 @@ TaskManager*& GetGpuManager()
 
 //============================================================================//
 
-void execute_cpu_iterations(uint64_t num_iter,
-                            TaskGroup_t* task_group,
-                            uint64_t n,
-                            uint64_t& remaining)
+void
+execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
+                       uint64_t& remaining)
 {
     if(remaining <= 0 || !task_group)
         return;
@@ -64,16 +64,15 @@ void execute_cpu_iterations(uint64_t num_iter,
 
     // add an element of randomness
     static std::atomic_uintmax_t _counter;
-    uintmax_t _seed = get_seed() + (++_counter * 10000);
+    uintmax_t                    _seed = get_seed() + (++_counter * 10000);
     get_engine().seed(_seed);
 
     std::stringstream ss;
-    ss << cprefix << "Submitting " << num_iter
-       << " tasks computing \"fibonacci(" << n << ")\" to task manager "
+    ss << cprefix << "Submitting " << num_iter << " tasks computing \"fibonacci(" << n
+       << ")\" to task manager "
        << "(" << remaining << " iterations remaining)..." << std::flush;
 
-    TaskManager* taskManager
-            = TaskRunManager::GetMasterRunManager()->GetTaskManager();
+    TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
     Timer t;
     t.Start();
@@ -91,23 +90,22 @@ void execute_cpu_iterations(uint64_t num_iter,
 
 //============================================================================//
 
-void execute_gpu_iterations(uint64_t num_iter,
-                            TaskGroup_t* task_group,
-                            uint64_t n)
+void
+execute_gpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n)
 {
     if(!task_group)
         return;
 
     // add an element of randomness
     static std::atomic_uintmax_t _counter;
-    uintmax_t _seed = get_seed() + (++_counter * 10000);
+    uintmax_t                    _seed = get_seed() + (++_counter * 10000);
     get_engine().seed(_seed);
 
     TaskManager* taskManager = GetGpuManager();
 
     std::stringstream ss;
-    ss << cprefix << "Submitting " << num_iter
-       << " tasks computing \"run_gpu(" << n << ")\" to task manager "
+    ss << cprefix << "Submitting " << num_iter << " tasks computing \"run_gpu(" << n
+       << ")\" to task manager "
        << "..." << std::flush;
 
     Timer t;
@@ -127,9 +125,10 @@ void execute_gpu_iterations(uint64_t num_iter,
 
 //============================================================================//
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
-    _pause_collection; // for VTune
+    _pause_collection;  // for VTune
 
 #if defined(PTL_USE_TIMEMORY)
     tim::manager* manager = tim::manager::instance();
@@ -137,10 +136,10 @@ int main(int argc, char** argv)
 
     ConsumeParameters(argc, argv);
 
-    auto hwthreads = std::thread::hardware_concurrency();
-    auto default_fib = 42;
-    auto default_tg = 2;
-    auto default_gpu = 52;
+    auto hwthreads        = std::thread::hardware_concurrency();
+    auto default_fib      = 42;
+    auto default_tg       = 2;
+    auto default_gpu      = 52;
     auto default_nthreads = (useTBB) ? (2 * hwthreads) : hwthreads;
 
     // default environment controls but don't overwrite
@@ -151,20 +150,21 @@ int main(int argc, char** argv)
     setenv("NUM_TASKS", std::to_string(hwthreads * hwthreads).c_str(), 0);
     setenv("NUM_TASK_GROUPS", std::to_string(default_tg).c_str(), 0);
 
-    rng_range = GetEnv<decltype(rng_range)> ("RNG_RANGE", rng_range,
-                                             "Setting RNG range to +/- this value");
-    unsigned numThreads = GetEnv<unsigned>  ("NUM_THREADS", default_nthreads,
-                                             "Getting the number of threads");
-    uint64_t nfib       = GetEnv<uint64_t>  ("FIBONACCI", default_fib,
-                                             "Setting the centerpoint of fib work distribution");
-    uint64_t ngpu       = GetEnv<uint64_t>  ("GPU_RANGE", default_gpu,
-                                             "Setting the GPU range centerpoint");
-    uint64_t grainsize  = GetEnv<uint64_t>  ("GRAINSIZE", numThreads,
-                                             "Dividing number of task into grain of this size");
-    uint64_t num_iter   = GetEnv<uint64_t>  ("NUM_TASKS", numThreads * numThreads,
-                                             "Setting the number of total tasks");
-    uint64_t num_groups = GetEnv<uint64_t>  ("NUM_TASK_GROUPS", 4,
-                                             "Setting the number of task groups");
+    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range,
+                                            "Setting RNG range to +/- this value");
+    unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
+                                           "Getting the number of threads");
+    uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
+                                     "Setting the centerpoint of fib work distribution");
+    uint64_t ngpu =
+        GetEnv<uint64_t>("GPU_RANGE", default_gpu, "Setting the GPU range centerpoint");
+    uint64_t grainsize =
+        GetEnv<uint64_t>("GRAINSIZE", numThreads,
+                         "Dividing number of task into grain of this size");
+    uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
+                                         "Setting the number of total tasks");
+    uint64_t num_groups =
+        GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
     PrintEnv();
 
     Timer total_timer;
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 
     // Construct the default run manager
     TaskRunManager* runManager = new TaskRunManager(useTBB);
-    //TaskRunManager* runManager = TaskRunManager::GetMasterRunManager(useTBB);
+    // TaskRunManager* runManager = TaskRunManager::GetMasterRunManager(useTBB);
     runManager->Initialize(numThreads);
     message(runManager);
 
@@ -180,17 +180,17 @@ int main(int argc, char** argv)
     // function calls into tasks for the ThreadPool
     TaskManager* taskManager = runManager->GetTaskManager();
 
-    ThreadPool*& gpu_tp = GetGpuPool();
+    ThreadPool*&  gpu_tp  = GetGpuPool();
     TaskManager*& gpu_man = GetGpuManager();
 
     if(!useTBB)
     {
-        gpu_tp = new ThreadPool(numThreads * numThreads, nullptr, false);
+        gpu_tp  = new ThreadPool(numThreads * numThreads, nullptr, false);
         gpu_man = new TaskManager(gpu_tp);
     }
     else
     {
-        gpu_tp = runManager->GetThreadPool();
+        gpu_tp  = runManager->GetThreadPool();
         gpu_man = taskManager;
     }
 
@@ -201,9 +201,9 @@ int main(int argc, char** argv)
     //------------------------------------------------------------------------//
     {
         fuint64_t fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
-        uint64_t fib_n = fib_async.get();
-        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- "
-                  << rng_range << ") = " << fib_n << std::endl;
+        uint64_t  fib_n     = fib_async.get();
+        std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- " << rng_range
+                  << ") = " << fib_n << std::endl;
         std::cout << std::endl;
     }
 
@@ -222,44 +222,39 @@ int main(int argc, char** argv)
     ///                                                                      ///
     ///======================================================================///
     // this function joins task results
-    auto cpu_join = [&] (Array_t& ref, const uint64_t& thread_local_solution)
-    {
+    auto cpu_join = [&](Array_t& ref, const uint64_t& thread_local_solution) {
         true_answer += thread_local_solution;
         ref.push_back(thread_local_solution);
         return ref;
     };
     //------------------------------------------------------------------------//
     // this function joins task results
-    auto gpu_join = [] (Array_t& ref, const uint64_t& thread_local_solution)
-    {
+    auto gpu_join = [](Array_t& ref, const uint64_t& thread_local_solution) {
         ref.push_back(thread_local_solution);
         return ref;
     };
     //------------------------------------------------------------------------//
     // this function deletes task groups
-    auto del = [] (TaskGroup_t*& _task_group)
-    {
+    auto del = [](TaskGroup_t*& _task_group) {
         delete _task_group;
         _task_group = nullptr;
     };
     //------------------------------------------------------------------------//
     // create a task group
-    auto cpu_create = [=] (TaskGroup_t*& _task_group)
-    {
+    auto cpu_create = [=](TaskGroup_t*& _task_group) {
         if(!_task_group)
             _task_group = new TaskGroup_t(cpu_join);
     };
     //------------------------------------------------------------------------//
     // create a task group
-    auto gpu_create = [=] (TaskGroup_t*& _task_group)
-    {
+    auto gpu_create = [=](TaskGroup_t*& _task_group) {
         if(!_task_group)
             _task_group = new TaskGroup_t(gpu_join, gpu_tp);
     };
     //------------------------------------------------------------------------//
     std::vector<TaskGroup_t*> cpu_task_groups(num_groups, nullptr);
     std::vector<TaskGroup_t*> gpu_task_groups(num_groups, nullptr);
-    uint64_t remaining = num_iter;
+    uint64_t                  remaining = num_iter;
 
     ///======================================================================///
     ///                                                                      ///
@@ -303,8 +298,8 @@ int main(int argc, char** argv)
     Timer timer;
 
     //------------------------------------------------------------------------//
-    timer.Start();      // start timer for calculation
-    _resume_collection; // for VTune
+    timer.Start();       // start timer for calculation
+    _resume_collection;  // for VTune
     //------------------------------------------------------------------------//
 
     //------------------------------------------------------------------------//
@@ -370,17 +365,17 @@ int main(int argc, char** argv)
     ///======================================================================///
 
     std::cout << prefix << "[task group] fibonacci(" << nfib << " +/- " << rng_range
-           << ") * " << num_iter << " = " << cpu_answer << std::endl;
+              << ") * " << num_iter << " = " << cpu_answer << std::endl;
     std::cout << cprefix << "[task group] run_gpu(" << ngpu << " +/- " << rng_range
-           << ") * " << num_iter << " = " << gpu_answer << std::endl;
-    std::cout << cprefix << "[atomic]     gpu-tasking answer: " << true_answer << std::endl;
+              << ") * " << num_iter << " = " << gpu_answer << std::endl;
+    std::cout << cprefix << "[atomic]     gpu-tasking answer: " << true_answer
+              << std::endl;
 
     std::stringstream fibprefix;
     fibprefix << "gpu-tasking(...) calculation time: ";
     int32_t _w = fibprefix.str().length() + 2;
 
-    std::cout << prefix << std::setw(_w) << fibprefix.str()
-           << "\t" << timer << std::endl;
+    std::cout << prefix << std::setw(_w) << fibprefix.str() << "\t" << timer << std::endl;
 
     // KNL hangs somewhere between finishing calculations and total_timer
     Timer del_timer;
@@ -393,18 +388,19 @@ int main(int argc, char** argv)
 
     del_timer.Stop();
     std::cout << cprefix << std::setw(_w) << "Task group deletion time: "
-           << "\t" << del_timer << std::endl;
+              << "\t" << del_timer << std::endl;
 
     // print the time for the calculation
     total_timer.Stop();
     std::cout << cprefix << std::setw(_w) << "Total time: "
-           << "\t" << total_timer << std::endl;
+              << "\t" << total_timer << std::endl;
 
     uintmax_t ret = (true_answer - cpu_answer);
     if(ret == 0 && num_iter == gpu_answer)
         std::cout << prefix << "Successful MT gpu-tasking calculation" << std::endl;
     else
-        std::cout << prefix << "Failure combining MT gpu-tasking calculation " << std::endl;
+        std::cout << prefix << "Failure combining MT gpu-tasking calculation "
+                  << std::endl;
 
     std::cout << std::endl;
 

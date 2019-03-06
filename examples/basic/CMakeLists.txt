@@ -30,14 +30,14 @@ file(GLOB headers ${CMAKE_CURRENT_LIST_DIR}/*.h ${CMAKE_CURRENT_LIST_DIR}/*.hh)
 #
 add_executable(tasking tasking.cc ${headers} ${common_headers})
 target_link_libraries(tasking ${EXTERNAL_LIBRARIES})
-install(TARGETS tasking DESTINATION bin)
+set_target_properties(tasking PROPERTIES COMPILE_FLAGS ${PTL_CXX_FLAGS})
 
 if(PTL_USE_TBB)
     add_executable(tbb_tasking tasking.cc ${headers})
-    set_target_properties(tbb_tasking
-        PROPERTIES COMPILE_DEFINITIONS USE_TBB_TASKS)
+    set_target_properties(tbb_tasking PROPERTIES
+        COMPILE_DEFINITIONS USE_TBB_TASKS
+        COMPILE_FLAGS ${PTL_CXX_FLAGS})
     target_link_libraries(tbb_tasking ${EXTERNAL_LIBRARIES})
-    install(TARGETS tbb_tasking DESTINATION bin)
 endif(PTL_USE_TBB)
 
 
@@ -46,12 +46,20 @@ endif(PTL_USE_TBB)
 #
 add_executable(recursive_tasking recursive_tasking.cc ${headers} ${common_headers})
 target_link_libraries(recursive_tasking ${EXTERNAL_LIBRARIES})
-install(TARGETS recursive_tasking DESTINATION bin)
+set_target_properties(recursive_tasking PROPERTIES COMPILE_FLAGS ${PTL_CXX_FLAGS})
 
 if(PTL_USE_TBB)
     add_executable(recursive_tbb_tasking recursive_tasking.cc ${headers} ${common_headers})
-    set_target_properties(recursive_tbb_tasking
-        PROPERTIES COMPILE_DEFINITIONS USE_TBB_TASKS)
+    set_target_properties(recursive_tbb_tasking PROPERTIES
+        COMPILE_DEFINITIONS USE_TBB_TASKS
+        COMPILE_FLAGS ${PTL_CXX_FLAGS})
     target_link_libraries(recursive_tbb_tasking ${EXTERNAL_LIBRARIES})
-    install(TARGETS recursive_tbb_tasking DESTINATION bin)
+endif(PTL_USE_TBB)
+
+
+#----------------------------------------------------------------------------
+# installation
+install(TARGETS tasking recursive_tasking DESTINATION bin)
+if(PTL_USE_TBB)
+    install(TARGETS recursive_tasking recursive_tbb_tasking DESTINATION bin)
 endif(PTL_USE_TBB)

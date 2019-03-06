@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ----------------------------------------------------------------------
 // Class Timer
@@ -66,33 +65,35 @@
 // 21.08.95 P.Kent
 // 29.04.97 G.Cosmo Added timings for Windows/NT
 
-#ifndef TIMER_HH
-#define TIMER_HH
+#pragma once
 
 #ifndef WIN32
-#  include <unistd.h>
-#  include <sys/times.h>
+#    include <sys/times.h>
+#    include <unistd.h>
 #else
-#  include <time.h>
-#  define _SC_CLK_TCK    1
+#    include <time.h>
+#    define _SC_CLK_TCK 1
 
-   extern "C" {
-          int sysconf(int);
-   };
+extern "C"
+{
+    int sysconf(int);
+};
 
-   // Structure returned by times()
+// Structure returned by times()
 
-   struct tms {
-      clock_t tms_utime;           /* user time */
-      clock_t tms_stime;           /* system time */
-      clock_t tms_cutime;          /* user time, children */
-      clock_t tms_cstime;          /* system time, children */
-   };
+struct tms
+{
+    clock_t tms_utime;  /* user time */
+    clock_t tms_stime;  /* system time */
+    clock_t tms_cutime; /* user time, children */
+    clock_t tms_cstime; /* system time, children */
+};
 
-   extern "C" {
-      extern clock_t times(struct tms *);
-   };
-#endif  /* WIN32 */
+extern "C"
+{
+    extern clock_t times(struct tms*);
+};
+#endif /* WIN32 */
 
 #include "PTL/Types.hh"
 
@@ -106,22 +107,21 @@ public:
     Timer();
 
 public:
-    inline void Start();
-    inline void Stop();
-    inline bool IsValid() const;
+    inline void        Start();
+    inline void        Stop();
+    inline bool        IsValid() const;
     inline const char* GetClockTime() const;
-    double GetRealElapsed() const;
-    double GetSystemElapsed() const;
-    double GetUserElapsed() const;
+    double             GetRealElapsed() const;
+    double             GetSystemElapsed() const;
+    double             GetUserElapsed() const;
 
 private:
-    bool fValidTimes;
+    bool                                fValidTimes;
     std::chrono::time_point<clock_type> fStartRealTime, fEndRealTime;
-    tms fStartTimes,fEndTimes;
+    tms                                 fStartTimes, fEndTimes;
 };
 
-std::ostream& operator << (std::ostream& os, const Timer& t);
+std::ostream&
+operator<<(std::ostream& os, const Timer& t);
 
 #include "PTL/Timer.icc"
-
-#endif

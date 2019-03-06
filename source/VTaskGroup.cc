@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
@@ -30,30 +29,31 @@
 // ---------------------------------------------------------------
 
 #include "PTL/VTaskGroup.hh"
-#include "PTL/VTask.hh"
-#include "PTL/ThreadData.hh"
-#include "PTL/ThreadPool.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskRunManager.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/VTask.hh"
 
-//============================================================================//
+//======================================================================================//
 
-std::atomic_uintmax_t& vtask_group_counter()
+std::atomic_uintmax_t&
+vtask_group_counter()
 {
     static std::atomic_uintmax_t _instance(0);
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
 VTaskGroup::VTaskGroup(ThreadPool* tp)
-: m_clear_count(0),
-  m_clear_freq(1),
-  m_tot_task_count(0),
-  m_id(vtask_group_counter()++),
-  m_pool(tp),
-  m_task_lock(),
-  m_main_tid(std::this_thread::get_id())
+: m_clear_count(0)
+, m_clear_freq(1)
+, m_tot_task_count(0)
+, m_id(vtask_group_counter()++)
+, m_pool(tp)
+, m_task_lock()
+, m_main_tid(std::this_thread::get_id())
 {
     if(!m_pool && TaskRunManager::GetMasterRunManager())
         m_pool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
@@ -67,27 +67,26 @@ VTaskGroup::VTaskGroup(ThreadPool* tp)
 #endif
 }
 
-//============================================================================//
+//======================================================================================//
 
-VTaskGroup::~VTaskGroup()
-{ }
+VTaskGroup::~VTaskGroup() {}
 
-//============================================================================//
+//======================================================================================//
 
-void VTaskGroup::execute_this_threads_tasks()
+void
+VTaskGroup::execute_this_threads_tasks()
 {
     // for internal threads
     ThreadData* data = ThreadData::GetInstance();
 
-    ThreadPool* _tpool = (m_pool) ? m_pool
-                                  : ((data) ? data->thread_pool : nullptr);
+    ThreadPool* _tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
 
-    VUserTaskQueue* _taskq = (m_pool) ? m_pool->get_queue()
-                                      : ((data) ? data->current_queue : nullptr);
+    VUserTaskQueue* _taskq =
+        (m_pool) ? m_pool->get_queue() : ((data) ? data->current_queue : nullptr);
 
     // for external threads
-    bool is_master = (data) ? data->is_master : false;
-    bool within_task = (data) ? data->within_task : true;
+    bool ext_is_master   = (data) ? data->is_master : false;
+    bool ext_within_task = (data) ? data->within_task : true;
 
     // for external threads
     if(!data)
@@ -108,23 +107,14 @@ void VTaskGroup::execute_this_threads_tasks()
     }
 
     // only want to process if within a task
-    if((!is_master || _tpool->size() < 2) && within_task)
+    if((!ext_is_master || _tpool->size() < 2) && ext_within_task)
     {
-#if defined(DEBUG)
-        std::cout << "VTaskGroup::" << __FUNCTION__ << "()..." << std::endl;
-#endif
         if(!_taskq)
             return;
-        int bin = static_cast<int>(_taskq->GetThreadBin());
-        const auto nitr = (_tpool)
-                           ? _tpool->size()
-                           : Thread::hardware_concurrency();
+        int        bin  = static_cast<int>(_taskq->GetThreadBin());
+        const auto nitr = (_tpool) ? _tpool->size() : Thread::hardware_concurrency();
         while(this->pending() > 0)
         {
-#if defined(DEBUG)
-            std::cout << "[" << _taskq->GetThreadBin() << "] pending = "
-                   << this->pending() << "..." << std::endl;
-#endif
             task_pointer _task = _taskq->GetTask(bin, static_cast<int>(nitr));
             if(_task.get())
                 (*_task)();
@@ -132,9 +122,10 @@ void VTaskGroup::execute_this_threads_tasks()
     }
 }
 
-//============================================================================//
+//======================================================================================//
 
-void VTaskGroup::wait()
+void
+VTaskGroup::wait()
 {
     // if no pool was initially present at creation
     if(!m_pool)
@@ -161,16 +152,15 @@ void VTaskGroup::wait()
     if(!m_pool->is_alive() || !is_native_task_group())
         return;
 
-    //execute_this_threads_tasks();
-    //return;
+    // execute_this_threads_tasks();
+    // return;
 
-    auto is_active_state = [&] ()
-    {
+    auto is_active_state = [&]() {
         return static_cast<int>(m_pool->state()) != static_cast<int>(state::STOPPED);
     };
 
     intmax_t _pool_size = m_pool->size();
-    intmax_t _pending = 0;
+    intmax_t _pending   = 0;
     AutoLock _lock(m_task_lock, std::defer_lock);
 
     while(is_active_state())
@@ -185,7 +175,7 @@ void VTaskGroup::wait()
                 _lock.lock();
             // Wait until signaled that a task has been competed
             // Unlock mutex while wait, then lock it back when signaled
-            if((_pending = pending()) > _pool_size) // for safety
+            if((_pending = pending()) > _pool_size)  // for safety
                 m_task_cond.wait(_lock);
             else
                 m_task_cond.wait_for(_lock, std::chrono::milliseconds(10));
@@ -209,9 +199,8 @@ void VTaskGroup::wait()
            << "are running!" << std::endl;
         std::cout << ss.str();
         this->wait();
-        //throw std::runtime_error(ss.str().c_str());
+        // throw std::runtime_error(ss.str().c_str());
     }
-
 }
 
-//============================================================================//
+//======================================================================================//

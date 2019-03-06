@@ -5,10 +5,6 @@ include(CheckCXXCompilerFlag)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 include_directories(${TiMemory_INCLUDE_DIRS})
 
-if(PTL_USE_CLANG_TIDY AND CLANG_TIDY)
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY};checks=-*,readability-*")
-endif()
-
 ################################################################################
 #                                                                              #
 #                               General                                        #
@@ -59,7 +55,9 @@ if(BUILD_STATIC_LIBS)
         OUTPUT_NAME ptl
         SOURCES ${ptl_headers} ${ptl_sources}
         LINK_LIBRARIES ${EXTERNAL_LIBRARIES})
-    list(APPEND INSTALL_LIBRARIES ptl-static)
+    if(PTL_DEVELOPER_INSTALL)
+        list(APPEND INSTALL_LIBRARIES ptl-static)
+    endif()
 endif()
 
 
@@ -71,21 +69,25 @@ endif()
 #------------------------------------------------------------------------------#
 # Install the targets and export
 #
-# libraries
-install(TARGETS ${INSTALL_LIBRARIES}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    EXPORT ${PROJECT_NAME}LibraryDepends
-    COMPONENT development)
+if(PTL_DEVELOPER_INSTALL OR BUILD_SHARED_LIBS)
+    # libraries
+    install(TARGETS ${INSTALL_LIBRARIES}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        EXPORT ${PROJECT_NAME}LibraryDepends
+        COMPONENT development)
 
-# headers
-install(FILES ${ptl_headers}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/PTL
-    COMPONENT development)
+    # install export
+    install(EXPORT ${PROJECT_NAME}LibraryDepends
+        DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
+        COMPONENT development)
+endif()
 
-# install export
-install(EXPORT ${PROJECT_NAME}LibraryDepends
-    DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
-    COMPONENT development)
+if(PTL_DEVELOPER_INSTALL)
+    # headers
+    install(FILES ${ptl_headers}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/PTL
+        COMPONENT development)
+endif()
 
 # generate export for build tree
 export(TARGETS ${INSTALL_LIBRARIES}

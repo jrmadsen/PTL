@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // Tasking class header file
 //
@@ -28,40 +27,39 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#ifndef VTask_hh_
-#define VTask_hh_
+#pragma once
 
-#include "PTL/Threading.hh"
 #include "PTL/AutoLock.hh"
 #include "PTL/TaskAllocator.hh"
+#include "PTL/Threading.hh"
 
-#include <functional>
-#include <utility>
-#include <tuple>
-#include <cstddef>
-#include <string>
-#include <future>
-#include <thread>
-#include <cstdint>
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <future>
+#include <string>
+#include <thread>
+#include <tuple>
+#include <utility>
 
 class VTaskGroup;
 class ThreadPool;
 
-//============================================================================//
+//======================================================================================//
 
 /// \brief VTask is the abstract class stored in thread_pool
 class VTask
 {
 public:
-    typedef std::thread::id             tid_type;
-    typedef size_t                      size_type;
-    typedef VTask                       this_type;
-    typedef std::atomic_uintmax_t       count_t;
-    typedef VTask*                      iterator;
-    typedef const VTask*                const_iterator;
-    typedef TaskAllocator<this_type>    allocator_type;
-    typedef std::function<void()>       void_func_t;
+    typedef std::thread::id          tid_type;
+    typedef size_t                   size_type;
+    typedef VTask                    this_type;
+    typedef std::atomic_uintmax_t    count_t;
+    typedef VTask*                   iterator;
+    typedef const VTask*             const_iterator;
+    typedef TaskAllocator<this_type> allocator_type;
+    typedef std::function<void()>    void_func_t;
 
 public:
     VTask(VTaskGroup* _group = nullptr);
@@ -73,23 +71,23 @@ public:
 
 public:
     // used by thread_pool
-    void operator++();
-    void operator--();
-    virtual bool is_native_task() const;
+    void                operator++();
+    void                operator--();
+    virtual bool        is_native_task() const;
     virtual ThreadPool* pool() const;
 
 public:
     // used by task tree
     iterator begin() { return this; }
-    iterator end() { return this+1; }
+    iterator end() { return this + 1; }
 
     const_iterator begin() const { return this; }
-    const_iterator end() const { return this+1; }
+    const_iterator end() const { return this + 1; }
 
     const_iterator cbegin() const { return this; }
-    const_iterator cend() const { return this+1; }
+    const_iterator cend() const { return this + 1; }
 
-    intmax_t& depth() { return m_depth; }
+    intmax_t&       depth() { return m_depth; }
     const intmax_t& depth() const { return m_depth; }
 
 protected:
@@ -99,11 +97,7 @@ protected:
     VTaskGroup* m_vgroup;
     tid_type    m_tid_bin;
     intmax_t    m_depth;
-    void_func_t m_func = [](){};
-
+    void_func_t m_func = []() {};
 };
 
-//============================================================================//
-
-#endif
-
+//======================================================================================//

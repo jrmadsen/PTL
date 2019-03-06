@@ -7,15 +7,14 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED
+// "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
@@ -32,36 +31,39 @@
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
 
-//============================================================================//
+//======================================================================================//
 
-TaskManager*& TaskManager::fgInstance()
+TaskManager*&
+TaskManager::fgInstance()
 {
     ThreadLocalStatic TaskManager* _instance = nullptr;
     return _instance;
 }
 
-//============================================================================//
+//======================================================================================//
 
-TaskManager* TaskManager::GetInstance()
+TaskManager*
+TaskManager::GetInstance()
 {
     if(!fgInstance())
     {
         auto nthreads = std::thread::hardware_concurrency();
-        std::cout << "Allocating mad::TaskManager with " << nthreads
-                  << " thread(s)..." << std::endl;
+        std::cout << "Allocating mad::TaskManager with " << nthreads << " thread(s)..."
+                  << std::endl;
         new TaskManager(TaskRunManager::GetMasterRunManager()->GetThreadPool());
     }
     return fgInstance();
 }
 
-//============================================================================//
+//======================================================================================//
 
-TaskManager* TaskManager::GetInstanceIfExists()
+TaskManager*
+TaskManager::GetInstanceIfExists()
 {
     return fgInstance();
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager::TaskManager(ThreadPool* _pool)
 : m_pool(_pool)
@@ -70,7 +72,7 @@ TaskManager::TaskManager(ThreadPool* _pool)
         fgInstance() = this;
 }
 
-//============================================================================//
+//======================================================================================//
 
 TaskManager::~TaskManager()
 {
@@ -79,22 +81,4 @@ TaskManager::~TaskManager()
         fgInstance() = nullptr;
 }
 
-//============================================================================//
-
-TaskManager::TaskManager(const TaskManager& rhs)
-: m_pool(rhs.m_pool)
-{ }
-
-//============================================================================//
-
-TaskManager& TaskManager::operator=(const TaskManager& rhs)
-{
-    if(this == &rhs)
-        return *this;
-
-    m_pool = rhs.m_pool;
-
-    return *this;
-}
-
-//============================================================================//
+//======================================================================================//
