@@ -891,8 +891,8 @@ macro(BUILD_LIBRARY)
             SOVERSION ${${PROJECT_NAME}_VERSION_MAJOR})
     endif()
 
-    target_link_libraries(${LIB_TARGET_NAME}
-    PUBLIC ${EXTERNAL_LIBRARIES} ${LIB_LINK_LIBRARIES})
+    target_link_libraries(${LIB_TARGET_NAME} PUBLIC
+        ${EXTERNAL_LIBRARIES} ${LIB_LINK_LIBRARIES})
 
     set_target_properties(${LIB_TARGET_NAME}
         PROPERTIES
@@ -900,8 +900,15 @@ macro(BUILD_LIBRARY)
             LANGUAGE                    CXX
             LINKER_LANGUAGE             CXX
             POSITION_INDEPENDENT_CODE   ON
-            COMPILE_FLAGS               "${${PROJECT_NAME}_CXX_FLAGS}"
             ${LIB_EXTRA_ARGS})
+
+    target_compile_definitions(${LIB_TARGET_NAME} PUBLIC
+        ${${PROJECT_NAME}_DEFINITIONS})
+
+    target_compile_options(${LIB_TARGET_NAME} PUBLIC
+        $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>
+        $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS} ${LIB_CUDAFLAGS}>)
 
     list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})
 endmacro(BUILD_LIBRARY)

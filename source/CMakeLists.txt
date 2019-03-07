@@ -12,11 +12,11 @@ include_directories(${TiMemory_INCLUDE_DIRS})
 ################################################################################
 
 if(PTL_USE_TBB)
-    add_definitions(-DPTL_USE_TBB)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_TBB)
 endif(PTL_USE_TBB)
 
 if(PTL_USE_TIMEMORY)
-    add_definitions(-DPTL_USE_TIMEMORY)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_TIMEMORY)
 endif(PTL_USE_TIMEMORY)
 
 # libraries to install

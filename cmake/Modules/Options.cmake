@@ -50,7 +50,7 @@ if(PTL_USE_SANITIZER)
 endif()
 
 if(PTL_USE_GPU)
-    add_definitions(-DPTL_USE_GPU)
+    list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_GPU)
 
     # default settings
     set(CUDA_FOUND OFF)
