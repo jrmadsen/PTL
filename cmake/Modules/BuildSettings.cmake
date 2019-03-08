@@ -97,7 +97,6 @@ endif()
 
 # SIMD OpenMP
 add_c_flag_if_avail("-fopenmp-simd")
-add_cxx_flag_if_avail("-fopenmp-simd")
 
 # general warnings
 add_cxx_flag_if_avail("-W")
@@ -105,6 +104,9 @@ add_cxx_flag_if_avail("-Wall")
 add_cxx_flag_if_avail("-Wextra")
 add_cxx_flag_if_avail("-Wshadow")
 add_cxx_flag_if_avail("-faligned-new")
+
+# SIMD OpenMP
+add_cxx_flag_if_avail("-fopenmp-simd")
 
 if(PTL_USE_ARCH)
     if(CMAKE_C_COMPILER_IS_INTEL)
