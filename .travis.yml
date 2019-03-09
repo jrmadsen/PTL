@@ -76,23 +76,23 @@ matrix:
             - clang-tidy
       env:
         - MATRIX_EVAL="CC=$(which gcc-7) && CXX=$(which g++-7) && COVERAGE=0"
-    # Clang 4.0
+    # Clang 5.0
     - os: linux
       dist: xenial
       sudo: false
       addons:
         apt:
           sources:
-            - llvm-toolchain-xenial-4.0
+            - llvm-toolchain-xenial-5.0
             - ubuntu-toolchain-r-test
           packages:
-            - clang-4.0
-            - clang++-4.0
+            - clang-5.0
+            - clang++-5.0
             - build-essential
             - cmake
             - clang-tidy
       env:
-        - MATRIX_EVAL="CC=$(which clang-4.0) && CXX=$(which clang++-4.0) && COVERAGE=0 && NOTBB=1"
+        - MATRIX_EVAL="CC=$(which clang-5.0) && CXX=$(which clang++-5.0) && COVERAGE=0 && NOTBB=1"
 
 
 before_install:

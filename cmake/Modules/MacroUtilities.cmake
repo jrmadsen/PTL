@@ -905,10 +905,18 @@ macro(BUILD_LIBRARY)
     target_compile_definitions(${LIB_TARGET_NAME} PUBLIC
         ${${PROJECT_NAME}_DEFINITIONS})
 
-    target_compile_options(${LIB_TARGET_NAME} PUBLIC
-        $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
-        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>
-        $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS} ${LIB_CUDAFLAGS}>)
+    get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+
+    if("CUDA" IN_LIST languages)
+        target_compile_options(${LIB_TARGET_NAME} PUBLIC
+            $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
+            $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>
+            $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS} ${LIB_CUDAFLAGS}>)
+    else()
+        target_compile_options(${LIB_TARGET_NAME} PUBLIC
+            $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
+            $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>)
+    endif()
 
     list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})
 endmacro(BUILD_LIBRARY)

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -69,20 +69,19 @@ public:  // with description
     // Malloc and Free methods to be used when overloading
     // new and delete operators in the client <Type> object
 
-    inline void ResetStorage();
+    inline void ResetStorage() override;
     // Returns allocated storage to the free store, resets allocator.
     // Note: contents in memory are lost using this call !
 
-    inline size_t GetAllocatedSize() const;
+    inline size_t GetAllocatedSize() const override;
     // Returns the size of the total memory allocated
-    inline int GetNoPages() const;
+    inline int GetNoPages() const override;
     // Returns the total number of allocated pages
-    inline size_t GetPageSize() const;
+    inline size_t GetPageSize() const override;
     // Returns the current size of a page
-    inline void IncreasePageSize(unsigned int sz);
+    inline void IncreasePageSize(unsigned int sz) override;
     // Resets allocator and increases default page size of a given factor
-
-    inline const char* GetPoolType() const;
+    inline const char* GetPoolType() const override;
     // Returns the type_info Id of the allocated type in the pool
 
 public:  // without description
@@ -105,6 +104,7 @@ public:  // without description
     template <class U>
     TaskAllocator(const TaskAllocator<U>& right) throw()
     : mem(right.mem)
+    , tname (right.name())
     {
     }
     // Copy constructor
@@ -168,8 +168,8 @@ private:
 template <class Type>
 TaskAllocator<Type>::TaskAllocator()
 : mem(sizeof(Type))
+, tname (typeid(Type).name())
 {
-    tname = typeid(Type).name();
 }
 
 // ************************************************************

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -273,7 +273,7 @@ public:
     // Locks the associated mutex by calling m.lock(). The behavior is
     // undefined if the current thread already owns the mutex except when
     // the mutex is recursive
-    TemplateAutoLock(mutex_type& _mutex)
+    explicit TemplateAutoLock(mutex_type& _mutex)
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
