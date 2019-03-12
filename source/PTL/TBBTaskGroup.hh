@@ -154,7 +154,7 @@ public:
                 CONDITIONBROADCAST(&(this->task_cond()));
             }
         };
-        m_task_set.push_back(data_type(false, std::move(_fut)));
+        m_task_set.push_back(data_type(false, std::move(_fut), ArgTp()));
         m_tbb_task_group->run(_func);
     }
     //------------------------------------------------------------------------//
