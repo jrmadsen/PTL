@@ -35,19 +35,19 @@
 
 //======================================================================================//
 
-TaskRunManager*&
+TaskRunManager::pointer&
 TaskRunManager::GetPrivateMasterRunManager(bool init, bool useTBB)
 {
-    static TaskRunManager* _instance = (init) ? new TaskRunManager(useTBB) : nullptr;
+    static pointer _instance = (init) ? new TaskRunManager(useTBB) : nullptr;
     return _instance;
 }
 
 //======================================================================================//
 
-TaskRunManager*&
+TaskRunManager*
 TaskRunManager::GetMasterRunManager(bool useTBB)
 {
-    static TaskRunManager* _instance = GetPrivateMasterRunManager(true, useTBB);
+    static pointer& _instance = GetPrivateMasterRunManager(true, useTBB);
     return _instance;
 }
 
@@ -68,11 +68,11 @@ TaskRunManager::TaskRunManager(bool useTBB)
 , taskQueue(nullptr)
 , threadPool(nullptr)
 , taskManager(nullptr)
-, workTaskGroup(nullptr)
-, workTaskGroupTBB(nullptr)
 {
     if(!GetPrivateMasterRunManager(false))
+    {
         GetPrivateMasterRunManager(false) = this;
+    }
 
 #ifdef PTL_USE_TBB
     int _useTBB = GetEnv<int>("FORCE_TBB", (int) useTBB);
@@ -94,7 +94,7 @@ TaskRunManager::TaskRunManager(bool useTBB)
 
 //======================================================================================//
 
-TaskRunManager::~TaskRunManager() { Terminate(); }
+TaskRunManager::~TaskRunManager() {}
 
 //======================================================================================//
 
@@ -128,19 +128,11 @@ TaskRunManager::Initialize(uint64_t n)
     {
         if(verbose > 0)
             std::cout << "TaskRunManager :: Using TBB..." << std::endl;
-        if(!workTaskGroupTBB)
-        {
-            workTaskGroupTBB = new RunTaskGroupTBB();
-        }
     }
     else
     {
         if(verbose > 0)
             std::cout << "TaskRunManager :: Using ThreadPool..." << std::endl;
-        if(!workTaskGroup)
-        {
-            workTaskGroup = new RunTaskGroup();
-        }
     }
 
     isInitialized = true;
@@ -160,32 +152,10 @@ void
 TaskRunManager::Terminate()
 {
     isInitialized = false;
-
-    if(workTaskGroupTBB)
-        workTaskGroupTBB->join();
-    if(workTaskGroup)
-        workTaskGroup->join();
-    delete workTaskGroupTBB;
-    delete workTaskGroup;
     delete taskManager;
     delete threadPool;
-    workTaskGroupTBB = nullptr;
-    workTaskGroup    = nullptr;
-    taskManager      = nullptr;
-    threadPool       = nullptr;
-}
-
-//======================================================================================//
-
-void
-TaskRunManager::Wait()
-{
-    // Now join threads.
-    if(workTaskGroupTBB)
-        workTaskGroupTBB->join();
-
-    if(workTaskGroup)
-        workTaskGroup->join();
+    taskManager = nullptr;
+    threadPool  = nullptr;
 }
 
 //======================================================================================//

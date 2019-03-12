@@ -44,6 +44,7 @@ class TaskRunManager
 public:
     typedef TaskGroup<void>    RunTaskGroup;
     typedef TBBTaskGroup<void> RunTaskGroupTBB;
+    typedef TaskRunManager*    pointer;
 
 public:
     // Parameters:
@@ -67,7 +68,6 @@ public:
     // Inherited methods to re-implement for MT case
     virtual void Initialize(uint64_t n = std::thread::hardware_concurrency());
     virtual void Terminate();
-    virtual void Wait();
     ThreadPool*  GetThreadPool() const { return threadPool; }
     TaskManager* GetTaskManager() const { return taskManager; }
     bool         IsInitialized() const { return isInitialized; }
@@ -79,22 +79,20 @@ private:
 
 public:  // with description
     // Singleton implementing master thread behavior
-    static TaskRunManager*  GetInstance(bool useTBB = false);
-    static TaskRunManager*& GetMasterRunManager(bool useTBB = false);
+    static TaskRunManager* GetInstance(bool useTBB = false);
+    static TaskRunManager* GetMasterRunManager(bool useTBB = false);
 
 private:
-    static TaskRunManager*& GetPrivateMasterRunManager(bool init, bool useTBB = false);
+    static pointer& GetPrivateMasterRunManager(bool init, bool useTBB = false);
 
 protected:
     // Barriers: synch points between master and workers
-    bool             isInitialized;
-    int              verbose;
-    uint64_t         nworkers;
-    VUserTaskQueue*  taskQueue;
-    ThreadPool*      threadPool;
-    TaskManager*     taskManager;
-    RunTaskGroup*    workTaskGroup;
-    RunTaskGroupTBB* workTaskGroupTBB;
+    bool            isInitialized;
+    int             verbose;
+    uint64_t        nworkers;
+    VUserTaskQueue* taskQueue;
+    ThreadPool*     threadPool;
+    TaskManager*    taskManager;
 
 public:
     virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;

@@ -52,8 +52,8 @@
 #    define GLOB_DLL
 #endif
 
-#include <complex>
 #include <atomic>
+#include <complex>
 #include <limits>
 
 // Definitions for Thread Local Storage

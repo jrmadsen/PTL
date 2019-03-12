@@ -47,9 +47,7 @@ vtask_group_counter()
 //======================================================================================//
 
 VTaskGroup::VTaskGroup(ThreadPool* tp)
-:  // m_clear_count(0)
-   //, m_clear_freq(1)
-    m_tot_task_count(0)
+: m_tot_task_count(0)
 , m_id(vtask_group_counter()++)
 , m_pool(tp)
 , m_task_lock()
