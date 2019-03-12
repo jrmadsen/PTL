@@ -53,6 +53,8 @@
 #endif
 
 #include <complex>
+#include <atomic>
+#include <limits>
 
 // Definitions for Thread Local Storage
 //

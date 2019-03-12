@@ -307,25 +307,12 @@ public:
     // delete copy-construct
     TaskGroup(const this_type&) = delete;
     // define move-construct
-    TaskGroup(this_type&& rhs)
-    : VTaskGroup(std::move(rhs))
-    , m_join_function(std::move(rhs.m_join_function))
-    {
-        set_join_function(rhs.m_join_function);
-    }
+    TaskGroup(this_type&& rhs) = default;
 
     // delete copy-assign
     this_type& operator=(const this_type& rhs) = delete;
     // define move-assign
-    this_type& operator=(this_type&& rhs)
-    {
-        if(this != &rhs)
-        {
-            VTaskGroup::operator=(std::move(rhs));
-            m_join_function     = std::move(rhs.m_join_function);
-        }
-        return *this;
-    }
+    this_type& operator=(this_type&& rhs) = default;
 
 public:
     //------------------------------------------------------------------------//
