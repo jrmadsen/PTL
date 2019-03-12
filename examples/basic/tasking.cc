@@ -23,8 +23,9 @@
 
 //============================================================================//
 
+template <typename TaskGroup_t>
 uint64_t
-tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
+task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 {
     if(n < 2)
     {
@@ -32,13 +33,13 @@ tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
     }
     else
     {
-        uint64_t        x, y;
-        tbb::task_group g;
+        uint64_t    x, y;
+        TaskGroup_t g;
         ++task_group_counter();
         if(n >= cutoff)
         {
-            g.run([&]() { x = tbb_fibonacci(n - 1, cutoff); });
-            g.run([&]() { y = tbb_fibonacci(n - 2, cutoff); });
+            g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+            g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
         }
         else
         {
@@ -54,40 +55,11 @@ tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 
 //============================================================================//
 
-uint64_t
-task_fibonacci(const uint64_t& n, const uint64_t& cutoff, TaskManager* taskMan)
-{
-    if(n < 2)
-    {
-        return 1;
-    }
-    else
-    {
-        uint64_t    x, y;
-        VoidGroup_t tg;
-        ++task_group_counter();
-        if(n >= cutoff)
-        {
-            taskMan->exec(tg, [&]() { x = task_fibonacci(n - 1, cutoff, taskMan); });
-            taskMan->exec(tg, [&]() { y = task_fibonacci(n - 2, cutoff, taskMan); });
-        }
-        else
-        {
-            taskMan->exec(tg, [&]() { x = fibonacci(n - 1); });
-            taskMan->exec(tg, [&]() { y = fibonacci(n - 2); });
-        }
-        tg.wait();
-        return x + y;
-    }
-}
-
-//============================================================================//
-
 void
 execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
                        uint64_t& remaining, bool verbose = true)
 {
-    if(remaining <= 0 || !task_group)
+    if(!task_group)
         return;
 
     if(num_iter > remaining)

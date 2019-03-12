@@ -61,8 +61,8 @@ public:
     bool AcquireClaim();
     void ReleaseClaim();
 
-    void     PushTask(VTaskPtr);
-    VTaskPtr PopTask(bool front = true);
+    void PushTask(VTaskPtr);
+    void PopTask(bool front = true);
 
     size_type size() const;
     bool      empty() const;
@@ -144,25 +144,19 @@ TaskSubQueue::PushTask(VTaskPtr task)
 
 //======================================================================================//
 
-inline TaskSubQueue::VTaskPtr
+inline void
 TaskSubQueue::PopTask(bool front)
 {
-    VTaskPtr _task(nullptr);
     // no need to lock -- claim is acquired via atomic
     assert(m_available.load(std::memory_order_relaxed) == false);
     if(m_task_queue.empty())
-        return _task;
+        return;
+
+    /*
     --m_ntasks;
-    // std::stringstream ss;
-    // ss << ThreadPool::GetThisThreadID() << "> "
-    //   << ThisThread::get_id()
-    //   << " [" << __FUNCTION__ << ":" << __LINE__ << "] "
-    //   << "this = " << this << ", "
-    //   << "# tasks = " << m_all_tasks->load(std::memory_order_relaxed);
     --(*m_all_tasks);
-    // ss << " vs. " << m_all_tasks->load(std::memory_order_relaxed);
-    // ss << std::endl;
-    // std::cout << ss.str();
+
+    VTaskPtr _task;
     if(front)
     {
         _task = std::move(m_task_queue.front());
@@ -173,7 +167,58 @@ TaskSubQueue::PopTask(bool front)
         _task = std::move(m_task_queue.back());
         m_task_queue.pop_back();
     }
-    return _task;
+    // release the claim on the bin
+    ReleaseClaim();
+    VUserTaskQueue::Execute(_task);
+    */
+
+    size_type nmax  = 1;
+    size_type nexec = std::min(nmax, m_task_queue.size());
+
+    m_ntasks -= nexec;
+    for(size_type i = 0; i < nexec; ++i)
+        --(*m_all_tasks);
+
+    if(nexec == 1)
+    {
+        VTaskPtr _task;
+        if(front)
+        {
+            _task = std::move(m_task_queue.front());
+            m_task_queue.pop_front();
+        }
+        else
+        {
+            _task = std::move(m_task_queue.back());
+            m_task_queue.pop_back();
+        }
+        // release the claim on the bin
+        ReleaseClaim();
+        VUserTaskQueue::Execute(_task);
+    }
+    else
+    {
+        std::vector<VTaskPtr> exec_container(nexec);
+        if(front)
+        {
+            for(size_type i = 0; i < nexec; ++i)
+            {
+                exec_container[i] = std::move(m_task_queue.front());
+                m_task_queue.pop_front();
+            }
+        }
+        else
+        {
+            for(size_type i = 0; i < nexec; ++i)
+            {
+                exec_container[i] = std::move(m_task_queue.back());
+                m_task_queue.pop_back();
+            }
+        }
+        // release the claim on the bin
+        ReleaseClaim();
+        VUserTaskQueue::Execute(exec_container);
+    }
 }
 
 //======================================================================================//

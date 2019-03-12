@@ -79,29 +79,6 @@ TaskGroup<_Tp, _Arg>::set_join_function(const _Func& _join)
 //======================================================================================//
 
 template <typename _Tp, typename _Arg>
-inline typename VTaskGroup::tid_type
-TaskGroup<_Tp, _Arg>::add(future_type&& _f)
-{
-    tid_type _tid = this_tid();
-    m_task_set.push_back(data_type(false, std::move(_f), ArgTp()));
-    return _tid;
-}
-
-//======================================================================================//
-
-template <typename _Tp, typename _Arg>
-inline typename VTaskGroup::tid_type
-TaskGroup<_Tp, _Arg>::add(packaged_task_type* _task)
-{
-    tid_type _tid = this_tid();
-    auto     _f   = _task->get_future();
-    m_task_set.push_back(data_type(false, std::move(_f), ArgTp()));
-    return _tid;
-}
-
-//======================================================================================//
-
-template <typename _Tp, typename _Arg>
 inline _Tp
 TaskGroup<_Tp, _Arg>::join(_Tp accum)
 {
@@ -112,8 +89,8 @@ TaskGroup<_Tp, _Arg>::join(_Tp accum)
         accum      = m_join_function(accum, _val);
     }
 
-    if(m_clear_freq.load() > 0 && (++m_clear_count) % m_clear_freq.load() == 0)
-        this->clear();
+    // if(m_clear_freq.load() > 0 && (++m_clear_count) % m_clear_freq.load() == 0)
+    this->clear();
 
     return accum;
 }

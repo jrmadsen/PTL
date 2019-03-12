@@ -177,6 +177,8 @@ UserTaskQueue::bin_empty() const
 inline bool
 UserTaskQueue::true_empty() const
 {
+    // return !std::any_of(m_subqueues->begin(), m_subqueues->end(), [](TaskSubQueue* itr)
+    // { return !itr->empty(); });
     for(const auto& itr : *m_subqueues)
         if(!itr->empty())
             return false;
@@ -188,6 +190,9 @@ UserTaskQueue::true_empty() const
 inline UserTaskQueue::size_type
 UserTaskQueue::true_size() const
 {
+    // return std::accumulate<TaskSubQueueContainer::iterator, size_type>(
+    //    m_subqueues->begin(), m_subqueues->end(), 0,
+    //    [](size_type& n, TaskSubQueue* itr) { return n += itr->size(); });
     size_type _n = 0;
     for(const auto& itr : *m_subqueues)
         _n += itr->size();

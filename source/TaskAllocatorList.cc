@@ -76,7 +76,7 @@ void
 TaskAllocatorList::Destroy(int nStat, int verboseLevel)
 {
     int    i = 0, j = 0;
-    double mem = 0, tmem = 0;
+    double tmem = 0;
     if(verboseLevel > 0)
     {
         std::cout << "================== Deleting memory pools ==================="
@@ -84,7 +84,7 @@ TaskAllocatorList::Destroy(int nStat, int verboseLevel)
     }
     for(auto& itr : fList)
     {
-        mem = itr->GetAllocatedSize();
+        double mem = itr->GetAllocatedSize();
         if(i < nStat)
         {
             i++;

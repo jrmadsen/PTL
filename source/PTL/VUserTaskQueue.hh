@@ -31,7 +31,11 @@
 #include "PTL/Threading.hh"
 #include "PTL/Types.hh"
 
+#include <cstddef>
 #include <set>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 class VTask;
 class VTaskGroup;
@@ -105,6 +109,62 @@ public:
     //      postfix versions
     // virtual uintmax_t operator++(int) = 0;
     // virtual uintmax_t operator--(int) = 0;
+
+public:
+    template <
+        typename Container,
+        typename std::enable_if<std::is_same<Container, VTaskPtr>::value, int>::type = 0>
+    static void Execute(Container& obj)
+    {
+        if(obj.get())
+            (*obj)();
+    }
+
+    template <
+        typename Container,
+        typename std::enable_if<!std::is_same<Container, VTaskPtr>::value, int>::type = 0>
+    static void Execute(Container& tasks)
+    {
+        for(auto& itr : tasks)
+        {
+            if(itr.get())
+                (*itr)();
+        }
+        /*
+        using value_type    = typename Container::value_type;
+        size_type n         = tasks.size();
+        auto      _run_task = [](const value_type& a, const value_type& b) {
+            if(a.get())
+                (*a)();
+            if(b.get())
+                (*b)();
+        };
+
+        std::function<void(const value_type&, const value_type&)> run_task =
+            std::bind(_run_task, std::placeholders::_1, std::placeholders::_2);
+        while(n > 0)
+        {
+            auto compute = (n > 2) ? 2 : n;
+            switch(compute)
+            {
+                case 2:
+                {
+                    auto t = ContainerToTuple<2>(tasks);
+                    apply(run_task, t);
+                    break;
+                }
+                case 1:
+                {
+                    auto t = ContainerToTuple<1>(tasks);
+                    Execute(std::get<0>(t));
+                    break;
+                }
+                case 0: break;
+            }
+            tasks.erase(tasks.begin(), tasks.begin() + compute);
+            n -= compute;
+        }*/
+    }
 
 protected:
     intmax_t m_workers;

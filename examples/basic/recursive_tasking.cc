@@ -31,8 +31,9 @@
 
 //============================================================================//
 
+template <typename TaskGroup_t>
 uint64_t
-tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
+task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 {
     if(n < 2)
     {
@@ -40,13 +41,13 @@ tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
     }
     else
     {
-        uint64_t        x, y;
-        tbb::task_group g;
+        uint64_t    x, y;
+        TaskGroup_t g;
         ++task_group_counter();
         if(n >= cutoff)
         {
-            g.run([&]() { x = tbb_fibonacci(n - 1, cutoff); });
-            g.run([&]() { y = tbb_fibonacci(n - 2, cutoff); });
+            g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+            g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
         }
         else
         {
@@ -62,40 +63,11 @@ tbb_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 
 //============================================================================//
 
-uint64_t
-task_fibonacci(const uint64_t& n, const uint64_t& cutoff, TaskManager* taskMan)
-{
-    if(n < 2)
-    {
-        return 1;
-    }
-    else
-    {
-        uint64_t    x, y;
-        VoidGroup_t tg;
-        ++task_group_counter();
-        if(n >= cutoff)
-        {
-            taskMan->exec(tg, [&]() { x = task_fibonacci(n - 1, cutoff, taskMan); });
-            taskMan->exec(tg, [&]() { y = task_fibonacci(n - 2, cutoff, taskMan); });
-        }
-        else
-        {
-            taskMan->exec(tg, [&]() { x = fibonacci(n - 1); });
-            taskMan->exec(tg, [&]() { y = fibonacci(n - 2); });
-        }
-        tg.wait();
-        return x + y;
-    }
-}
-
-//============================================================================//
-
 void
 execute_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
                    uint64_t& remaining)
 {
-    if(remaining <= 0 || !task_group)
+    if(!task_group)
         return;
 
     if(num_iter > remaining)
@@ -111,14 +83,12 @@ execute_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
          << ")\" to task manager "
          << "(" << remaining << " iterations remaining)..." << std::flush;
 
-    TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
-
     Timer t;
     t.Start();
     for(uint32_t i = 0; i < num_iter; ++i)
     {
         int offset = get_random_int();
-        taskManager->exec(*task_group, fibonacci, n + offset);
+        task_group->exec(fibonacci, n + offset);
     }
     t.Stop();
     cout << " " << t << endl;
@@ -144,7 +114,7 @@ main(int argc, char** argv)
     ConsumeParameters(argc, argv);
 
     auto hwthreads        = std::thread::hardware_concurrency();
-    auto default_fib      = 28;
+    auto default_fib      = 36;
     auto default_tg       = 1;
     auto default_grain    = pow(32, 1);
     auto default_ntasks   = pow(32, 1);
@@ -163,7 +133,7 @@ main(int argc, char** argv)
     setenv("NUM_TASKS", std::to_string(default_ntasks).c_str(), 0);
     setenv("NUM_TASK_GROUPS", std::to_string(default_tg).c_str(), 0);
 
-    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range,
+    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range + 6,
                                             "Setting RNG range to +/- this value");
     unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
                                            "Getting the number of threads");
@@ -172,8 +142,7 @@ main(int argc, char** argv)
     uint64_t grainsize =
         GetEnv<uint64_t>("GRAINSIZE", numThreads,
                          "Dividing number of task into grain of this size");
-    uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
-                                         "Setting the number of total tasks");
+    uint64_t num_iter = numThreads * numThreads;
     uint64_t num_groups =
         GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
 
@@ -222,11 +191,7 @@ main(int argc, char** argv)
 
     //------------------------------------------------------------------------//
     auto run_recursive = [=](LongGroup_t& fib_tmp, int cutoff) {
-#if defined(USE_TBB_TASKS)
-        taskManager->exec(fib_tmp, tbb_fibonacci, cutoff_value, cutoff);
-#else
-        taskManager->exec(fib_tmp, task_fibonacci, cutoff_value, cutoff, taskManager);
-#endif
+        fib_tmp.exec(task_fibonacci<VoidGroup_t>, cutoff_value, cutoff);
     };
     //------------------------------------------------------------------------//
 

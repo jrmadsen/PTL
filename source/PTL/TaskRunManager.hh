@@ -50,7 +50,7 @@ public:
     //      taskQueue: provide a custom task queue
     //      useTBB: only relevant if PTL_USE_TBB defined
     //      grainsize:  0 = auto
-    TaskRunManager(bool useTBB = false);
+    explicit TaskRunManager(bool useTBB = false);
     virtual ~TaskRunManager();
 
 public:

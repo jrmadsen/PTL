@@ -35,7 +35,15 @@ class ThreadPool;
 
 #if defined(PTL_USE_TBB)
 
+#    include <functional>
+#    include <memory>
 #    include <tbb/tbb.h>
+
+class ThreadPool;
+namespace
+{
+typedef tbb::task_group tbb_task_group_t;
+}
 
 //--------------------------------------------------------------------------------------//
 
@@ -43,11 +51,21 @@ template <typename _Tp, typename _Arg = _Tp>
 class TBBTaskGroup : public TaskGroup<_Tp, _Arg>
 {
 public:
+    typedef typename std::remove_const<typename std::remove_reference<_Arg>::type>::type
+        ArgTp;
+
+    template <typename... _Args>
+    using task_type = Task<ArgTp, _Args...>;
+
+    template <typename... _Args>
+    using task_pointer = std::shared_ptr<task_type<_Args...>>;
+
+    using func_task_type    = Task<ArgTp>;
+    using func_task_pointer = std::shared_ptr<func_task_type>;
+
     typedef TBBTaskGroup<_Tp, _Arg>                this_type;
     typedef TaskGroup<_Tp, _Arg>                   base_type;
     typedef typename base_type::result_type        result_type;
-    typedef typename base_type::ArgTp              ArgTp;
-    typedef typename VTaskGroup::tid_type          tid_type;
     typedef typename base_type::data_type          data_type;
     typedef typename base_type::packaged_task_type packaged_task_type;
     typedef typename base_type::future_type        future_type;
@@ -57,11 +75,21 @@ public:
 public:
     // Constructor
     template <typename _Func>
-    TBBTaskGroup(const _Func& _join, ThreadPool* tp = nullptr);
+    TBBTaskGroup(const _Func& _join, ThreadPool* tp = nullptr)
+    : base_type(_join, tp)
+    , m_tbb_task_group(new tbb_task_group_t())
+    {
+    }
+
     template <typename _Func>
-    TBBTaskGroup(int _freq, const _Func& _join, ThreadPool* tp = nullptr);
+    TBBTaskGroup(int _freq, const _Func& _join, ThreadPool* tp = nullptr)
+    : base_type(_freq, _join, tp)
+    , m_tbb_task_group(new tbb_task_group_t())
+    {
+    }
+
     // Destructor
-    virtual ~TBBTaskGroup();
+    virtual ~TBBTaskGroup() { delete m_tbb_task_group; }
 
     // delete copy-construct
     TBBTaskGroup(const this_type&) = delete;
@@ -75,9 +103,89 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    // add task
-    tid_type add(packaged_task_type*);
+    template <typename... _Args>
+    task_pointer<_Args...>& operator+=(task_pointer<_Args...>& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // return
+        return _task;
+    }
+    //------------------------------------------------------------------------//
+    func_task_pointer& operator+=(func_task_pointer& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // return
+        return _task;
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    {
+        return task_pointer<_Args...>(
+            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    func_task_pointer wrap(const _Func& func)
+    {
+        return func_task_pointer(new func_task_type(this, func));
+        ;
+    }
 
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void run(const _Func& func, _Args... args)
+    {
+        auto _task = wrap(func, std::forward<_Args>(args)...);
+        auto _fut  = _task->get_future();
+        auto _func = [=]() {
+            (*_task)();
+            intmax_t _count = operator--();
+            if(_count < 1)
+            {
+                AutoLock l(this->task_lock());
+                CONDITIONBROADCAST(&(this->task_cond()));
+            }
+        };
+        m_task_set.push_back(data_type(false, std::move(_fut)));
+        m_tbb_task_group->run(_func);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void run(const _Func& func)
+    {
+        auto _func = [=]() {
+            func();
+            intmax_t _count = operator--();
+            if(_count < 1)
+            {
+                AutoLock l(this->task_lock());
+                CONDITIONBROADCAST(&(this->task_cond()));
+            }
+        };
+        m_tbb_task_group->run(func);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void exec(const _Func& func, _Args... args)
+    {
+        run(func, std::forward<_Args>(args)...);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void exec(const _Func& func)
+    {
+        run(func);
+    }
+
+public:
     //------------------------------------------------------------------------//
     // this is not a native Tasking task group
     virtual bool is_native_task_group() const override { return false; }
@@ -96,7 +204,9 @@ protected:
     using base_type::m_join_function;
     using base_type::m_promise;
     using base_type::m_task_set;
-    using base_type::m_tot_task_count;
+    using base_type::vtask_list;
+    using base_type::operator++;
+    using base_type::operator--;
 };
 
 //--------------------------------------------------------------------------------------//
@@ -109,7 +219,6 @@ public:
     typedef TaskGroup<void, void>                  base_type;
     typedef typename base_type::result_type        result_type;
     typedef typename base_type::ArgTp              ArgTp;
-    typedef typename VTaskGroup::tid_type          tid_type;
     typedef typename base_type::data_type          data_type;
     typedef typename base_type::packaged_task_type packaged_task_type;
     typedef typename base_type::future_type        future_type;
@@ -145,16 +254,88 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    // add task
-    tid_type add(packaged_task_type* _task)
+    template <typename... _Args>
+    task_pointer<_Args...>& operator+=(task_pointer<_Args...>& _task)
     {
-        tid_type _tid  = this_tid();
-        auto     _f    = _task->get_future();
-        auto     _func = [=]() { (*_task)(); };
-        m_tbb_task_group->run(_func);
-        m_task_set.push_back(data_type(false, std::move(_f)));
-        return _tid;
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // return
+        return _task;
     }
+    //------------------------------------------------------------------------//
+    func_task_pointer& operator+=(func_task_pointer& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // return
+        return _task;
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    {
+        return task_pointer<_Args...>(
+            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    func_task_pointer wrap(const _Func& func)
+    {
+        return func_task_pointer(new func_task_type(this, func));
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void run(const _Func& func, _Args... args)
+    {
+        auto _task = wrap(func, std::forward<_Args>(args)...);
+        auto _func = [=]() {
+            (*_task)();
+            intmax_t _count = --m_tot_task_count;
+            if(_count < 1)
+            {
+                AutoLock l(this->task_lock());
+                CONDITIONBROADCAST(&(this->task_cond()));
+            }
+        };
+        m_tbb_task_group->run(_func);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void run(const _Func& func)
+    {
+        auto _func = [=]() {
+            func();
+            intmax_t _count = --m_tot_task_count;
+            if(_count < 1)
+            {
+                AutoLock l(this->task_lock());
+                CONDITIONBROADCAST(&(this->task_cond()));
+            }
+        };
+        m_tbb_task_group->run(_func);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void exec(const _Func& func, _Args... args)
+    {
+        run(func, std::forward<_Args>(args)...);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void exec(const _Func& func)
+    {
+        run(func);
+    }
+
+public:
     //------------------------------------------------------------------------//
     // this is not a native Tasking task group
     virtual bool is_native_task_group() const override { return false; }
@@ -171,7 +352,6 @@ protected:
     // Private variables
     using base_type::m_tot_task_count;
     tbb_task_group_t* m_tbb_task_group;
-    using TaskGroup<void, void>::m_task_set;
 };
 
 //--------------------------------------------------------------------------------------//

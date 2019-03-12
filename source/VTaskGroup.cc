@@ -47,9 +47,9 @@ vtask_group_counter()
 //======================================================================================//
 
 VTaskGroup::VTaskGroup(ThreadPool* tp)
-: m_clear_count(0)
-, m_clear_freq(1)
-, m_tot_task_count(0)
+:  // m_clear_count(0)
+   //, m_clear_freq(1)
+    m_tot_task_count(0)
 , m_id(vtask_group_counter()++)
 , m_pool(tp)
 , m_task_lock()
@@ -115,9 +115,7 @@ VTaskGroup::execute_this_threads_tasks()
         const auto nitr = (_tpool) ? _tpool->size() : Thread::hardware_concurrency();
         while(this->pending() > 0)
         {
-            task_pointer _task = _taskq->GetTask(bin, static_cast<int>(nitr));
-            if(_task.get())
-                (*_task)();
+            _taskq->GetTask(bin, static_cast<int>(nitr));
         }
     }
 }
@@ -160,13 +158,13 @@ VTaskGroup::wait()
     };
 
     intmax_t _pool_size = m_pool->size();
-    intmax_t _pending   = 0;
     AutoLock _lock(m_task_lock, std::defer_lock);
 
     while(is_active_state())
     {
         execute_this_threads_tasks();
 
+        intmax_t _pending = 0;
         // while loop protects against spurious wake-ups
         while((_pending = pending()) > 0 && is_active_state())
         {

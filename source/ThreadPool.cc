@@ -727,7 +727,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 
         // get the next task and execute the task (will return if nullptr)
         while(!_task_queue->empty())
-            run(_task_queue->GetTask());
+            _task_queue->GetTask();
         //----------------------------------------------------------------//
 
         // disable guard against recursive deadlock

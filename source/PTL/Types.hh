@@ -58,6 +58,101 @@
 //
 #include "PTL/ThreadLocalStatic.hh"
 
+//--------------------------------------------------------------------------------------//
+
+template <typename CountedType>
+class CountedObject
+{
+public:
+    typedef CountedObject<CountedType> this_type;
+    typedef CountedObject<void>        void_type;
+
+public:
+    // return number of existing objects:
+    static int64_t           live() { return count(); }
+    static constexpr int64_t zero() { return static_cast<int64_t>(0); }
+    static int64_t           max_depth() { return fmax_depth; }
+
+    static void enable(const bool& val) { fenabled = val; }
+    static void set_max_depth(const int64_t& val) { fmax_depth = val; }
+    static bool is_enabled() { return fenabled; }
+
+    template <typename _Tp = CountedType,
+              typename std::enable_if<std::is_same<_Tp, void>::value>::type* = nullptr>
+    static bool enable()
+    {
+        return fenabled && fmax_depth > count();
+    }
+    // the void type is consider the global setting
+    template <typename _Tp = CountedType,
+              typename std::enable_if<!std::is_same<_Tp, void>::value>::type* = nullptr>
+    static bool enable()
+    {
+        return void_type::is_enabled() && void_type::max_depth() > count() && fenabled &&
+               fmax_depth > count();
+    }
+
+protected:
+    // default constructor
+    CountedObject() { ++count(); }
+    ~CountedObject() { --count(); }
+    CountedObject(const this_type&) { ++count(); }
+    explicit CountedObject(this_type&&) { ++count(); }
+
+private:
+    // number of existing objects
+    static int64_t& thread_number();
+    static int64_t& master_count();
+    static int64_t& count();
+    static int64_t  fmax_depth;
+    static bool     fenabled;
+};
+
+//--------------------------------------------------------------------------------------//
+
+template <typename CountedType>
+int64_t&
+CountedObject<CountedType>::thread_number()
+{
+    static std::atomic<int64_t> _all_instance;
+    static thread_local int64_t _instance = _all_instance++;
+    return _instance;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename CountedType>
+int64_t&
+CountedObject<CountedType>::master_count()
+{
+    static int64_t _instance = 0;
+    return _instance;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename CountedType>
+int64_t&
+CountedObject<CountedType>::count()
+{
+    if(thread_number() == 0)
+        return master_count();
+    static thread_local int64_t _instance = master_count();
+    return _instance;
+}
+
+//--------------------------------------------------------------------------------------//
+
+template <typename CountedType>
+int64_t CountedObject<CountedType>::fmax_depth = std::numeric_limits<int64_t>::max();
+
+//--------------------------------------------------------------------------------------//
+
+template <typename CountedType>
+bool CountedObject<CountedType>::fenabled = true;
+
+//======================================================================================//
+
 // Typedefs to decouple from library classes
 // Typedefs for numeric types
 //

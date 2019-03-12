@@ -35,51 +35,48 @@
 
 //======================================================================================//
 
-VTask::VTask(VTaskGroup* _group)
-: m_vgroup(_group)
-, m_tid_bin(this_tid())
-, m_depth(0)
+VTask::VTask()
+: m_depth(0)
+, m_group(nullptr)
+, m_pool(nullptr)
 {
-    // ThreadData* data = ThreadData::GetInstance();
-    // if(data && data->within_task)
-    //    m_depth = (data->task_depth += 1);
 }
 
 //======================================================================================//
 
-VTask::~VTask()
+VTask::VTask(VTaskGroup* group)
+: m_depth(0)
+, m_group(group)
+, m_pool((m_group) ? group->pool() : nullptr)
 {
-    // ThreadData* data = ThreadData::GetInstance();
-    // if(data && data->within_task)
-    //    data->task_depth -= 1;
 }
 
 //======================================================================================//
 
-void
-VTask::operator++()
+VTask::VTask(ThreadPool* pool)
+: m_depth(0)
+, m_group(nullptr)
+, m_pool(pool)
 {
-    if(m_vgroup)
-    {
-        m_vgroup->increase(m_tid_bin);
-    }
 }
+
+//======================================================================================//
+
+VTask::~VTask() {}
 
 //======================================================================================//
 
 void
 VTask::operator--()
 {
-    if(m_vgroup)
+    if(m_group)
     {
-        intmax_t _count = m_vgroup->reduce(m_tid_bin);
+        intmax_t _count = --(*m_group);
         if(_count < 2)
         {
-            // AutoLock l(m_vgroup->task_lock());
-            // CONDITIONBROADCAST(&m_vgroup->task_cond());
             try
             {
-                m_vgroup->task_cond().notify_all();
+                m_group->task_cond().notify_all();
             }
             catch(std::system_error& e)
             {
@@ -99,7 +96,7 @@ VTask::operator--()
 bool
 VTask::is_native_task() const
 {
-    return (m_vgroup) ? m_vgroup->is_native_task_group() : false;
+    return (m_group) ? m_group->is_native_task_group() : false;
 }
 
 //======================================================================================//
@@ -107,7 +104,7 @@ VTask::is_native_task() const
 ThreadPool*
 VTask::pool() const
 {
-    return (m_vgroup) ? m_vgroup->pool() : nullptr;
+    return (!m_pool && m_group) ? m_group->pool() : m_pool;
 }
 
 //======================================================================================//

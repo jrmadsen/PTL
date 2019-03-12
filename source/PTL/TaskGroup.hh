@@ -31,6 +31,8 @@
 
 #pragma once
 
+#include "PTL/Task.hh"
+#include "PTL/ThreadPool.hh"
 #include "PTL/VTaskGroup.hh"
 
 #include <cstdint>
@@ -48,11 +50,24 @@ class ThreadPool;
 //--------------------------------------------------------------------------------------//
 
 template <typename _Tp, typename _Arg = _Tp>
-class TaskGroup : public VTaskGroup
+class TaskGroup
+: public VTaskGroup
+, public TaskAllocator<TaskGroup<_Tp, _Arg>>
+, public CountedObject<TaskGroup<_Tp, _Arg>>
 {
 public:
     typedef typename std::remove_const<typename std::remove_reference<_Arg>::type>::type
-                                                         ArgTp;
+        ArgTp;
+
+    template <typename... _Args>
+    using task_type = Task<ArgTp, _Args...>;
+
+    template <typename... _Args>
+    using task_pointer = std::shared_ptr<task_type<_Args...>>;
+
+    using func_task_type    = Task<ArgTp>;
+    using func_task_pointer = std::shared_ptr<func_task_type>;
+
     typedef _Tp                                          result_type;
     typedef TaskGroup<_Tp, _Arg>                         this_type;
     typedef std::promise<ArgTp>                          promise_type;
@@ -60,7 +75,6 @@ public:
     typedef std::packaged_task<ArgTp()>                  packaged_task_type;
     typedef std::tuple<bool, future_type, ArgTp>         data_type;
     typedef list_type<data_type>                         task_list_t;
-    typedef map_type<tid_type, task_list_t>              task_map_t;
     typedef std::function<_Tp(_Tp&, _Arg)>               function_type;
     typedef typename task_list_t::iterator               iterator;
     typedef typename task_list_t::reverse_iterator       reverse_iterator;
@@ -102,6 +116,88 @@ public:
 
 public:
     //------------------------------------------------------------------------//
+    template <typename... _Args>
+    task_pointer<_Args...>& operator+=(task_pointer<_Args...>& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // add the future
+        m_task_set.push_back(data_type(false, std::move(_task->get_future()), ArgTp()));
+        // return
+        return _task;
+    }
+    //------------------------------------------------------------------------//
+    func_task_pointer& operator+=(func_task_pointer& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // add the future
+        m_task_set.push_back(data_type(false, std::move(_task->get_future()), ArgTp()));
+        // return
+        return _task;
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    {
+        auto _task = task_pointer<_Args...>(
+            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+        return operator+=(_task);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    func_task_pointer wrap(const _Func& func)
+    {
+        auto   _task = func_task_pointer(new func_task_type(this, func));
+        return operator+=(_task);
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void exec(const _Func& func, _Args... args)
+    {
+        if(m_task_set.size() > 10000)
+            func(std::forward<_Args>(args)...);
+        else
+            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void exec(const _Func& func)
+    {
+        if(m_task_set.size() > 10000)
+            func();
+        else
+            m_pool->add_task(wrap(func));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void run(const _Func& func, _Args... args)
+    {
+        if(m_task_set.size() > 10000)
+            func(std::forward<_Args>(args)...);
+        else
+            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void run(const _Func& func)
+    {
+        if(m_task_set.size() > 10000)
+            func();
+        else
+            m_pool->add_task(wrap(func));
+    }
+
+public:
+    //------------------------------------------------------------------------//
     // set the join function
     template <typename _Func>
     void set_join_function(const _Func&);
@@ -136,10 +232,6 @@ public:
     critr_t rend() const { return m_task_set.rend(); }
 
     //------------------------------------------------------------------------//
-    // add task
-    tid_type add(future_type&& _f);
-    tid_type add(packaged_task_type*);
-    //------------------------------------------------------------------------//
     // wait to finish
     _Tp join(_Tp accum = _Tp());
     //------------------------------------------------------------------------//
@@ -165,10 +257,24 @@ protected:
 //--------------------------------------------------------------------------------------//
 // specialization for void type
 template <>
-class TaskGroup<void, void> : public VTaskGroup
+class TaskGroup<void, void>
+: public VTaskGroup
+, public TaskAllocator<TaskGroup<void, void>>
+, public CountedObject<TaskGroup<void, void>>
+
 {
 public:
-    typedef void                                         ArgTp;
+    using ArgTp = void;
+
+    template <typename... _Args>
+    using task_type = Task<ArgTp, _Args...>;
+
+    template <typename... _Args>
+    using task_pointer = std::shared_ptr<task_type<_Args...>>;
+
+    using func_task_type    = Task<ArgTp>;
+    using func_task_pointer = std::shared_ptr<func_task_type>;
+
     typedef void                                         result_type;
     typedef TaskGroup<void, void>                        this_type;
     typedef std::promise<void>                           promise_type;
@@ -176,7 +282,6 @@ public:
     typedef std::packaged_task<void()>                   packaged_task_type;
     typedef std::tuple<bool, future_type>                data_type;
     typedef list_type<data_type>                         task_list_t;
-    typedef map_type<tid_type, task_list_t>              task_map_t;
     typedef std::function<void()>                        function_type;
     typedef typename task_list_t::iterator               iterator;
     typedef typename task_list_t::reverse_iterator       reverse_iterator;
@@ -204,10 +309,9 @@ public:
     // define move-construct
     TaskGroup(this_type&& rhs)
     : VTaskGroup(std::move(rhs))
-    , m_task_set(std::move(rhs.m_task_set))
     , m_join_function(std::move(rhs.m_join_function))
     {
-        // set_join_function(rhs.m_join_function);
+        set_join_function(rhs.m_join_function);
     }
 
     // delete copy-assign
@@ -218,10 +322,91 @@ public:
         if(this != &rhs)
         {
             VTaskGroup::operator=(std::move(rhs));
-            m_task_set          = std::move(rhs.m_task_set);
             m_join_function     = std::move(rhs.m_join_function);
         }
         return *this;
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename... _Args>
+    task_pointer<_Args...>& operator+=(task_pointer<_Args...>& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // add the future
+        // m_task_set.push_back(data_type(false, std::move(_task->get_future())));
+        // return
+        return _task;
+    }
+    //------------------------------------------------------------------------//
+    func_task_pointer& operator+=(func_task_pointer& _task)
+    {
+        // store in list
+        vtask_list.push_back(_task);
+        // thread-safe increment of tasks in task group
+        operator++();
+        // add the future
+        // m_task_set.push_back(data_type(false, _task->get_future()));
+        // return
+        return _task;
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    {
+        auto _task = task_pointer<_Args...>(
+            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+        return operator+=(_task);
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    func_task_pointer wrap(const _Func& func)
+    {
+        auto   _task = func_task_pointer(new func_task_type(this, func));
+        return operator+=(_task);
+    }
+
+public:
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void exec(const _Func& func, _Args... args)
+    {
+        if(CountedObject<this_type>::live() > 1000)
+            func(std::forward<_Args>(args)...);
+        else
+            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void exec(const _Func& func)
+    {
+        if(CountedObject<this_type>::live() > 1000)
+            func();
+        else
+            m_pool->add_task(wrap(func));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void run(const _Func& func, _Args... args)
+    {
+        if(CountedObject<this_type>::live() > 1000)
+            func(std::forward<_Args>(args)...);
+        else
+            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void run(const _Func& func)
+    {
+        if(CountedObject<this_type>::live() > 1000)
+            func();
+        else
+            m_pool->add_task(wrap(func));
     }
 
 protected:
@@ -236,22 +421,6 @@ public:
     //------------------------------------------------------------------------//
     // Get tasks with non-void return types
     //
-    task_list_t&       get_tasks() { return m_task_set; }
-    const task_list_t& get_tasks() const { return m_task_set; }
-
-    //------------------------------------------------------------------------//
-    // iterate over tasks with return type
-    //
-    itr_t   begin() { return m_task_set.begin(); }
-    itr_t   end() { return m_task_set.end(); }
-    citr_t  begin() const { return m_task_set.begin(); }
-    citr_t  end() const { return m_task_set.end(); }
-    citr_t  cbegin() const { return m_task_set.begin(); }
-    citr_t  cend() const { return m_task_set.end(); }
-    ritr_t  rbegin() { return m_task_set.rbegin(); }
-    ritr_t  rend() { return m_task_set.rend(); }
-    critr_t rbegin() const { return m_task_set.rbegin(); }
-    critr_t rend() const { return m_task_set.rend(); }
 
     //------------------------------------------------------------------------//
     // join function
@@ -261,58 +430,22 @@ public:
         m_join_function = std::bind<void>(_join);
     }
     //------------------------------------------------------------------------//
-    // add task
-    tid_type add(future_type&& _f)
-    {
-        tid_type _tid = this_tid();
-        m_task_set.push_back(data_type(false, std::move(_f)));
-        return _tid;
-    }
-    //------------------------------------------------------------------------//
-    // add task
-    tid_type add(packaged_task_type& _task)
-    {
-        tid_type _tid = this_tid();
-        auto     _f   = _task.get_future();
-        m_task_set.push_back(data_type(false, std::move(_f)));
-        return _tid;
-    }
-    //------------------------------------------------------------------------//
     // wait to finish
     void join()
     {
         this->wait();
-        for(auto itr = begin(); itr != end(); ++itr)
-            this->get(*itr);
         m_join_function();
 
-        if(m_clear_freq.load() > 0 && (++m_clear_count) % m_clear_freq.load() == 0)
-            this->clear();
+        // if(m_clear_freq.load() > 0 && (++m_clear_count) % m_clear_freq.load() == 0)
+        this->clear();
     }
     //------------------------------------------------------------------------//
     // clear the task result history
-    void clear() override
-    {
-        m_task_set.clear();
-        VTaskGroup::clear();
-    }
-
-protected:
-    //------------------------------------------------------------------------//
-    // get specific task
-    void get(data_type& _data)
-    {
-        if(!std::get<0>(_data))
-        {
-            std::get<1>(_data).get();
-            std::get<0>(_data) = true;
-        }
-    }
+    void clear() override { VTaskGroup::clear(); }
 
 protected:
     // Private variables
-    mutable task_list_t m_task_set;
-    function_type       m_join_function;
+    function_type m_join_function;
 };
 
 //--------------------------------------------------------------------------------------//

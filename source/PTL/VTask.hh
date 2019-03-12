@@ -52,17 +52,18 @@ class ThreadPool;
 class VTask
 {
 public:
-    typedef std::thread::id          tid_type;
-    typedef size_t                   size_type;
-    typedef VTask                    this_type;
-    typedef std::atomic_uintmax_t    count_t;
-    typedef VTask*                   iterator;
-    typedef const VTask*             const_iterator;
-    typedef TaskAllocator<this_type> allocator_type;
-    typedef std::function<void()>    void_func_t;
+    typedef std::thread::id       tid_type;
+    typedef size_t                size_type;
+    typedef VTask                 this_type;
+    typedef std::atomic_uintmax_t count_t;
+    typedef VTask*                iterator;
+    typedef const VTask*          const_iterator;
+    typedef std::function<void()> void_func_t;
 
 public:
-    VTask(VTaskGroup* _group = nullptr);
+    VTask();
+    explicit VTask(VTaskGroup* group);
+    explicit VTask(ThreadPool* pool);
     virtual ~VTask();
 
 public:
@@ -71,7 +72,6 @@ public:
 
 public:
     // used by thread_pool
-    void                operator++();
     void                operator--();
     virtual bool        is_native_task() const;
     virtual ThreadPool* pool() const;
@@ -94,9 +94,9 @@ protected:
     static tid_type this_tid() { return std::this_thread::get_id(); }
 
 protected:
-    VTaskGroup* m_vgroup;
-    tid_type    m_tid_bin;
     intmax_t    m_depth;
+    VTaskGroup* m_group;
+    ThreadPool* m_pool;
     void_func_t m_func = []() {};
 };
 

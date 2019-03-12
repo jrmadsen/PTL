@@ -31,7 +31,6 @@
 #pragma once
 
 #include "TaskAllocator.hh"
-#include "TaskGroup.hh"
 #include "VTask.hh"
 
 #include <cstdint>
@@ -40,26 +39,41 @@
 
 #define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
 
+class VTaskGroup;
+class ThreadPool;
+
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <typename _Ret, typename _Arg, typename... _Args>
-class PackagedTask : public VTask
+template <typename _Ret, typename... _Args>
+class PackagedTask
+: public VTask
+, public TaskAllocator<PackagedTask<_Ret, _Args...>>
 {
 public:
-    typedef PackagedTask<_Ret, _Arg, _Args...>           this_type;
-    typedef _Ret                                         result_type;
-    typedef std::function<_Arg(_Args...)>                function_type;
-    typedef TaskGroup<_Ret, _Arg>                        task_group_type;
-    typedef typename task_group_type::promise_type       promise_type;
-    typedef typename task_group_type::future_type        future_type;
-    typedef typename task_group_type::packaged_task_type packaged_task_type;
-    typedef TaskAllocator<this_type>                     allocator_type;
+    typedef PackagedTask<_Ret, _Args...>  this_type;
+    typedef std::function<_Ret(_Args...)> function_type;
+    typedef std::promise<_Ret>            promise_type;
+    typedef std::future<_Ret>             future_type;
+    typedef std::packaged_task<_Ret()>    packaged_task_type;
+    typedef _Ret                          result_type;
 
 public:
     // pass a free function pointer
     PackagedTask(const function_type& func, _Args... args)
-    : VTask(nullptr)
+    : VTask()
+    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    {
+    }
+
+    PackagedTask(VTaskGroup* group, const function_type& func, _Args... args)
+    : VTask(group)
+    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    {
+    }
+
+    PackagedTask(ThreadPool* pool, const function_type& func, _Args... args)
+    : VTask(pool)
     , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
     }
@@ -72,28 +86,6 @@ public:
     future_type  get_future() { return m_ptask.get_future(); }
     virtual bool is_native_task() const override { return true; }
 
-public:
-    // define the new operator
-    void* operator new(size_type)
-    {
-        return static_cast<void*>(get_allocator()->MallocSingle());
-    }
-    // define the delete operator
-    void operator delete(void* ptr)
-    {
-        get_allocator()->FreeSingle(static_cast<this_type*>(ptr));
-    }
-
-private:
-    // currently disabled due to memory leak found via -fsanitize=leak
-    // static function to get allocator
-    static allocator_type*& get_allocator()
-    {
-        typedef allocator_type* allocator_ptr;
-        ThreadLocalStatic allocator_ptr _allocator = new allocator_type;
-        return _allocator;
-    }
-
 private:
     packaged_task_type m_ptask;
 };
@@ -101,35 +93,36 @@ private:
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
-template <typename _Ret, typename _Arg, typename... _Args>
-class Task : public VTask
+template <typename _Ret, typename... _Args>
+class Task
+: public VTask
+, public TaskAllocator<Task<_Ret, _Args...>>
 {
 public:
-    typedef Task<_Ret, _Arg, _Args...>                   this_type;
-    typedef _Ret                                         result_type;
-    typedef TaskGroup<_Ret, _Arg>                        task_group_type;
-    typedef typename task_group_type::ArgTp              ArgTp;
-    typedef typename task_group_type::promise_type       promise_type;
-    typedef typename task_group_type::future_type        future_type;
-    typedef typename task_group_type::packaged_task_type packaged_task_type;
-    typedef std::function<ArgTp(_Args...)>               function_type;
-    typedef TaskAllocator<this_type>                     allocator_type;
+    typedef Task<_Ret, _Args...>          this_type;
+    typedef std::function<_Ret(_Args...)> function_type;
+    typedef std::promise<_Ret>            promise_type;
+    typedef std::future<_Ret>             future_type;
+    typedef std::packaged_task<_Ret()>    packaged_task_type;
+    typedef _Ret                          result_type;
 
 public:
-    // pass a free function pointer
-    Task(task_group_type* tg, const function_type& func, _Args... args)
-    : VTask(tg)
+    Task(const function_type& func, _Args... args)
+    : VTask()
     , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
-        m_tid_bin = tg->add(m_ptask.get_future());
     }
 
-    // pass a free function pointer
-    Task(task_group_type& tg, const function_type& func, _Args... args)
-    : VTask(&tg)
+    Task(VTaskGroup* group, const function_type& func, _Args... args)
+    : VTask(group)
     , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
     {
-        m_tid_bin = tg.add(m_ptask.get_future());
+    }
+
+    Task(ThreadPool* pool, const function_type& func, _Args... args)
+    : VTask(pool)
+    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    {
     }
 
     virtual ~Task() {}
@@ -148,28 +141,7 @@ public:
     }
 
     virtual bool is_native_task() const override { return true; }
-
-public:
-    // define the new operator
-    void* operator new(size_type)
-    {
-        return static_cast<void*>(get_allocator()->MallocSingle());
-    }
-    // define the delete operator
-    void operator delete(void* ptr)
-    {
-        get_allocator()->FreeSingle(static_cast<this_type*>(ptr));
-    }
-
-private:
-    // currently disabled due to memory leak found via -fsanitize=leak
-    // static function to get allocator
-    static allocator_type* get_allocator()
-    {
-        typedef std::unique_ptr<allocator_type> allocator_ptr;
-        static thread_local allocator_ptr _allocator = allocator_ptr(new allocator_type);
-        return _allocator.get();
-    }
+    future_type  get_future() { return m_ptask.get_future(); }
 
 private:
     packaged_task_type m_ptask;
@@ -179,33 +151,36 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <>
-class Task<void, void> : public VTask
+class Task<void, void>
+: public VTask
+, public TaskAllocator<Task<void, void>>
 {
 public:
-    typedef Task<void, void>                             this_type;
-    typedef void                                         _Ret;
-    typedef _Ret                                         result_type;
-    typedef std::function<_Ret()>                        function_type;
-    typedef TaskGroup<_Ret, _Ret>                        task_group_type;
-    typedef typename task_group_type::promise_type       promise_type;
-    typedef typename task_group_type::future_type        future_type;
-    typedef typename task_group_type::packaged_task_type packaged_task_type;
-    typedef TaskAllocator<this_type>                     allocator_type;
+    typedef void                       _Ret;
+    typedef Task<void, void>           this_type;
+    typedef std::function<_Ret()>      function_type;
+    typedef std::promise<_Ret>         promise_type;
+    typedef std::future<_Ret>          future_type;
+    typedef std::packaged_task<_Ret()> packaged_task_type;
+    typedef _Ret                       result_type;
 
 public:
-    // pass a free function pointer
-    Task(task_group_type* tg, const function_type& func)
-    : VTask(tg)
+    explicit Task(const function_type& func)
+    : VTask()
     , m_ptask(func)
     {
-        m_tid_bin = tg->add(m_ptask.get_future());
     }
 
-    Task(task_group_type& tg, const function_type& func)
-    : VTask(&tg)
+    Task(VTaskGroup* group, const function_type& func)
+    : VTask(group)
     , m_ptask(func)
     {
-        m_tid_bin = tg.add(m_ptask.get_future());
+    }
+
+    Task(ThreadPool* pool, const function_type& func)
+    : VTask(pool)
+    , m_ptask(func)
+    {
     }
 
     virtual ~Task() {}
@@ -224,28 +199,7 @@ public:
     }
 
     virtual bool is_native_task() const override { return true; }
-
-public:
-    // define the new operator
-    void* operator new(size_type)
-    {
-        return static_cast<void*>(get_allocator()->MallocSingle());
-    }
-    // define the delete operator
-    void operator delete(void* ptr)
-    {
-        get_allocator()->FreeSingle(static_cast<this_type*>(ptr));
-    }
-
-private:
-    // currently disabled due to memory leak found via -fsanitize=leak
-    // static function to get allocator
-    static allocator_type* get_allocator()
-    {
-        typedef std::unique_ptr<allocator_type> allocator_ptr;
-        static thread_local allocator_ptr _allocator = allocator_ptr(new allocator_type);
-        return _allocator.get();
-    }
+    future_type  get_future() { return m_ptask.get_future(); }
 
 private:
     packaged_task_type m_ptask;

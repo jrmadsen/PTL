@@ -172,14 +172,11 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         if(!task_subq->empty() && task_subq->AcquireClaim())
         {
             // pop task out of bin
-            _task = task_subq->PopTask(n == tbin);
-            // release the claim on the bin
-            task_subq->ReleaseClaim();
+            task_subq->PopTask(n == tbin);
             // debug
             // printf("> Acquired task from bin %li [thread bin: %li]\n", _n,
             // tbin);
-            // if not an empty task, return the task
-            return (_task.get()) ? true : false;
+            return true;
         }
         return false;
     };
@@ -285,10 +282,8 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
 void
 UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 {
-    typedef Task<int, int>             task_type;
-    typedef std::shared_ptr<task_type> task_pointer;
-    typedef TaskGroup<int, int>        task_group_type;
-    typedef std::map<int64_t, bool>    thread_execute_map_t;
+    typedef TaskGroup<int, int>     task_group_type;
+    typedef std::map<int64_t, bool> thread_execute_map_t;
 
     if(!tp->is_alive())
     {
@@ -331,8 +326,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         };
         //--------------------------------------------------------------------//
 
-        VTaskPtr _task = tg->store(task_pointer(new task_type(tg, thread_specific_func)));
-        //++(*this);
+        auto _task = tg->wrap(thread_specific_func);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
 
@@ -357,10 +351,8 @@ void
 UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
                                         function_type func)
 {
-    typedef Task<int, int>             task_type;
-    typedef std::shared_ptr<task_type> task_pointer;
-    typedef TaskGroup<int, int>        task_group_type;
-    typedef std::map<int64_t, bool>    thread_execute_map_t;
+    typedef TaskGroup<int, int>     task_group_type;
+    typedef std::map<int64_t, bool> thread_execute_map_t;
 
     auto join_func = [=](int& ref, int i) {
         ref += i;
@@ -408,8 +400,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         if(i == GetThreadBin())
             continue;
 
-        VTaskPtr _task = tg->store(task_pointer(new task_type(tg, thread_specific_func)));
-        //++(*this);
+        auto _task = tg->wrap(thread_specific_func);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
     tp->notify_all();
