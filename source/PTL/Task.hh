@@ -37,7 +37,7 @@
 #include <functional>
 #include <stdexcept>
 
-#define _forward_args_t(_Args, _args) std::forward<_Args>(std::move(_args))...
+#define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
 
 class VTaskGroup;
 class ThreadPool;
@@ -60,21 +60,21 @@ public:
 
 public:
     // pass a free function pointer
-    PackagedTask(const function_type& func, _Args... args)
+    PackagedTask(function_type&& func, _Args... args)
     : VTask()
-    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
     {
     }
 
-    PackagedTask(VTaskGroup* group, const function_type& func, _Args... args)
+    PackagedTask(VTaskGroup* group, function_type&& func, _Args... args)
     : VTask(group)
-    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
     {
     }
 
-    PackagedTask(ThreadPool* pool, const function_type& func, _Args... args)
+    PackagedTask(ThreadPool* pool, function_type&& func, _Args... args)
     : VTask(pool)
-    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
     {
     }
 
@@ -107,21 +107,21 @@ public:
     typedef _Ret                          result_type;
 
 public:
-    Task(const function_type& func, _Args... args)
+    Task(function_type&& func, _Args... args)
     : VTask()
-    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
     {
     }
 
-    Task(VTaskGroup* group, const function_type& func, _Args... args)
+    Task(VTaskGroup* group, function_type&& func, _Args... args)
     : VTask(group)
-    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
     {
     }
 
-    Task(ThreadPool* pool, const function_type& func, _Args... args)
+    Task(ThreadPool* pool, function_type&& func, _Args... args)
     : VTask(pool)
-    , m_ptask(std::bind(func, _forward_args_t(_Args, args)))
+    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
     {
     }
 
@@ -165,19 +165,19 @@ public:
     typedef _Ret                       result_type;
 
 public:
-    explicit Task(const function_type& func)
+    explicit Task(function_type&& func)
     : VTask()
     , m_ptask(func)
     {
     }
 
-    Task(VTaskGroup* group, const function_type& func)
+    Task(VTaskGroup* group, function_type&& func)
     : VTask(group)
     , m_ptask(func)
     {
     }
 
-    Task(ThreadPool* pool, const function_type& func)
+    Task(ThreadPool* pool, function_type&& func)
     : VTask(pool)
     , m_ptask(func)
     {

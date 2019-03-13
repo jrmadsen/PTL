@@ -75,15 +75,15 @@ public:
 public:
     // Constructor
     template <typename _Func>
-    TBBTaskGroup(const _Func& _join, ThreadPool* tp = nullptr)
-    : base_type(_join, tp)
+    TBBTaskGroup(_Func&& _join, ThreadPool* tp = nullptr)
+    : base_type(std::forward<_Func>(_join), tp)
     , m_tbb_task_group(new tbb_task_group_t())
     {
     }
 
     template <typename _Func>
-    TBBTaskGroup(int _freq, const _Func& _join, ThreadPool* tp = nullptr)
-    : base_type(_freq, _join, tp)
+    TBBTaskGroup(int _freq, _Func&& _join, ThreadPool* tp = nullptr)
+    : base_type(_freq, std::forward<_Func>(_join), tp)
     , m_tbb_task_group(new tbb_task_group_t())
     {
     }
@@ -125,25 +125,25 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         return task_pointer<_Args...>(
-            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+            new task_type<_Args...>(this, std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    func_task_pointer wrap(const _Func& func)
+    func_task_pointer wrap(_Func&& func)
     {
-        return func_task_pointer(new func_task_type(this, func));
+        return func_task_pointer(new func_task_type(this, std::forward<_Func>(func)));
         ;
     }
 
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void run(const _Func& func, _Args... args)
+    void run(_Func&& func, _Args&&... args)
     {
-        auto _task = wrap(func, std::forward<_Args>(args)...);
+        auto _task = wrap(std::forward<_Func>(func), std::forward<_Args>(args)...);
         auto _fut  = _task->get_future();
         auto _func = [=]() {
             (*_task)();
@@ -159,7 +159,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void run(const _Func& func)
+    void run(_Func&& func)
     {
         auto _func = [=]() {
             func();
@@ -174,15 +174,15 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void exec(const _Func& func, _Args... args)
+    void exec(_Func&& func, _Args&&... args)
     {
-        run(func, std::forward<_Args>(args)...);
+        run(std::forward<_Func>(func), std::forward<_Args>(args)...);
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void exec(const _Func& func)
+    void exec(_Func&& func)
     {
-        run(func);
+        run(std::forward<_Func>(func));
     }
 
 public:
@@ -233,8 +233,8 @@ public:
     {
     }
     template <typename _Func>
-    TBBTaskGroup(const _Func& _join, ThreadPool* tp = nullptr)
-    : base_type(_join, tp)
+    TBBTaskGroup(_Func&& _join, ThreadPool* tp = nullptr)
+    : base_type(std::forward<_Func>(_join), tp)
     , m_tbb_task_group(new tbb_task_group_t())
     {
     }
@@ -278,24 +278,24 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         return task_pointer<_Args...>(
-            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+            new task_type<_Args...>(this, std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    func_task_pointer wrap(const _Func& func)
+    func_task_pointer wrap(_Func&& func)
     {
-        return func_task_pointer(new func_task_type(this, func));
+        return func_task_pointer(new func_task_type(this, std::forward<_Func>(func)));
     }
 
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void run(const _Func& func, _Args... args)
+    void run(_Func&& func, _Args&&... args)
     {
-        auto _task = wrap(func, std::forward<_Args>(args)...);
+        auto _task = wrap(std::forward<_Func>(func), std::forward<_Args>(args)...);
         auto _func = [=]() {
             (*_task)();
             intmax_t _count = --m_tot_task_count;
@@ -309,7 +309,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void run(const _Func& func)
+    void run(_Func&& func)
     {
         auto _func = [=]() {
             func();
@@ -324,15 +324,15 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void exec(const _Func& func, _Args... args)
+    void exec(_Func&& func, _Args&&... args)
     {
-        run(func, std::forward<_Args>(args)...);
+        run(std::forward<_Func>(func), std::forward<_Args>(args)...);
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void exec(const _Func& func)
+    void exec(_Func&& func)
     {
-        run(func);
+        run(std::forward<_Func>(func));
     }
 
 public:

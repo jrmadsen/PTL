@@ -84,9 +84,9 @@ public:
 public:
     // Constructor
     template <typename _Func>
-    TaskGroup(const _Func& _join, ThreadPool* tp = nullptr);
+    TaskGroup(_Func&& _join, ThreadPool* tp = nullptr);
     template <typename _Func>
-    TaskGroup(int _freq, const _Func& _join, ThreadPool* tp = nullptr);
+    TaskGroup(int _freq, _Func&& _join, ThreadPool* tp = nullptr);
     // Destructor
     virtual ~TaskGroup();
 
@@ -144,7 +144,7 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         auto _task = task_pointer<_Args...>(
             new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
@@ -152,7 +152,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    func_task_pointer wrap(const _Func& func)
+    func_task_pointer wrap(_Func&& func)
     {
         auto   _task = func_task_pointer(new func_task_type(this, func));
         return operator+=(_task);
@@ -161,7 +161,7 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void exec(const _Func& func, _Args... args)
+    void exec(_Func&& func, _Args&&... args)
     {
         if(m_task_set.size() > 10000)
             func(std::forward<_Args>(args)...);
@@ -170,7 +170,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void exec(const _Func& func)
+    void exec(_Func&& func)
     {
         if(m_task_set.size() > 10000)
             func();
@@ -179,7 +179,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void run(const _Func& func, _Args... args)
+    void run(_Func&& func, _Args&&... args)
     {
         if(m_task_set.size() > 10000)
             func(std::forward<_Args>(args)...);
@@ -188,7 +188,7 @@ public:
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void run(const _Func& func)
+    void run(_Func&& func)
     {
         if(m_task_set.size() > 10000)
             func();
@@ -200,7 +200,7 @@ public:
     //------------------------------------------------------------------------//
     // set the join function
     template <typename _Func>
-    void set_join_function(const _Func&);
+    void set_join_function(_Func&&);
 
 protected:
     //------------------------------------------------------------------------//
@@ -296,10 +296,10 @@ public:
     {
     }
     template <typename _Func>
-    TaskGroup(const _Func& _join, ThreadPool* tp = nullptr)
+    TaskGroup(_Func&& _join, ThreadPool* tp = nullptr)
     : VTaskGroup(tp)
     {
-        set_join_function(_join);
+        set_join_function(std::forward<_Func>(_join));
     }
     // Destructor
     virtual ~TaskGroup() {}
@@ -344,56 +344,56 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    task_pointer<_Args...> wrap(const _Func& func, _Args... args)
+    task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         auto _task = task_pointer<_Args...>(
-            new task_type<_Args...>(this, func, std::forward<_Args>(args)...));
+            new task_type<_Args...>(this, std::forward<_Func>(func), std::forward<_Args>(args)...));
         return operator+=(_task);
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    func_task_pointer wrap(const _Func& func)
+    func_task_pointer wrap(_Func&& func)
     {
-        auto   _task = func_task_pointer(new func_task_type(this, func));
+        auto   _task = func_task_pointer(new func_task_type(this, std::forward<_Func>(func)));
         return operator+=(_task);
     }
 
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void exec(const _Func& func, _Args... args)
+    void exec(_Func&& func, _Args&&... args)
     {
         if(CountedObject<this_type>::live() > 1000)
             func(std::forward<_Args>(args)...);
         else
-            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+            m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void exec(const _Func& func)
+    void exec(_Func&& func)
     {
         if(CountedObject<this_type>::live() > 1000)
             func();
         else
-            m_pool->add_task(wrap(func));
+            m_pool->add_task(wrap(std::forward<_Func>(func)));
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    void run(const _Func& func, _Args... args)
+    void run(_Func&& func, _Args&&... args)
     {
         if(CountedObject<this_type>::live() > 1000)
             func(std::forward<_Args>(args)...);
         else
-            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+            m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
-    void run(const _Func& func)
+    void run(_Func&& func)
     {
         if(CountedObject<this_type>::live() > 1000)
             func();
         else
-            m_pool->add_task(wrap(func));
+            m_pool->add_task(wrap(std::forward<_Func>(func)));
     }
 
 protected:
@@ -412,9 +412,9 @@ public:
     //------------------------------------------------------------------------//
     // join function
     template <typename _Func>
-    void set_join_function(_Func& _join)
+    void set_join_function(_Func&& _join)
     {
-        m_join_function = std::bind<void>(_join);
+        m_join_function = std::bind<void>(std::forward<_Func>(_join));
     }
     //------------------------------------------------------------------------//
     // wait to finish
