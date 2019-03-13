@@ -347,14 +347,16 @@ public:
     task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         auto _task = task_pointer<_Args...>(
-            new task_type<_Args...>(this, std::forward<_Func>(func), std::forward<_Args>(args)...));
+            new task_type<_Args...>(this, std::forward<_Func>(func),
+                                    std::forward<_Args>(args)...));
         return operator+=(_task);
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
     func_task_pointer wrap(_Func&& func)
     {
-        auto   _task = func_task_pointer(new func_task_type(this, std::forward<_Func>(func)));
+        auto _task =
+            func_task_pointer(new func_task_type(this, std::forward<_Func>(func)));
         return operator+=(_task);
     }
 
@@ -366,7 +368,8 @@ public:
         if(CountedObject<this_type>::live() > 1000)
             func(std::forward<_Args>(args)...);
         else
-            m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+            m_pool->add_task(
+                wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
@@ -384,7 +387,8 @@ public:
         if(CountedObject<this_type>::live() > 1000)
             func(std::forward<_Args>(args)...);
         else
-            m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+            m_pool->add_task(
+                wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>

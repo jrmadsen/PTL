@@ -128,7 +128,8 @@ public:
     task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         return task_pointer<_Args...>(
-            new task_type<_Args...>(this, std::forward<_Func>(func), std::forward<_Args>(args)...));
+            new task_type<_Args...>(this, std::forward<_Func>(func),
+                                    std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
@@ -281,7 +282,8 @@ public:
     task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
     {
         return task_pointer<_Args...>(
-            new task_type<_Args...>(this, std::forward<_Func>(func), std::forward<_Args>(args)...));
+            new task_type<_Args...>(this, std::forward<_Func>(func),
+                                    std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
