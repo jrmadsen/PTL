@@ -152,7 +152,6 @@ TaskSubQueue::PopTask(bool front)
     if(m_task_queue.empty())
         return;
 
-    /*
     --m_ntasks;
     --(*m_all_tasks);
 
@@ -170,8 +169,8 @@ TaskSubQueue::PopTask(bool front)
     // release the claim on the bin
     ReleaseClaim();
     VUserTaskQueue::Execute(_task);
-    */
 
+    /*
     size_type nmax  = 1;
     size_type nexec = std::min(nmax, m_task_queue.size());
 
@@ -219,6 +218,7 @@ TaskSubQueue::PopTask(bool front)
         ReleaseClaim();
         VUserTaskQueue::Execute(exec_container);
     }
+    */
 }
 
 //======================================================================================//

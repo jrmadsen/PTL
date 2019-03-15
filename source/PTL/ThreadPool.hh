@@ -169,7 +169,6 @@ public:
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
-    void run(const task_pointer&);
     int  insert(const task_pointer&, int = -1);
     int  run_on_this(const task_pointer&);
 

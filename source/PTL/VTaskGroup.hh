@@ -56,20 +56,17 @@ public:
     using container_type = std::list<_Tp>;
     template <typename _Tp>
     using list_type = std::list<_Tp>;
-    template <typename _Key, typename _Mapped>
-    using map_type = std::unordered_map<_Key, _Mapped>;
 
-    typedef VTaskGroup                     this_type;
-    typedef std::thread::id                tid_type;
-    typedef VTask                          task_type;
-    typedef uintmax_t                      size_type;
-    typedef Mutex                          lock_t;
-    typedef std::atomic_intmax_t           atomic_int;
-    typedef std::atomic_uintmax_t          atomic_uint;
-    typedef map_type<tid_type, atomic_int> task_count_map;
-    typedef Condition                      condition_t;
-    typedef std::shared_ptr<task_type>     task_pointer;
-    typedef container_type<task_pointer>   vtask_list_type;
+    typedef VTaskGroup                   this_type;
+    typedef std::thread::id              tid_type;
+    typedef VTask                        task_type;
+    typedef uintmax_t                    size_type;
+    typedef Mutex                        lock_t;
+    typedef std::atomic_intmax_t         atomic_int;
+    typedef std::atomic_uintmax_t        atomic_uint;
+    typedef Condition                    condition_t;
+    typedef std::shared_ptr<task_type>   task_pointer;
+    typedef container_type<task_pointer> vtask_list_type;
 
 public:
     // Constructor and Destructors
@@ -79,33 +76,10 @@ public:
     virtual ~VTaskGroup();
 
     VTaskGroup(const this_type&) = delete;
-    VTaskGroup(this_type&& rhs)
-    {
-        *this = std::move(rhs);
-        /*
-        m_clear_count.store(m_clear_count.load());
-        m_clear_freq.store(m_clear_freq.load());
-        m_tot_task_count.store(m_tot_task_count.load());
-        _MOVE_MEMBER(m_tid_task_count);
-        _MOVE_MEMBER(m_id);
-        _MOVE_MEMBER(m_pool);
-        _MOVE_MEMBER(m_main_tid);
-        _MOVE_MEMBER(vtask_list);*/
-    }
+    VTaskGroup(this_type&& rhs)  = default;
 
     this_type& operator=(const this_type&) = delete;
-    this_type& operator                    =(this_type&& rhs)
-    {
-        if(this == &rhs)
-            return *this;
-
-        m_tot_task_count.store(m_tot_task_count.load());
-        _MOVE_MEMBER(m_id);
-        _MOVE_MEMBER(m_pool);
-        _MOVE_MEMBER(m_main_tid);
-        _MOVE_MEMBER(vtask_list);
-        return *this;
-    }
+    this_type& operator=(this_type&& rhs) = default;
 
 public:
     //------------------------------------------------------------------------//

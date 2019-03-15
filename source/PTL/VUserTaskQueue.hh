@@ -65,7 +65,7 @@ public:
     //      2. int - number of iterations
     // returns:
     //      VTask* - a task or nullptr
-    virtual VTaskPtr GetTask(intmax_t subq = -1, intmax_t nitr = -1) = 0;
+    virtual void GetTask(intmax_t subq = -1, intmax_t nitr = -1) = 0;
 
     // Virtual function for inserting a task into the queue
     // parameters:
@@ -85,8 +85,8 @@ public:
     virtual size_type size() const  = 0;
     virtual bool      empty() const = 0;
 
-    virtual size_type bin_size() const  = 0;
-    virtual bool      bin_empty() const = 0;
+    virtual size_type bin_size(size_type bin) const  = 0;
+    virtual bool      bin_empty(size_type bin) const = 0;
 
     // these are for slower checking, default to returning normal size()/empty
     virtual size_type true_size() const { return size(); }

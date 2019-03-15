@@ -46,9 +46,8 @@ class ThreadPool;
 
 /// \brief The task class is supplied to thread_pool.
 template <typename _Ret, typename... _Args>
-class PackagedTask
-: public VTask
-, public TaskAllocator<PackagedTask<_Ret, _Args...>>
+class PackagedTask : public VTask
+//, public TaskAllocator<PackagedTask<_Ret, _Args...>>
 {
 public:
     typedef PackagedTask<_Ret, _Args...>  this_type;
@@ -60,21 +59,21 @@ public:
 
 public:
     // pass a free function pointer
-    PackagedTask(function_type&& func, _Args... args)
+    PackagedTask(function_type&& func, _Args&&... args)
     : VTask()
-    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
+    , m_ptask([&]() { return func(std::forward<_Args>(args)...); })
     {
     }
 
-    PackagedTask(VTaskGroup* group, function_type&& func, _Args... args)
+    PackagedTask(VTaskGroup* group, function_type&& func, _Args&&... args)
     : VTask(group)
-    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
+    , m_ptask([&]() { return func(std::forward<_Args>(args)...); })
     {
     }
 
-    PackagedTask(ThreadPool* pool, function_type&& func, _Args... args)
+    PackagedTask(ThreadPool* pool, function_type&& func, _Args&&... args)
     : VTask(pool)
-    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
+    , m_ptask([&]() { return func(std::forward<_Args>(args)...); })
     {
     }
 
@@ -94,9 +93,8 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <typename _Ret, typename... _Args>
-class Task
-: public VTask
-, public TaskAllocator<Task<_Ret, _Args...>>
+class Task : public VTask
+//, public TaskAllocator<Task<_Ret, _Args...>>
 {
 public:
     typedef Task<_Ret, _Args...>          this_type;
@@ -107,21 +105,21 @@ public:
     typedef _Ret                          result_type;
 
 public:
-    Task(function_type&& func, _Args... args)
+    Task(function_type&& func, _Args&&... args)
     : VTask()
-    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
+    , m_ptask([&]() { return func(std::forward<_Args>(args)...); })
     {
     }
 
-    Task(VTaskGroup* group, function_type&& func, _Args... args)
+    Task(VTaskGroup* group, function_type&& func, _Args&&... args)
     : VTask(group)
-    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
+    , m_ptask([&]() { return func(std::forward<_Args>(args)...); })
     {
     }
 
-    Task(ThreadPool* pool, function_type&& func, _Args... args)
+    Task(ThreadPool* pool, function_type&& func, _Args&&... args)
     : VTask(pool)
-    , m_ptask(std::bind(std::forward<function_type>(func), _forward_args_t(_Args, args)))
+    , m_ptask([&]() { return func(std::forward<_Args>(args)...); })
     {
     }
 
@@ -151,9 +149,8 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <>
-class Task<void, void>
-: public VTask
-, public TaskAllocator<Task<void, void>>
+class Task<void, void> : public VTask
+//, public TaskAllocator<Task<void, void>>
 {
 public:
     typedef void                       _Ret;

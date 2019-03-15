@@ -163,37 +163,25 @@ public:
     template <typename _Func, typename... _Args>
     void exec(_Func&& func, _Args&&... args)
     {
-        if(m_task_set.size() > 10000)
-            func(std::forward<_Args>(args)...);
-        else
-            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
     void exec(_Func&& func)
     {
-        if(m_task_set.size() > 10000)
-            func();
-        else
-            m_pool->add_task(wrap(func));
+        m_pool->add_task(wrap(func));
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
     void run(_Func&& func, _Args&&... args)
     {
-        if(m_task_set.size() > 10000)
-            func(std::forward<_Args>(args)...);
-        else
-            m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
     void run(_Func&& func)
     {
-        if(m_task_set.size() > 10000)
-            func();
-        else
-            m_pool->add_task(wrap(func));
+        m_pool->add_task(wrap(func));
     }
 
 public:
@@ -365,39 +353,25 @@ public:
     template <typename _Func, typename... _Args>
     void exec(_Func&& func, _Args&&... args)
     {
-        if(CountedObject<this_type>::live() > 1000)
-            func(std::forward<_Args>(args)...);
-        else
-            m_pool->add_task(
-                wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
     void exec(_Func&& func)
     {
-        if(CountedObject<this_type>::live() > 1000)
-            func();
-        else
-            m_pool->add_task(wrap(std::forward<_Func>(func)));
+        m_pool->add_task(wrap(std::forward<_Func>(func)));
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
     void run(_Func&& func, _Args&&... args)
     {
-        if(CountedObject<this_type>::live() > 1000)
-            func(std::forward<_Args>(args)...);
-        else
-            m_pool->add_task(
-                wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
     void run(_Func&& func)
     {
-        if(CountedObject<this_type>::live() > 1000)
-            func();
-        else
-            m_pool->add_task(wrap(std::forward<_Func>(func)));
+        m_pool->add_task(wrap(std::forward<_Func>(func)));
     }
 
 protected:

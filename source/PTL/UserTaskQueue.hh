@@ -59,7 +59,7 @@ public:
 
 public:
     // Virtual  function for getting a task from the queue
-    virtual VTaskPtr GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
+    virtual void GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
     // Virtual function for inserting a task into the queue
     virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr,
                                 intmax_t subq = -1) override;
@@ -71,8 +71,8 @@ public:
     virtual bool      empty() const override;
     virtual size_type size() const override;
 
-    virtual size_type bin_size() const override;
-    virtual bool      bin_empty() const override;
+    virtual size_type bin_size(size_type bin) const override;
+    virtual bool      bin_empty(size_type bin) const override;
 
     inline bool      true_empty() const override;
     inline size_type true_size() const override;
@@ -159,17 +159,17 @@ UserTaskQueue::size() const
 //======================================================================================//
 
 inline UserTaskQueue::size_type
-UserTaskQueue::bin_size() const
+UserTaskQueue::bin_size(size_type bin) const
 {
-    return (*m_subqueues)[GetThreadBin()]->size();
+    return (*m_subqueues)[bin]->size();
 }
 
 //======================================================================================//
 
 inline bool
-UserTaskQueue::bin_empty() const
+UserTaskQueue::bin_empty(size_type bin) const
 {
-    return (*m_subqueues)[GetThreadBin()]->empty();
+    return (*m_subqueues)[bin]->empty();
 }
 
 //======================================================================================//
@@ -180,7 +180,7 @@ UserTaskQueue::true_empty() const
     // return !std::any_of(m_subqueues->begin(), m_subqueues->end(), [](TaskSubQueue* itr)
     // { return !itr->empty(); });
     for(const auto& itr : *m_subqueues)
-        if(!itr->empty())
+        if(itr->size() > 0)
             return false;
     return true;
 }

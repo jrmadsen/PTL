@@ -143,11 +143,15 @@ UserTaskQueue::GetInsertBin() const
 
 //======================================================================================//
 
-UserTaskQueue::VTaskPtr
+void
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 {
     bool spin = m_hold->load(std::memory_order_relaxed);
     // bool recursive = (nitr < 0);
+
+    // exit if empty
+    if(this->true_empty())
+        return;
 
     // if not greater than zero, set to number of workers + 1
     if(nitr < 1)
@@ -161,8 +165,6 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     // ensure the thread has a bin assignment
     if(!(subq < 0))
         GetThreadBin();
-
-    VTaskPtr _task(nullptr);
 
     //------------------------------------------------------------------------//
     auto get_task = [&](intmax_t _n) {
@@ -188,8 +190,8 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         // then start looking in other bins for work to steal
         for(intmax_t i = 0; i < nitr; ++i)
             if(get_task(n % (m_workers + 1)))
-                return _task;
-        return _task;
+                return;
+        return;
     }
 
     // if(get_task(m_subqueues->at(GetRandomBin())))
@@ -200,14 +202,14 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     for(intmax_t i = 0; i < nitr; ++i, ++n)
     {
         if(get_task(n % (m_workers + 1)))
-            return _task;
+            return;
     }
 
     // only reached if looped over all bins (and looked in own bin twice)
     // and found no work so return an empty task and the thread will be put to
     // sleep if there is still no work by the time it reaches its
     // condition variable
-    return _task;
+    return;
 }
 
 //======================================================================================//

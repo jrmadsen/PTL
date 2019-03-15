@@ -539,23 +539,10 @@ ThreadPool::stop_thread()
 
 //======================================================================================//
 
-void
-ThreadPool::run(const task_pointer& task)
-{
-    // check the task_pointer (std::shared_ptr) has a valid pointer
-    if(!task.get())
-        return;
-
-    // execute task
-    (*task)();
-}
-
-//======================================================================================//
-
 int
 ThreadPool::run_on_this(const task_pointer& task)
 {
-    auto _func = [=]() { this->run(task); };
+    auto _func = [=]() { (*task)(); };
     if(m_tbb_tp)
     {
         if(m_tbb_task_group)
@@ -624,9 +611,9 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // initialization function
     m_init_func();
 
-    ThreadId tid = ThisThread::get_id();
-
+    ThreadId    tid  = ThisThread::get_id();
     ThreadData* data = thread_data();
+    // auto        thread_bin = _task_queue->GetThreadBin();
 
     assert(data->current_queue != nullptr);
     assert(_task_queue == data->current_queue);
@@ -634,7 +621,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // essentially a dummy run
     {
         data->within_task = true;
-        run(_task_queue->GetTask());
+        _task_queue->GetTask();
         data->within_task = false;
     }
 
@@ -645,6 +632,39 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         // Try to pick a task
         AutoLock _task_lock(m_task_lock, std::defer_lock);
         //--------------------------------------------------------------------//
+
+        auto leave_pool = [&]() {
+            auto _state      = [&]() { return static_cast<int>(m_pool_state.load()); };
+            auto _pool_state = _state();
+            if(_pool_state > 0)
+            {
+                // stop whole pool
+                if(_pool_state == state::STOPPED)
+                {
+                    if(_task_lock.owns_lock())
+                        _task_lock.unlock();
+                    return true;
+                }
+                // single thread stoppage
+                else if(_pool_state == state::PARTIAL)
+                {
+                    if(!_task_lock.owns_lock())
+                        _task_lock.lock();
+                    if(m_is_stopped.size() > 0 && m_is_stopped.back())
+                    {
+                        m_stop_threads.push_back(get_thread(tid));
+                        m_is_stopped.pop_back();
+                        if(_task_lock.owns_lock())
+                            _task_lock.unlock();
+                        // exit entire function
+                        return true;
+                    }
+                    if(_task_lock.owns_lock())
+                        _task_lock.unlock();
+                }
+            }
+            return false;
+        };
 
         // We need to put condition.wait() in a loop for two reasons:
         // 1. There can be spurious wake-ups (due to signal/ENITR)
@@ -659,36 +679,8 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             auto _empty = [&]() { return _task_queue->empty(); };
             auto _wake  = [&]() { return (!_empty() || _size() > 0 || _state() > 0); };
 
-            // If the thread was waked to notify process shutdown, return from
-            // here
-            auto _pool_state = _state();
-            if(_pool_state > 0)
-            {
-                // stop whole pool
-                if(_pool_state == state::STOPPED)
-                {
-                    if(_task_lock.owns_lock())
-                        _task_lock.unlock();
-                    return;
-                }
-                // single thread stoppage
-                else if(_pool_state == state::PARTIAL)
-                {
-                    if(!_task_lock.owns_lock())
-                        _task_lock.lock();
-                    if(m_is_stopped.size() > 0 && m_is_stopped.back())
-                    {
-                        m_stop_threads.push_back(get_thread(tid));
-                        m_is_stopped.pop_back();
-                        if(_task_lock.owns_lock())
-                            _task_lock.unlock();
-                        // exit entire function
-                        return;
-                    }
-                    if(_task_lock.owns_lock())
-                        _task_lock.unlock();
-                }
-            }
+            if(leave_pool())
+                return;
 
             if(_task_queue->true_size() == 0)
             {
@@ -721,12 +713,16 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             _task_lock.unlock();
         //----------------------------------------------------------------//
 
+        // leave pool if conditions dictate it
+        if(leave_pool())
+            return;
+
         // activate guard against recursive deadlock
         data->within_task = true;
         //----------------------------------------------------------------//
 
-        // get the next task and execute the task (will return if nullptr)
-        while(!_task_queue->empty())
+        // get the next task and execute the task
+        while(!_task_queue->true_empty())
             _task_queue->GetTask();
         //----------------------------------------------------------------//
 
