@@ -75,8 +75,8 @@ TaskRunManager::TaskRunManager(bool useTBB)
     }
 
 #ifdef PTL_USE_TBB
-    int _useTBB = GetEnv<int>("FORCE_TBB", (int) useTBB);
-    if(_useTBB > 0)
+    auto _useTBB = GetEnv<bool>("FORCE_TBB", useTBB);
+    if(_useTBB)
         useTBB = true;
 #endif
 
@@ -117,9 +117,11 @@ TaskRunManager::Initialize(uint64_t n)
     else if(nworkers != threadPool->size())
     {
         if(verbose > 0)
+        {
             std::cout << "TaskRunManager :: Resizing thread pool from "
                       << threadPool->size() << " to " << nworkers << " threads ..."
                       << std::endl;
+        }
         threadPool->resize(nworkers);
     }
 

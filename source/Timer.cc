@@ -127,8 +127,10 @@ double
 Timer::GetRealElapsed() const
 {
     if(!fValidTimes)
+    {
         throw std::runtime_error("Timer::GetRealElapsed() - "
                                  "Timer not stopped or times not recorded!");
+    }
     std::chrono::duration<double> diff = fEndRealTime - fStartRealTime;
     return diff.count();
 }
@@ -139,8 +141,10 @@ double
 Timer::GetSystemElapsed() const
 {
     if(!fValidTimes)
+    {
         throw std::runtime_error("Timer::GetSystemElapsed() - "
                                  "Timer not stopped or times not recorded!");
+    }
     double diff = fEndTimes.tms_stime - fStartTimes.tms_stime;
     return diff / sysconf(_SC_CLK_TCK);
 }
@@ -151,8 +155,10 @@ double
 Timer::GetUserElapsed() const
 {
     if(!fValidTimes)
+    {
         throw std::runtime_error("Timer::GetUserElapsed() - "
                                  "Timer not stopped or times not recorded!");
+    }
     double diff = fEndTimes.tms_utime - fStartTimes.tms_utime;
     return diff / sysconf(_SC_CLK_TCK);
 }

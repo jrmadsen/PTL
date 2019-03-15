@@ -247,8 +247,10 @@ main(int argc, char** argv)
                  << endl;
 
             if(fib_async != fib_recur)
+            {
                 cerr << cprefix << "Warning! async != recursive: " << fib_async
                      << " != " << fib_recur << endl;
+            }
         }
     }
     measureTimer.Stop();
@@ -339,9 +341,9 @@ main(int argc, char** argv)
 
     // compute the anser
     uint64_t answer = 0;
-    for(uint64_t i = 0; i < results.size(); ++i)
+    for(auto& itr : results)
     {
-        answer += compute_sum(results[i]);
+        answer += compute_sum(itr);
     }
     ///======================================================================///
     ///                                                                      ///
@@ -385,9 +387,13 @@ main(int argc, char** argv)
 
     int64_t ret = (true_answer - answer);
     if(ret == 0)
+    {
         cout << prefix << "Successful MT fibonacci calculation" << endl;
+    }
     else
+    {
         cout << prefix << "Failure combining MT fibonacci calculation " << endl;
+    }
 
     cout << endl;
 

@@ -281,8 +281,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             m_pool_size = proposed_size;
             _task_scheduler->initialize(proposed_size + 1);
             if(m_verbose > 0)
+            {
                 std::cout << "ThreadPool [TBB] initialized with " << m_pool_size
                           << " threads." << std::endl;
+            }
         }
         // create task group (used for async)
         if(!m_tbb_task_group)
@@ -320,15 +322,19 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             while(stop_thread() > proposed_size)
                 ;
             if(m_verbose > 0)
+            {
                 std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                           << std::endl;
+            }
             return m_pool_size;
         }
-        else if(m_pool_size == proposed_size)
+        else if(m_pool_size == proposed_size) // NOLINT
         {
             if(m_verbose > 0)
+            {
                 std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                           << std::endl;
+            }
             return m_pool_size;
         }
     }
@@ -386,9 +392,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     }
 
     if(m_verbose > 0)
+    {
         std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                   << std::endl;
-
+    }
     return m_main_threads.size();
 }
 
@@ -522,11 +529,13 @@ ThreadPool::stop_thread()
         m_stop_threads.pop_back();
         // remove from main
         for(auto itr = m_main_threads.begin(); itr != m_main_threads.end(); ++itr)
+        {
             if((*itr)->get_id() == t->get_id())
             {
                 m_main_threads.erase(itr);
                 break;
             }
+        }
         // remove from join list
         m_is_joined.pop_back();
         // delete thread
@@ -546,9 +555,13 @@ ThreadPool::run_on_this(const task_pointer& task)
     if(m_tbb_tp)
     {
         if(m_tbb_task_group)
+        {
             m_tbb_task_group->run(_func);
+        }
         else
+        {
             _func();
+        }
     }
     else  // execute task
         _func();
@@ -647,11 +660,11 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
                     return true;
                 }
                 // single thread stoppage
-                else if(_pool_state == state::PARTIAL)
+                else if(_pool_state == state::PARTIAL) // NOLINT
                 {
                     if(!_task_lock.owns_lock())
                         _task_lock.lock();
-                    if(m_is_stopped.size() > 0 && m_is_stopped.back())
+                    if(!m_is_stopped.empty() && m_is_stopped.back())
                     {
                         m_stop_threads.push_back(get_thread(tid));
                         m_is_stopped.pop_back();

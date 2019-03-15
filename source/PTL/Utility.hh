@@ -37,9 +37,9 @@
 //--------------------------------------------------------------------------------------//
 // use this function to get rid of "unused parameter" warnings
 //
-template <typename _Tp, typename... _Args>
+template <typename... _Args>
 void
-ConsumeParameters(_Tp, _Args...)
+ConsumeParameters(_Args...)
 {
 }
 

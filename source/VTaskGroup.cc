@@ -172,9 +172,13 @@ VTaskGroup::wait()
             // Wait until signaled that a task has been competed
             // Unlock mutex while wait, then lock it back when signaled
             if((_pending = pending()) > _pool_size)  // for safety
+            {
                 m_task_cond.wait(_lock);
+            }
             else
+            {
                 m_task_cond.wait_for(_lock, std::chrono::milliseconds(10));
+            }
             if(_lock.owns_lock())
                 _lock.unlock();
         }

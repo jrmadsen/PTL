@@ -96,7 +96,7 @@ Threading::SetPinAffinity(int cpu, NativeThread& aT)
     cpu_set_t* aset = new cpu_set_t;
     CPU_ZERO(aset);
     CPU_SET(cpu, aset);
-    pthread_t& _aT = (pthread_t&) (aT);
+    pthread_t& _aT = static_cast<pthread_t&>(aT);
     return (pthread_setaffinity_np(_aT, sizeof(cpu_set_t), aset) == 0);
 #else  // Not available for Mac, WIN,...
     ConsumeParameters(cpu, aT);
