@@ -328,7 +328,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             }
             return m_pool_size;
         }
-        else if(m_pool_size == proposed_size) // NOLINT
+        else if(m_pool_size == proposed_size)  // NOLINT
         {
             if(m_verbose > 0)
             {
@@ -624,10 +624,10 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // initialization function
     m_init_func();
 
-    ThreadId    tid  = ThisThread::get_id();
-    ThreadData* data = thread_data();
+    ThreadId    tid        = ThisThread::get_id();
+    ThreadData* data       = thread_data();
     auto        thread_bin = _task_queue->GetThreadBin();
-    auto workers = _task_queue->workers();
+    auto        workers    = _task_queue->workers();
 
     assert(data->current_queue != nullptr);
     assert(_task_queue == data->current_queue);
@@ -660,7 +660,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
                     return true;
                 }
                 // single thread stoppage
-                else if(_pool_state == state::PARTIAL) // NOLINT
+                else if(_pool_state == state::PARTIAL)  // NOLINT
                 {
                     if(!_task_lock.owns_lock())
                         _task_lock.lock();
@@ -732,14 +732,14 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             return;
 
         // get the size
-        //auto nitr = _task_queue->true_size();
+        // auto nitr = _task_queue->true_size();
 
         // activate guard against recursive deadlock
         data->within_task = true;
         //----------------------------------------------------------------//
 
         // get the next task and execute the task
-        //for(decltype(nitr) i = 0; i < nitr; ++i)
+        // for(decltype(nitr) i = 0; i < nitr; ++i)
         _task_queue->GetTask(thread_bin, workers * (_task_queue->size() + 1));
         //----------------------------------------------------------------//
 

@@ -47,8 +47,7 @@ class ThreadPool;
 
 /// \brief The task class is supplied to thread_pool.
 template <typename _Ret, typename... _Args>
-class PackagedTask
-: public VTask
+class PackagedTask : public VTask
 {
 public:
     typedef PackagedTask<_Ret, _Args...>       this_type;
@@ -103,8 +102,7 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <typename _Ret, typename... _Args>
-class Task
-: public VTask
+class Task : public VTask
 {
 public:
     typedef Task<_Ret, _Args...>               this_type;
@@ -165,8 +163,7 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <>
-class Task<void, void>
-: public VTask
+class Task<void, void> : public VTask
 {
 public:
     typedef void                       _Ret;
