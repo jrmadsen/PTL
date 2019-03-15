@@ -613,7 +613,8 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 
     ThreadId    tid  = ThisThread::get_id();
     ThreadData* data = thread_data();
-    // auto        thread_bin = _task_queue->GetThreadBin();
+    auto        thread_bin = _task_queue->GetThreadBin();
+    auto workers = _task_queue->workers();
 
     assert(data->current_queue != nullptr);
     assert(_task_queue == data->current_queue);
@@ -717,13 +718,16 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         if(leave_pool())
             return;
 
+        // get the size
+        //auto nitr = _task_queue->true_size();
+
         // activate guard against recursive deadlock
         data->within_task = true;
         //----------------------------------------------------------------//
 
         // get the next task and execute the task
-        while(!_task_queue->true_empty())
-            _task_queue->GetTask();
+        //for(decltype(nitr) i = 0; i < nitr; ++i)
+        _task_queue->GetTask(thread_bin, workers * (_task_queue->size() + 1));
         //----------------------------------------------------------------//
 
         // disable guard against recursive deadlock

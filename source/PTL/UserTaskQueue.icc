@@ -168,10 +168,11 @@ TaskSubQueue::PopTask(bool front)
     }
     // release the claim on the bin
     ReleaseClaim();
-    VUserTaskQueue::Execute(_task);
+    if(_task.get())
+        (*_task)();
 
     /*
-    size_type nmax  = 1;
+    size_type nmax  = 16;
     size_type nexec = std::min(nmax, m_task_queue.size());
 
     m_ntasks -= nexec;

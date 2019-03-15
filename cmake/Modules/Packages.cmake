@@ -11,16 +11,14 @@ include("${CMAKE_CURRENT_LIST_DIR}/MacroUtilities.cmake")
 #
 ################################################################################
 
-if(CMAKE_C_COMPILER_IS_INTEL OR CMAKE_CXX_COMPILER_IS_INTEL)
-    if(NOT WIN32)
-        set(CMAKE_THREAD_PREFER_PTHREAD ON)
-        set(THREADS_PREFER_PTHREAD_FLAG OFF CACHE BOOL "Use -pthread vs. -lpthread" FORCE)
-    endif()
+if(NOT WIN32)
+    set(CMAKE_THREAD_PREFER_PTHREAD ON)
+    set(THREADS_PREFER_PTHREAD_FLAG OFF CACHE BOOL "Use -pthread vs. -lpthread" FORCE)
+endif()
 
-    find_package(Threads)
-    if(Threads_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
-    endif()
+find_package(Threads)
+if(Threads_FOUND)
+    list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
 endif()
 
 ################################################################################
@@ -49,7 +47,7 @@ endif(PTL_USE_TIMEMORY)
 ################################################################################
 
 if(PTL_USE_GPERF)
-    find_package(GPerfTools COMPONENTS profiler tcmalloc)
+    find_package(GPerfTools COMPONENTS profiler)
 
     if(GPerfTools_FOUND)
         list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})

@@ -163,7 +163,7 @@ public:
     template <typename _Func, typename... _Args>
     void exec(_Func&& func, _Args&&... args)
     {
-        m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
@@ -175,14 +175,47 @@ public:
     template <typename _Func, typename... _Args>
     void run(_Func&& func, _Args&&... args)
     {
-        m_pool->add_task(wrap(func, std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func>
     void run(_Func&& func)
     {
-        m_pool->add_task(wrap(func));
+        m_pool->add_task(wrap(std::forward<_Func>(func)));
     }
+    //------------------------------------------------------------------------//
+    /*
+    template <typename _Func, typename... _Args>
+    void parallel_for(uintmax_t nitr, uintmax_t chunks, _Func&& func, _Args&&... args)
+    {
+        auto nsplit     = nitr / chunks;
+        auto nmod       = nitr % chunks;
+        auto chunk_func = [&](const uintmax_t& n) {
+            auto beg = n * nsplit;
+            auto end = (n + 1) * nsplit + (n + 1 == chunks) ? nmod : 0;
+            for(uintmax_t i = beg; i < end; ++i)
+                func(std::forward<_Args>(args)...);
+        };
+
+        for(uintmax_t i = 0; i < chunks; ++i)
+            m_pool->add_task(wrap(chunk_func, i));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void parallel_for(uintmax_t nitr, uintmax_t chunks, _Func&& func)
+    {
+        auto nsplit     = nitr / chunks;
+        auto nmod       = nitr % chunks;
+        auto chunk_func = [&](const uintmax_t& n) {
+            auto beg = n * nsplit;
+            auto end = (n + 1) * nsplit + (n + 1 == chunks) ? nmod : 0;
+            for(uintmax_t i = beg; i < end; ++i)
+                func();
+        };
+
+        for(uintmax_t i = 0; i < chunks; ++i)
+            m_pool->add_task(wrap(chunk_func, i));
+    }*/
 
 public:
     //------------------------------------------------------------------------//
@@ -372,6 +405,40 @@ public:
     void run(_Func&& func)
     {
         m_pool->add_task(wrap(std::forward<_Func>(func)));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args>
+    void parallel_for(uintmax_t nitr, uintmax_t chunks, _Func&& func, _Args&&... args)
+    {
+        auto nsplit     = nitr / chunks;
+        auto nmod       = nitr % chunks;
+        auto chunk_func = [&](const uintmax_t& n) {
+            auto beg = n * nsplit;
+            auto end = (n + 1) * nsplit + (n + 1 == chunks) ? nmod : 0;
+            for(uintmax_t i = beg; i < end; ++i)
+                func(std::forward<_Args>(args)...);
+        };
+
+        for(uintmax_t i = 0; i < chunks; ++i)
+            m_pool->add_task(wrap(chunk_func, i));
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func>
+    void parallel_for(uintmax_t nitr, uintmax_t chunks, _Func&& func)
+    {
+        auto nsplit     = nitr / chunks;
+        auto nmod       = nitr % chunks;
+        auto chunk_func = [&](const uintmax_t& n) {
+            auto beg = n * nsplit;
+            auto end = (n + 1) * nsplit;
+            if(n + 1 == chunks)
+                end += nmod;
+            for(uintmax_t i = beg; i < end; ++i)
+                func();
+        };
+
+        for(uintmax_t i = 0; i < chunks; ++i)
+            m_pool->add_task(wrap(chunk_func, i));
     }
 
 protected:
