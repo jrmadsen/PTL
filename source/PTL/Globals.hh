@@ -35,6 +35,10 @@
 // Global utility functions
 #include "PTL/Utility.hh"
 
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 // for pre-C++14 tuple expansion to arguments
 namespace details
 {
@@ -119,7 +123,6 @@ apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 {
     __f(std::get<_Idx>(std::forward<_Tuple>(__t))...);
 }
-
 }
 
 template <class T>
