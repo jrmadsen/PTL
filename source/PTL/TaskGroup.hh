@@ -414,7 +414,9 @@ public:
         auto nmod       = nitr % chunks;
         auto chunk_func = [&](const uintmax_t& n) {
             auto beg = n * nsplit;
-            auto end = (n + 1) * nsplit + (n + 1 == chunks) ? nmod : 0;
+            auto end = (n + 1) * nsplit;
+            if(n + 1 == chunks)
+                end += nmod;
             for(uintmax_t i = beg; i < end; ++i)
                 func(std::forward<_Args>(args)...);
         };
