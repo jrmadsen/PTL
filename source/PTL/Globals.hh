@@ -119,10 +119,14 @@ apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 {
     __f(std::get<_Idx>(std::forward<_Tuple>(__t))...);
 }
+
 }
 
+template <class T>
+using decay_t = typename std::decay<T>::type;
+
 template <typename _Fn, typename _Tuple,
-          std::size_t _N    = std::tuple_size<std::decay_t<_Tuple>>::value,
+          std::size_t _N    = std::tuple_size<decay_t<_Tuple>>::value,
           typename _Indices = impl::make_index_sequence<_N>>
 static void
 apply(_Fn&& __f, _Tuple&& __t)
