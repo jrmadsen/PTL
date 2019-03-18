@@ -35,6 +35,10 @@
 // Global utility functions
 #include "PTL/Utility.hh"
 
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 // for pre-C++14 tuple expansion to arguments
 namespace details
 {
@@ -121,8 +125,11 @@ apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 }
 }
 
+template <class T>
+using decay_t = typename std::decay<T>::type;
+
 template <typename _Fn, typename _Tuple,
-          std::size_t _N    = std::tuple_size<std::decay_t<_Tuple>>::value,
+          std::size_t _N    = std::tuple_size<decay_t<_Tuple>>::value,
           typename _Indices = impl::make_index_sequence<_N>>
 static void
 apply(_Fn&& __f, _Tuple&& __t)
