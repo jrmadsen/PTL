@@ -18,7 +18,7 @@ endif()
 
 find_package(Threads)
 if(Threads_FOUND)
-    list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
+    list(APPEND PRIVATE_EXTERNAL_LIBRARIES Threads::Threads)
 endif()
 
 ################################################################################
