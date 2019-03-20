@@ -185,6 +185,12 @@ main(int argc, char** argv)
              << cutoff_tasks << " = " << fib_async << " ... " << singleTimer << endl;
     }
 
+        #if defined(USE_TBB_TASKS)
+        cout << prefix << "Running with TBB task_group..." << std::endl;
+        #else
+        cout << prefix << "Running with PTL task_group..." << std::endl;
+    #endif
+
     std::vector<int> cutoffs;
     for(int i = cutoff_high; i >= cutoff_low; i -= cutoff_incr)
         cutoffs.push_back(i);

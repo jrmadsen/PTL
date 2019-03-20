@@ -74,17 +74,18 @@ VTaskGroup::~VTaskGroup() {}
 void
 VTaskGroup::execute_this_threads_tasks()
 {
+    if(!is_native_task_group())
+        return;
+
     // for internal threads
-    ThreadData* data = ThreadData::GetInstance();
-
-    ThreadPool* _tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
-
+    ThreadData*     data   = ThreadData::GetInstance();
+    ThreadPool*     _tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
     VUserTaskQueue* _taskq =
         (m_pool) ? m_pool->get_queue() : ((data) ? data->current_queue : nullptr);
 
     // for external threads
-    bool ext_is_master   = (data) ? data->is_master : false;
-    bool ext_within_task = (data) ? data->within_task : true;
+    bool ext_is_master = (data) ? data->is_master : false;
+    // bool ext_within_task = (data) ? data->within_task : true;
 
     // for external threads
     if(!data)
@@ -105,12 +106,13 @@ VTaskGroup::execute_this_threads_tasks()
     }
 
     // only want to process if within a task
-    if((!ext_is_master || _tpool->size() < 2) && ext_within_task)
+    if((!ext_is_master || _tpool->size() < 2))
     {
         if(!_taskq)
             return;
-        int        bin  = static_cast<int>(_taskq->GetThreadBin());
-        const auto nitr = (_tpool) ? _tpool->size() : Thread::hardware_concurrency();
+        int        bin = static_cast<int>(_taskq->GetThreadBin());
+        const auto nitr =
+            pending() * ((_tpool) ? _tpool->size() : Thread::hardware_concurrency());
         while(this->pending() > 0)
         {
             _taskq->GetTask(bin, static_cast<int>(nitr));
@@ -144,16 +146,33 @@ VTaskGroup::wait()
         }
     }
 
+    ThreadData* data  = ThreadData::GetInstance();
+    ThreadPool* tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
+
+    if(!is_native_task_group())
+    {
+        // for external threads
+        bool ext_is_master = (data) ? data->is_master : false;
+        if(!ext_is_master || tpool->size() < 2)
+            return;
+    }
     // return if thread pool isn't built
-    if(!m_pool->is_alive() || !is_native_task_group())
+    if(is_native_task_group() && !m_pool->is_alive())
+    {
+        std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
+                  << "thread pool is not alive!" << std::endl;
         return;
-
-    // execute_this_threads_tasks();
-    // return;
-
+    }
     auto is_active_state = [&]() {
         return static_cast<int>(m_pool->state()) != static_cast<int>(state::STOPPED);
     };
+
+    if(!is_active_state())
+    {
+        std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
+                  << "thread pool is not active!" << std::endl;
+        return;
+    }
 
     intmax_t _pool_size = m_pool->size();
     AutoLock _lock(m_task_lock, std::defer_lock);
@@ -166,19 +185,19 @@ VTaskGroup::wait()
         // while loop protects against spurious wake-ups
         while((_pending = pending()) > 0 && is_active_state())
         {
+            auto _wake = [&]() { return (pending() < 1 || !is_active_state()); };
+
             // lock before sleeping on condition
             if(!_lock.owns_lock())
                 _lock.lock();
             // Wait until signaled that a task has been competed
             // Unlock mutex while wait, then lock it back when signaled
-            if((_pending = pending()) > _pool_size)  // for safety
-            {
+            // when true, this wakes the thread
+            if(pending() > _pool_size)
                 m_task_cond.wait(_lock);
-            }
             else
-            {
-                m_task_cond.wait_for(_lock, std::chrono::milliseconds(10));
-            }
+                m_task_cond.wait(_lock, _wake);
+            // unlock
             if(_lock.owns_lock())
                 _lock.unlock();
         }
@@ -197,9 +216,8 @@ VTaskGroup::wait()
         std::stringstream ss;
         ss << "\nWarning! Join operation issue! " << ntask << " tasks still "
            << "are running!" << std::endl;
-        std::cout << ss.str();
+        std::cerr << ss.str();
         this->wait();
-        // throw std::runtime_error(ss.str().c_str());
     }
 }
 

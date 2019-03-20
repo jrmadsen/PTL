@@ -112,7 +112,7 @@ static int16_t rng_range = 2;
 #if defined(USE_TBB_TASKS)
 const bool                                     useTBB = true;
 typedef TBBTaskGroup<Array_t, const uint64_t&> TaskGroup_t;
-typedef TBBTaskGroup<void>                     VoidGroup_t;
+typedef tbb::task_group                        VoidGroup_t;
 typedef TBBTaskGroup<long>                     LongGroup_t;
 #else
 const bool                                  useTBB = false;
