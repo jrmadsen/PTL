@@ -892,7 +892,8 @@ macro(BUILD_LIBRARY)
     endif()
 
     target_link_libraries(${LIB_TARGET_NAME} PUBLIC
-        ${EXTERNAL_LIBRARIES} ${LIB_LINK_LIBRARIES})
+        ${EXTERNAL_LIBRARIES} ${LIB_LINK_LIBRARIES}
+        PRIVATE ${PRIVATE_EXTERNAL_LIBRARIES})
 
     set_target_properties(${LIB_TARGET_NAME}
         PROPERTIES
