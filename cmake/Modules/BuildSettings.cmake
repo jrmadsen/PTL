@@ -209,8 +209,14 @@ if(PTL_USE_COVERAGE)
     endif()
 endif()
 
+# ---------------------------------------------------------------------------- #
 # user customization
-add_c_flag_if_avail("${CFLAGS}")
-add_c_flag_if_avail("$ENV{CFLAGS}")
-add_cxx_flag_if_avail("${CXXFLAGS}")
-add_cxx_flag_if_avail("$ENV{CXXFLAGS}")
+to_list(_CFLAGS "${CFLAGS};$ENV{CFLAGS}")
+foreach(_FLAG ${_CFLAGS})
+    add_c_flag_if_avail("${_FLAG}")
+endforeach()
+
+to_list(_CXXFLAGS "${CXXFLAGS};$ENV{CXXFLAGS}")
+foreach(_FLAG ${_CXXFLAGS})
+    add_cxx_flag_if_avail("${_FLAG}")
+endforeach()
