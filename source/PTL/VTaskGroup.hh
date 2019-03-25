@@ -120,6 +120,8 @@ public:
     // check if any tasks are still pending
     virtual intmax_t pending() { return m_tot_task_count.load(); }
 
+    static void set_verbose(int level) { f_verbose = level; }
+
 protected:
     //------------------------------------------------------------------------//
     // get the thread id
@@ -130,10 +132,6 @@ protected:
     atomic_int&       task_count() { return m_tot_task_count; }
     const atomic_int& task_count() const { return m_tot_task_count; }
 
-    //------------------------------------------------------------------------//
-    // process tasks in personal bin
-    void execute_this_threads_tasks();
-
 protected:
     // Private variables
     atomic_int      m_tot_task_count;
@@ -143,6 +141,7 @@ protected:
     lock_t          m_task_lock;
     tid_type        m_main_tid;
     vtask_list_type vtask_list;
+    static int      f_verbose;
 
 protected:
     enum class state : int

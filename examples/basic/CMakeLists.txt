@@ -59,7 +59,9 @@ endif(PTL_USE_TBB)
 
 #----------------------------------------------------------------------------
 # installation
-install(TARGETS tasking recursive_tasking DESTINATION bin)
-if(PTL_USE_TBB)
-    install(TARGETS recursive_tasking recursive_tbb_tasking DESTINATION bin)
-endif(PTL_USE_TBB)
+if(NOT DEFINED PTL_DEVELOPER_INSTALL OR PTL_DEVELOPER_INSTALL)
+    install(TARGETS tasking recursive_tasking DESTINATION bin)
+    if(PTL_USE_TBB)
+        install(TARGETS recursive_tasking recursive_tbb_tasking DESTINATION bin)
+    endif(PTL_USE_TBB)
+endif()
