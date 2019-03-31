@@ -144,10 +144,11 @@ UserTaskQueue::GetInsertBin() const
 //======================================================================================//
 
 void
-UserTaskQueue::GetBinnedTask(intmax_t nitr)
+UserTaskQueue::GetThreadBinTask()
 {
     intmax_t      tbin      = GetThreadBin();
     TaskSubQueue* task_subq = (*m_subqueues)[tbin % (m_workers + 1)];
+
     //------------------------------------------------------------------------//
     auto get_task = [&]() {
         if(task_subq->AcquireClaim())
@@ -160,11 +161,12 @@ UserTaskQueue::GetBinnedTask(intmax_t nitr)
     };
     //------------------------------------------------------------------------//
 
-    // if not in "hold/spin mode" (thread only processes tasks in its queue)
-    // then start looking in other bins for work to steal
-    for(intmax_t i = 0; i < nitr; ++i)
+    // while not empty
+    while(!task_subq->empty())
+    {
         if(get_task())
             break;
+    }
 }
 
 //======================================================================================//
@@ -178,7 +180,6 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 
     intmax_t tbin = GetThreadBin();
     intmax_t n    = (subq < 0) ? tbin : subq;
-    // if not greater than zero, set to number of workers + 1
     if(nitr < 1)
         nitr = (m_workers + 1) * m_ntasks->load(std::memory_order_relaxed);
     // ensure the thread has a bin assignment
@@ -187,7 +188,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 
     if(m_hold->load(std::memory_order_relaxed))
     {
-        GetBinnedTask(nitr);
+        GetThreadBinTask();
         return;
     }
 
@@ -200,11 +201,10 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         {
             // pop task out of bin
             task_subq->PopTask(n == tbin);
-            // debug
-            // printf("> Acquired task from bin %li [thread bin: %li]\n", _n,
-            // tbin);
+            // return success
             return true;
         }
+        // return failure
         return false;
     };
     //------------------------------------------------------------------------//
@@ -235,10 +235,11 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
     ++(*m_ntasks);
 
     bool spin = m_hold->load(std::memory_order_relaxed);
+    intmax_t tbin = GetThreadBin();
 
     if(data && data->within_task)
     {
-        subq = GetThreadBin();
+        subq = tbin;
         spin = true;
     }
 
@@ -250,7 +251,11 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
 
     //------------------------------------------------------------------------//
     auto insert_task = [&](intmax_t _n) {
-        TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
+        TaskSubQueue* task_subq = (*m_subqueues)[_n];
+        TaskSubQueue* next_subq = (*m_subqueues)[(_n + 1) % (m_workers + 1)];
+        // if not threads bin and size difference, insert into smaller
+        if(n != tbin && next_subq->size() < task_subq->size())
+            task_subq = next_subq;
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
         if(task_subq->AcquireClaim())
@@ -259,9 +264,6 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
             task_subq->PushTask(task);
             // release the claim on the bin
             task_subq->ReleaseClaim();
-            // debug
-            // printf("> Inserted task in bin %li [thread bin: %li]\n", _n,
-            // GetThreadBin());
             // return success
             return true;
         }
@@ -279,18 +281,18 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
             ;
         return n;
     }
-
-    // there are num_workers+1 bins so there is always a bin that is open
-    // execute num_workers+2 iterations so the thread checks its bin twice
-    for(intmax_t i = 0; i < (m_workers + 1); ++i, ++n)
+    else
     {
-        if(insert_task(n % (m_workers + 1)))
-            return n % (m_workers + 1);
+        // there are num_workers+1 bins so there is always a bin that is open
+        // execute num_workers+2 iterations so the thread checks its bin twice
+        while(true)
+        {
+            auto _n = (n++) % (m_workers + 1);
+            if(insert_task(_n))
+                return _n;
+        }
+        return GetThreadBin();
     }
-
-    // execute task
-    (*task)();
-    return GetThreadBin();
 }
 
 //======================================================================================//
