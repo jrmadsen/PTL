@@ -114,17 +114,17 @@ main(int argc, char** argv)
     ConsumeParameters(argc, argv);
 
     auto hwthreads        = std::thread::hardware_concurrency();
-    auto default_fib      = 36;
+    auto default_fib      = 20;
     auto default_tg       = 1;
-    auto default_grain    = pow(32, 1);
-    auto default_ntasks   = pow(32, 1);
+    auto default_grain    = pow(16, 1);
+    auto default_ntasks   = pow(16, 1);
     auto default_nthreads = hwthreads;
     // cutoff fields
-    auto cutoff_high  = 40;
-    auto cutoff_low   = 25;
+    auto cutoff_high  = 30;
+    auto cutoff_low   = 15;
     auto cutoff_incr  = 5;
     auto cutoff_tasks = 1;
-    long cutoff_value = 44;  // greater than 45 answer exceeds INT_MAX
+    long cutoff_value = 30;  // greater than 45 answer exceeds INT_MAX
 
     // default environment controls but don't overwrite
     setenv("NUM_THREADS", std::to_string(hwthreads).c_str(), 0);

@@ -111,6 +111,47 @@ public:
     // virtual uintmax_t operator--(int) = 0;
 
 public:
+    template <typename _Container, size_t... Idx>
+    static auto ContainerToTupleImpl(_Container&& container,
+                                     details::index_sequence<Idx...>)
+        -> decltype(std::make_tuple(std::forward<_Container>(container)[Idx]...))
+    {
+        return std::make_tuple(std::forward<_Container>(container)[Idx]...);
+    }
+
+    template <std::size_t _N, typename _Container>
+    static auto ContainerToTuple(_Container&& container)
+        -> decltype(ContainerToTupleImpl(std::forward<_Container>(container),
+                                         details::make_index_sequence<_N>{}))
+    {
+        return ContainerToTupleImpl(std::forward<_Container>(container),
+                                    details::make_index_sequence<_N>{});
+    }
+
+    template <std::size_t _N, std::size_t _Nt, typename _Tuple,
+              details::enable_if_t<(_N == _Nt), int> = 0>
+    static void _Executor(_Tuple&& _t)
+    {
+        if(std::get<_N>(_t).get())
+            (*(std::get<_N>(_t)))();
+    }
+
+    template <std::size_t _N, std::size_t _Nt, typename _Tuple,
+              details::enable_if_t<(_N < _Nt), int> = 0>
+    static void _Executor(_Tuple&& _t)
+    {
+        if(std::get<_N>(_t).get())
+            (*(std::get<_N>(_t)))();
+        _Executor<_N + 1, _Nt, _Tuple>(std::forward<_Tuple>(_t));
+    }
+
+    template <typename _Tuple,
+              std::size_t _N = std::tuple_size<details::decay_t<_Tuple>>::value>
+    static void Executor(_Tuple&& __t)
+    {
+        _Executor<0, _N - 1, _Tuple>(std::forward<_Tuple>(__t));
+    }
+
     template <
         typename Container,
         typename std::enable_if<std::is_same<Container, VTaskPtr>::value, int>::type = 0>
@@ -125,45 +166,49 @@ public:
         typename std::enable_if<!std::is_same<Container, VTaskPtr>::value, int>::type = 0>
     static void Execute(Container& tasks)
     {
+        /*
         for(auto& itr : tasks)
         {
             if(itr.get())
                 (*itr)();
-        }
-        /*
-        using value_type    = typename Container::value_type;
-        size_type n         = tasks.size();
-        auto      _run_task = [](const value_type& a, const value_type& b) {
-            if(a.get())
-                (*a)();
-            if(b.get())
-                (*b)();
-        };
+        }*/
 
-        std::function<void(const value_type&, const value_type&)> run_task =
-            std::bind(_run_task, std::placeholders::_1, std::placeholders::_2);
+        size_type n     = tasks.size();
+        size_type max_n = 4;
         while(n > 0)
         {
-            auto compute = (n > 2) ? 2 : n;
+            auto compute = (n > max_n) ? max_n : n;
             switch(compute)
             {
+                case 4:
+                {
+                    auto t = ContainerToTuple<4>(tasks);
+                    Executor(t);
+                    break;
+                }
+                case 3:
+                {
+                    auto t = ContainerToTuple<3>(tasks);
+                    Executor(t);
+                    break;
+                }
                 case 2:
                 {
                     auto t = ContainerToTuple<2>(tasks);
-                    apply(run_task, t);
+                    Executor(t);
                     break;
                 }
                 case 1:
                 {
                     auto t = ContainerToTuple<1>(tasks);
-                    Execute(std::get<0>(t));
+                    Executor(t);
                     break;
                 }
                 case 0: break;
             }
-            tasks.erase(tasks.begin(), tasks.begin() + compute);
+            // tasks.erase(tasks.begin(), tasks.begin() + compute);
             n -= compute;
-        }*/
+        }
     }
 
 protected:

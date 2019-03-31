@@ -90,8 +90,7 @@ VTaskGroup::wait()
         {
             if(f_verbose > 0)
             {
-                fprintf(stderr,
-                        "%s @ %i :: Warning! nullptr to thread-pool (%p)\n",
+                fprintf(stderr, "%s @ %i :: Warning! nullptr to thread-pool (%p)\n",
                         __FUNCTION__, __LINE__, m_pool);
                 std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
                           << "nullptr to thread pool!" << std::endl;
@@ -100,8 +99,8 @@ VTaskGroup::wait()
         }
     }
 
-    ThreadData* data  = ThreadData::GetInstance();
-    ThreadPool* tpool = nullptr;
+    ThreadData*     data  = ThreadData::GetInstance();
+    ThreadPool*     tpool = nullptr;
     VUserTaskQueue* taskq = nullptr;
 
     tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
@@ -131,7 +130,7 @@ VTaskGroup::wait()
                 pending() * ((tpool) ? tpool->size() : Thread::hardware_concurrency());
             while(this->pending() > 0)
             {
-                taskq->GetTask(bin, static_cast<int>(nitr));
+                taskq->GetTask(bin, nitr * nitr);
             }
         }
     };
@@ -177,7 +176,8 @@ VTaskGroup::wait()
         // while loop protects against spurious wake-ups
         while((_pending = pending()) > 0 && is_active_state())
         {
-            auto _wake = [&]() { return (pending() < 1 || !is_active_state()); };
+            // auto _wake = [&]() { return (pending() < _pool_size || !is_active_state());
+            // };
 
             // lock before sleeping on condition
             if(!_lock.owns_lock())
@@ -187,17 +187,20 @@ VTaskGroup::wait()
             // when true, this wakes the thread
             if(pending() > _pool_size)
             {
-                //m_task_cond.wait(_lock);
-                m_task_cond.wait(_lock, _wake);
+                // m_task_cond.wait(_lock);
+                m_task_cond.wait(_lock);
             }
             else
             {
-                //m_task_cond.wait(_lock, _wake);
-                m_task_cond.wait_for(_lock, std::chrono::milliseconds(10));
+                // m_task_cond.wait(_lock, _wake);
+                m_task_cond.wait_for(_lock, std::chrono::milliseconds(1));
             }
             // unlock
             if(_lock.owns_lock())
                 _lock.unlock();
+
+            // if(pending() > 0)
+            //    execute_this_threads_tasks();
         }
 
         // if pending is not greater than zero, we are joined

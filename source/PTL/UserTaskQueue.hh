@@ -64,6 +64,9 @@ public:
     virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr,
                                 intmax_t subq = -1) override;
 
+    // if executing only tasks in threads bin
+    void GetBinnedTask(intmax_t nitr);
+
     // Overload this function to hold threads
     virtual void Wait() override {}
     virtual void resize(intmax_t) override;

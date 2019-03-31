@@ -144,27 +144,52 @@ UserTaskQueue::GetInsertBin() const
 //======================================================================================//
 
 void
+UserTaskQueue::GetBinnedTask(intmax_t nitr)
+{
+    intmax_t      tbin      = GetThreadBin();
+    TaskSubQueue* task_subq = (*m_subqueues)[tbin % (m_workers + 1)];
+    //------------------------------------------------------------------------//
+    auto get_task = [&]() {
+        if(task_subq->AcquireClaim())
+        {
+            // run task
+            task_subq->PopTask(true);
+            return true;
+        }
+        return false;
+    };
+    //------------------------------------------------------------------------//
+
+    // if not in "hold/spin mode" (thread only processes tasks in its queue)
+    // then start looking in other bins for work to steal
+    for(intmax_t i = 0; i < nitr; ++i)
+        if(get_task())
+            break;
+}
+
+//======================================================================================//
+
+void
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 {
-    bool spin = m_hold->load(std::memory_order_relaxed);
-    // bool recursive = (nitr < 0);
-
     // exit if empty
     if(this->true_empty())
         return;
 
+    intmax_t tbin = GetThreadBin();
+    intmax_t n    = (subq < 0) ? tbin : subq;
     // if not greater than zero, set to number of workers + 1
     if(nitr < 1)
-        nitr = (m_workers + 1);
-
-    intmax_t tbin = GetThreadBin();
-    // subq is -1 unless specified so unless specified, a thread always
-    // looks in its own unique bin first
-    intmax_t n = (subq < 0) ? tbin : subq;
-
+        nitr = (m_workers + 1) * m_ntasks->load(std::memory_order_relaxed);
     // ensure the thread has a bin assignment
     if(!(subq < 0))
         GetThreadBin();
+
+    if(m_hold->load(std::memory_order_relaxed))
+    {
+        GetBinnedTask(nitr);
+        return;
+    }
 
     //------------------------------------------------------------------------//
     auto get_task = [&](intmax_t _n) {
@@ -184,32 +209,21 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     };
     //------------------------------------------------------------------------//
 
-    if(spin)
-    {
-        // if not in "hold/spin mode" (thread only processes tasks in its queue)
-        // then start looking in other bins for work to steal
-        for(intmax_t i = 0; i < nitr; ++i)
-            if(get_task(n % (m_workers + 1)))
-                return;
-        return;
-    }
-
-    // if(get_task(m_subqueues->at(GetRandomBin())))
-    //    return _task;
-
     // there are num_workers+1 bins so there is always a bin that is open
     // execute num_workers+2 iterations so the thread checks its bin twice
-    for(intmax_t i = 0; i < nitr; ++i, ++n)
+    // while(!empty())
     {
-        if(get_task(n % (m_workers + 1)))
-            return;
+        for(intmax_t i = 0; i < nitr; ++i, ++n)
+        {
+            if(get_task(n % (m_workers + 1)))
+                return;
+        }
     }
 
     // only reached if looped over all bins (and looked in own bin twice)
     // and found no work so return an empty task and the thread will be put to
     // sleep if there is still no work by the time it reaches its
     // condition variable
-    return;
 }
 
 //======================================================================================//

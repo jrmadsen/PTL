@@ -225,7 +225,7 @@ get_random_int(int16_t _range = rng_range)
 inline uint64_t
 fibonacci(const uint64_t& n)
 {
-    return (n < 2) ? 1 : (fibonacci(n - 2) + fibonacci(n - 1));
+    return (n < 2) ? n : (fibonacci(n - 1) + fibonacci(n - 2));
 }
 
 //============================================================================//
