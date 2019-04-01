@@ -50,7 +50,7 @@
 #    define ThreadLocalStatic static thread_local
 #    define ThreadLocal thread_local
 
-#elif defined(WIN32)
+#elif defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 #    define ThreadLocalStatic static thread_local
 #    define ThreadLocal thread_local
 
