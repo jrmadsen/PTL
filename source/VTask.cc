@@ -53,10 +53,10 @@ VTask::VTask(VTaskGroup* task_group)
 
 //======================================================================================//
 
-VTask::VTask(ThreadPool* pool)
+VTask::VTask(ThreadPool* tp)
 : m_depth(0)
 , m_group(nullptr)
-, m_pool(pool)
+, m_pool(tp)
 {
 }
 

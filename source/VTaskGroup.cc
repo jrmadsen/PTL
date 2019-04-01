@@ -29,6 +29,7 @@
 // ---------------------------------------------------------------
 
 #include "PTL/VTaskGroup.hh"
+#include "PTL/Globals.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskRunManager.hh"
 #include "PTL/ThreadData.hh"
@@ -91,7 +92,7 @@ VTaskGroup::wait()
             if(f_verbose > 0)
             {
                 fprintf(stderr, "%s @ %i :: Warning! nullptr to thread-pool (%p)\n",
-                        __FUNCTION__, __LINE__, m_pool);
+                        __FUNCTION__, __LINE__, static_cast<void*>(m_pool));
                 std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
                           << "nullptr to thread pool!" << std::endl;
             }
@@ -116,7 +117,8 @@ VTaskGroup::wait()
     }
 
     auto is_active_state = [&]() {
-        return static_cast<int>(tpool->state()) != static_cast<int>(state::STOPPED);
+        return (tpool->state().load(std::memory_order_relaxed) !=
+                thread_pool::state::STOPPED);
     };
 
     auto execute_this_threads_tasks = [&]() {
@@ -188,10 +190,13 @@ VTaskGroup::wait()
             // Unlock mutex while wait, then lock it back when signaled
             // when true, this wakes the thread
             if(pending() >= wake_size)
+            {
                 m_task_cond.wait(_lock, _wake);
+            }
             else
+            {
                 m_task_cond.wait_for(_lock, std::chrono::microseconds(100));
-
+            }
             // unlock
             if(_lock.owns_lock())
                 _lock.unlock();

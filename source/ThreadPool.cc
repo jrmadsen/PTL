@@ -29,6 +29,7 @@
 // ---------------------------------------------------------------
 
 #include "PTL/ThreadPool.hh"
+#include "PTL/Globals.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/VUserTaskQueue.hh"
@@ -53,16 +54,6 @@ ncores()
 
 ThreadPool::thread_id_map_t    ThreadPool::f_thread_ids;
 ThreadPool::thread_index_map_t ThreadPool::f_thread_indexes;
-
-//======================================================================================//
-
-namespace state
-{
-static const int STARTED = 0;
-static const int PARTIAL = 1;
-static const int STOPPED = 2;
-static const int NONINIT = 3;
-}
 
 //======================================================================================//
 
@@ -140,7 +131,7 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
 , m_alive_flag(false)
 , m_verbose(0)
 , m_pool_size(0)
-, m_pool_state(state::NONINIT)
+, m_pool_state(thread_pool::state::NONINIT)
 , m_master_tid(ThisThread::get_id())
 , m_thread_awake(new atomic_int_type(0))
 , m_task_queue(task_queue)
@@ -169,7 +160,7 @@ ThreadPool::~ThreadPool()
 {
     delete m_thread_awake;
     // Release resources
-    if(m_pool_state.load() != state::STOPPED)
+    if(m_pool_state.load() != thread_pool::state::STOPPED)
     {
         size_type ret = destroy_threadpool();
         while(ret > 0)
@@ -199,7 +190,7 @@ ThreadPool::~ThreadPool()
 bool
 ThreadPool::is_initialized() const
 {
-    return !(m_pool_state.load() == state::NONINIT);
+    return !(m_pool_state.load() == thread_pool::state::NONINIT);
 }
 
 //======================================================================================//
@@ -243,7 +234,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     //--------------------------------------------------------------------//
     // store that has been started
     if(!m_alive_flag.load())
-        m_pool_state.store(state::STARTED);
+        m_pool_state.store(thread_pool::state::STARTED);
 
         //--------------------------------------------------------------------//
         // handle tbb task scheduler
@@ -261,8 +252,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         }
 
         if(!_task_scheduler)
+        {
             _task_scheduler =
                 new tbb_task_scheduler_t(tbb::task_scheduler_init::deferred);
+        }
 
         if(!_task_scheduler->is_active())
         {
@@ -279,7 +272,9 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             m_tbb_task_group = new tbb_task_group_t();
         return m_pool_size;
     }
-    else if(tbb_task_scheduler())
+
+    // NOLINT(readability-else-after-return)
+    if(f_use_tbb && tbb_task_scheduler())
     {
         m_tbb_tp                               = false;
         tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
@@ -303,7 +298,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
 
     //--------------------------------------------------------------------//
     // if started, stop some thread if smaller or return if equal
-    if(m_pool_state.load() == state::STARTED)
+    if(m_pool_state.load() == thread_pool::state::STARTED)
     {
         if(m_pool_size > proposed_size)
         {
@@ -397,7 +392,7 @@ ThreadPool::destroy_threadpool()
     // the modified m_pool_state may not show up to other threads until its
     // modified in a lock!
     //------------------------------------------------------------------------//
-    m_pool_state.store(state::STOPPED);
+    m_pool_state.store(thread_pool::state::STOPPED);
 
     //--------------------------------------------------------------------//
     // handle tbb task scheduler
@@ -562,7 +557,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // essentially a dummy run
     {
         data->within_task = true;
-        auto _task        = std::move(_task_queue->GetTask());
+        auto _task        = _task_queue->GetTask();
         if(_task)
         {
             (*_task)();
@@ -586,14 +581,14 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             if(_pool_state > 0)
             {
                 // stop whole pool
-                if(_pool_state == state::STOPPED)
+                if(_pool_state == thread_pool::state::STOPPED)
                 {
                     if(_task_lock.owns_lock())
                         _task_lock.unlock();
                     return true;
                 }
                 // single thread stoppage
-                else if(_pool_state == state::PARTIAL)  // NOLINT
+                else if(_pool_state == thread_pool::state::PARTIAL)  // NOLINT
                 {
                     if(!_task_lock.owns_lock())
                         _task_lock.lock();
@@ -671,7 +666,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         // execute the task(s)
         while(!_task_queue->empty())
         {
-            auto _task = std::move(_task_queue->GetTask());
+            auto _task = _task_queue->GetTask();
             if(_task)
             {
                 (*_task)();

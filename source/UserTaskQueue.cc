@@ -155,7 +155,7 @@ UserTaskQueue::GetThreadBinTask()
         if(task_subq->AcquireClaim())
         {
             // run task
-            _task = std::move(task_subq->PopTask(true));
+            _task = task_subq->PopTask(true);
             return true;
         }
         return false;
@@ -200,7 +200,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         if(!task_subq->empty() && task_subq->AcquireClaim())
         {
             // pop task out of bin
-            _task = std::move(task_subq->PopTask(n == tbin));
+            _task = task_subq->PopTask(n == tbin);
             // release the claim on the bin
             task_subq->ReleaseClaim();
             // return success if valid pointer
@@ -284,18 +284,16 @@ UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
             ;
         return n;
     }
-    else
+
+    // there are num_workers+1 bins so there is always a bin that is open
+    // execute num_workers+2 iterations so the thread checks its bin twice
+    while(true)
     {
-        // there are num_workers+1 bins so there is always a bin that is open
-        // execute num_workers+2 iterations so the thread checks its bin twice
-        while(true)
-        {
-            auto _n = (n++) % (m_workers + 1);
-            if(insert_task(_n))
-                return _n;
-        }
-        return GetThreadBin();
+        auto _n = (n++) % (m_workers + 1);
+        if(insert_task(_n))
+            return _n;
     }
+    return GetThreadBin();
 }
 
 //======================================================================================//

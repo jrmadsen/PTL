@@ -65,8 +65,8 @@ public:
     typedef size_t                size_type;
     typedef std::atomic_uintmax_t task_count_type;
     typedef std::atomic_uintmax_t atomic_int_type;
-    typedef std::atomic<int>      pool_state_type;
-    typedef std::atomic<bool>     atomic_bool_type;
+    typedef std::atomic_short     pool_state_type;
+    typedef std::atomic_bool      atomic_bool_type;
     // objects
     typedef VTask                   task_type;
     typedef Mutex                   lock_t;

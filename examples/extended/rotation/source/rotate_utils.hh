@@ -119,8 +119,8 @@ cxx_rotate_ip(array_t<_Tp>& dst, const _Tp* src, double theta, const int& nx,
 {
     cv::Mat warp_src = cv::Mat::zeros(nx, ny, OpenCVDataType<_Tp>::value());
     memcpy(warp_src.ptr(), src, nx * ny * sizeof(float));
-    cv::Mat warp_rot =
-        opencv_affine_transform(warp_src, theta * degrees, nx, ny, eInterp, scale);
+    cv::Mat warp_rot = opencv_affine_transform(warp_src, theta * constants::degrees, nx,
+                                               ny, eInterp, scale);
     memcpy(dst.data(), warp_rot.ptr(), nx * ny * sizeof(float));
 }
 
@@ -162,7 +162,7 @@ cxx_compute_sum_dist(int dy, int dt, int dx, int nx, int ny, const float* theta)
 
     for(int p = 0; p < dt; ++p)
     {
-        float theta_p_rad = fmodf(theta[p] + halfpi, twopi);
+        float theta_p_rad = fmodf(theta[p] + constants::halfpi, constants::twopi);
         cxx_rotate_ip(rot, tmp.data(), -theta_p_rad, nx, ny, CPU_NN);
         compute(rot, sum_dist);
     }

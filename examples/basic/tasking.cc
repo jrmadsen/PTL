@@ -28,29 +28,25 @@ uint64_t
 task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 {
     if(n < 2)
-    {
         return n;
+
+    uint64_t    x, y;
+    TaskGroup_t g;
+    ++task_group_counter();
+    if(n >= cutoff)
+    {
+        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
     }
     else
     {
-        uint64_t    x, y;
-        TaskGroup_t g;
-        ++task_group_counter();
-        if(n >= cutoff)
-        {
-            g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-            g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
-        }
-        else
-        {
-            // cout << "Number of recursive task-groups: " << nrecur << endl;
-            g.run([&]() { x = fibonacci(n - 1); });
-            g.run([&]() { y = fibonacci(n - 2); });
-        }
-        // wait for both tasks to complete
-        g.wait();
-        return x + y;
+        // cout << "Number of recursive task-groups: " << nrecur << endl;
+        g.run([&]() { x = fibonacci(n - 1); });
+        g.run([&]() { y = fibonacci(n - 2); });
     }
+    // wait for both tasks to complete
+    g.wait();
+    return x + y;
 }
 
 //============================================================================//
@@ -73,9 +69,11 @@ execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
 
     std::stringstream ss;
     if(verbose)
+    {
         ss << cprefix << "Submitting " << num_iter << " tasks computing \"fibonacci(" << n
            << ")\" to task manager "
            << "(" << remaining << " iterations remaining)..." << std::flush;
+    }
 
     TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
@@ -223,21 +221,21 @@ main(int argc, char** argv)
 
     std::cout << cprefix << "BEGIN OF FAKE RUN" << std::endl;
     //------------------------------------------------------------------------//
-    for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+    for(auto& itr : cpu_task_groups)
     {
         // create the task group
-        cpu_create(cpu_task_groups[i]);
+        cpu_create(itr);
         // submit task with first task group
-        execute_cpu_iterations(hwthreads, cpu_task_groups[i], 10, remaining, false);
+        execute_cpu_iterations(hwthreads, itr, 10, remaining, false);
     }
     //------------------------------------------------------------------------//
     // make sure all task groups finished (does join)
-    for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+    for(auto& itr : cpu_task_groups)
     {
         // join task group
-        cpu_task_groups[i]->join();
+        itr->join();
         // delete task groups
-        del(cpu_task_groups[i]);
+        del(itr);
     }
     //------------------------------------------------------------------------//
     std::cout << cprefix << "END OF FAKE RUN\n" << std::endl;
@@ -287,9 +285,9 @@ main(int argc, char** argv)
 
     // compute the anser
     uint64_t cpu_answer = 0;
-    for(uint64_t i = 0; i < cpu_results.size(); ++i)
+    for(auto& itr : cpu_results)
     {
-        cpu_answer += compute_sum(cpu_results[i]);
+        cpu_answer += compute_sum(itr);
     }
 
     //------------------------------------------------------------------------//
@@ -316,21 +314,17 @@ main(int argc, char** argv)
 
     cout << prefix << std::setw(_w) << fibprefix.str() << "\t" << timer << endl;
 
-    for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
-        del(cpu_task_groups[i]);
+    for(auto& itr : cpu_task_groups)
+        del(itr);
 
     // print the time for the calculation
     total_timer.Stop();
     cout << cprefix << std::setw(_w) << "Total time: "
          << "\t" << total_timer << endl;
 
-    int64_t ret = (true_answer - cpu_answer);
-    if(ret == 0)
-        cout << prefix << "Successful MT fibonacci calculation" << endl;
-    else
-        cout << prefix << "Failure combining MT fibonacci calculation " << endl;
-
-    cout << endl;
+    int64_t     ret = (true_answer - cpu_answer);
+    std::string msg = (ret == 0) ? "Successful MT" : "Failure combining";
+    cout << prefix << msg << " fibonacci calculation" << endl << endl;
 
     delete runManager;
 

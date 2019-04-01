@@ -128,11 +128,11 @@ struct Measurement
     long   cutoff;
     long   num_task_groups;
     long   nthreads;
-    double ncount = 0.0;
-    double real = 0.0;
-    double cpu = 0.0;
+    double ncount         = 0.0;
+    double real           = 0.0;
+    double cpu            = 0.0;
     double cpu_per_thread = 0.0;
-    double cpu_util = 0.0;
+    double cpu_util       = 0.0;
 
     Measurement(long _cutoff, long _ntg, long _nthreads)
     : cutoff(_cutoff)

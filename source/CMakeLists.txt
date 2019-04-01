@@ -5,6 +5,12 @@ include(CheckCXXCompilerFlag)
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 include_directories(${TiMemory_INCLUDE_DIRS})
 
+execute_process(COMMAND
+    ${CMAKE_COMMAND} -E remove -f
+    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake)
+
+
 ################################################################################
 #                                                                              #
 #                               General                                        #
@@ -46,6 +52,8 @@ if(BUILD_SHARED_LIBS)
         LINK_LIBRARIES ${EXTERNAL_LIBRARIES}
         EXTRA_ARGS POSITION_INDEPENDENT_CODE ON)
     list(APPEND INSTALL_LIBRARIES ptl-shared)
+    export(TARGETS ptl-shared
+        FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}-shared.cmake)
 endif()
 
 if(BUILD_STATIC_LIBS)
@@ -58,6 +66,8 @@ if(BUILD_STATIC_LIBS)
     if(PTL_DEVELOPER_INSTALL)
         list(APPEND INSTALL_LIBRARIES ptl-static)
     endif()
+    export(TARGETS ptl-static
+        FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}-static.cmake)
 endif()
 
 
@@ -90,5 +100,3 @@ if(PTL_DEVELOPER_INSTALL)
 endif()
 
 # generate export for build tree
-export(TARGETS ${INSTALL_LIBRARIES}
-    FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}Build.cmake)

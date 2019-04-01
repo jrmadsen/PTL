@@ -182,7 +182,7 @@ TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
         }
     }
 #else
-    ConsumeParameters(fname, echo_stdout);
+    ConsumeParameters(std::move(fname), echo_stdout);
 #endif
 }
 

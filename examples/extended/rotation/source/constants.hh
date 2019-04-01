@@ -28,7 +28,7 @@
 
 //======================================================================================//
 
-namespace
+namespace constants
 {
 // pi numbers
 constexpr float pi     = static_cast<float>(M_PI);

@@ -142,15 +142,6 @@ protected:
     tid_type        m_main_tid;
     vtask_list_type vtask_list;
     static int      f_verbose;
-
-protected:
-    enum class state : int
-    {
-        STARTED = 0,
-        PARTIAL = 1,
-        STOPPED = 2,
-        NONINIT = 3
-    };
 };
 
 inline void

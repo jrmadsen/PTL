@@ -102,7 +102,7 @@ sirt_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
     auto cache = cpu_data[GetThisThreadID() % cpu_data.size()];
 
     // calculate some values
-    float    theta_p = fmodf(theta[p] + halfpi, twopi);
+    float    theta_p = fmodf(theta[p] + constants::halfpi, constants::twopi);
     farray_t tmp_update(dy * nx * ny, 0.0);
 
     for(int s = 0; s < dy; ++s)
@@ -208,7 +208,9 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
         for(uintmax_t ii = 0; ii < recon_pixels; ++ii)
         {
             if(sum_dist[ii] != 0.0f && dx != 0 && std::isfinite(update[ii]))
+            {
                 recon[ii] += update[ii] / sum_dist[ii] / scast<float>(dx);
+            }
             else if(!std::isfinite(update[ii]))
             {
                 std::cout << "update[" << ii << "] is not finite : " << update[ii]

@@ -66,8 +66,8 @@ public:
     }
 
     template <typename _Func>
-    PackagedTask(VTaskGroup* group, _Func&& func, _Args&&... args)
-    : VTask(group)
+    PackagedTask(VTaskGroup* tg, _Func&& func, _Args&&... args)
+    : VTask(tg)
     , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
@@ -122,16 +122,16 @@ public:
     }
 
     template <typename _Func>
-    Task(VTaskGroup* group, _Func&& func, _Args&&... args)
-    : VTask(group)
+    Task(VTaskGroup* tg, _Func&& func, _Args&&... args)
+    : VTask(tg)
     , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
 
     template <typename _Func>
-    Task(ThreadPool* pool, _Func&& func, _Args&&... args)
-    : VTask(pool)
+    Task(ThreadPool* tp, _Func&& func, _Args&&... args)
+    : VTask(tp)
     , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
@@ -184,15 +184,15 @@ public:
     }
 
     template <typename _Func>
-    Task(VTaskGroup* group, _Func&& func)
-    : VTask(group)
+    Task(VTaskGroup* tg, _Func&& func)
+    : VTask(tg)
     , m_ptask(std::forward<_Func>(func))
     {
     }
 
     template <typename _Func>
-    Task(ThreadPool* pool, _Func&& func)
-    : VTask(pool)
+    Task(ThreadPool* tp, _Func&& func)
+    : VTask(tp)
     , m_ptask(std::forward<_Func>(func))
     {
     }

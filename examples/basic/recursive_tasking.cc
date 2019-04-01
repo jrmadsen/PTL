@@ -36,28 +36,24 @@ uint64_t
 task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 {
     if(n < 2)
-    {
         return n;
+
+    uint64_t    x, y;
+    TaskGroup_t g;
+    ++task_group_counter();
+    if(n >= cutoff)
+    {
+        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
     }
     else
     {
-        uint64_t    x, y;
-        TaskGroup_t g;
-        ++task_group_counter();
-        if(n >= cutoff)
-        {
-            g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-            g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
-        }
-        else
-        {
-            g.run([&]() { x = fibonacci(n - 1); });
-            g.run([&]() { y = fibonacci(n - 2); });
-        }
-        // wait for both tasks to complete
-        g.wait();
-        return x + y;
+        g.run([&]() { x = fibonacci(n - 1); });
+        g.run([&]() { y = fibonacci(n - 2); });
     }
+    // wait for both tasks to complete
+    g.wait();
+    return x + y;
 }
 
 //============================================================================//
@@ -383,8 +379,8 @@ main(int argc, char** argv)
     Timer del_timer;
     del_timer.Start();
 
-    for(uint64_t i = 0; i < task_groups.size(); ++i)
-        del(task_groups[i]);
+    for(auto& itr : task_groups)
+        del(itr);
 
     del_timer.Stop();
     cout << cprefix << std::setw(_w) << "Task group deletion time: "

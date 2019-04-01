@@ -21,8 +21,7 @@
 //
 //
 
-#ifndef sum_hh_
-#define sum_hh_
+#pragma once
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
@@ -65,10 +64,10 @@ END_EXTERN_C
 #include <memory>
 #include <unordered_map>
 
-#include "ThreadData.hh"
-#include "ThreadPool.hh"
-#include "Threading.hh"
-#include "Utility.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/Threading.hh"
+#include "PTL/Utility.hh"
 
 #if defined(PTL_USE_CUDA)
 #    include <cuda.h>
@@ -470,5 +469,3 @@ uint64_t
 run_gpu(uint64_t n);
 
 //============================================================================//
-
-#endif

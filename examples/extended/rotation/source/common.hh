@@ -90,7 +90,12 @@ cpu_run_manager()
     // use unique pointer so manager gets deleted when thread gets deleted
     typedef std::unique_ptr<TaskRunManager> pointer;
     // first argument ensures we do not use TBB backend to PTL
-    static thread_local pointer _instance = pointer(new TaskRunManager(false));
+#if defined(CXX14)
+    static thread_local pointer _instance =
+        std::make_unique<TaskRunManager>(new TaskRunManager(false));
+#else
+    static thread_local pointer _instance   = pointer(new TaskRunManager(false));
+#endif
     return _instance.get();
 }
 
@@ -103,7 +108,12 @@ gpu_run_manager()
     // use shared pointer so manager gets deleted when thread gets deleted
     typedef std::unique_ptr<TaskRunManager> pointer;
     // first argument ensures we do not use TBB backend to PTL
-    static thread_local pointer _instance = pointer(new TaskRunManager(false));
+#if defined(CXX14)
+    static thread_local pointer _instance =
+        std::make_unique<TaskRunManager>(new TaskRunManager(false));
+#else
+    static thread_local pointer _instance   = pointer(new TaskRunManager(false));
+#endif
     // return pointer
     return _instance.get();
 }
@@ -259,9 +269,10 @@ public:
                 return false;
             auto l = val.find_last_of("0123456789");
             if(val.length() <= 2)  // 1, 2., etc.
+            {
                 return true;
-            else
-                return (f != l);  // 1.0, 1e3, 23, etc.
+            }
+            return (f != l);  // 1.0, 1e3, 23, etc.
         }
         return false;
     }
@@ -295,7 +306,7 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     options.push_back(DeviceOption(1, "gpu", "Run on GPU (CUDA NPP)"));
     std::string default_key = "gpu";
 #else
-    std::string default_key = "cpu";
+    std::string                 default_key = "cpu";
 #endif
 
     auto default_itr =
@@ -306,10 +317,10 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     auto print_options = [&]() {
         static bool first = true;
         if(!first)
+        {
             return;
-        else
-            first = false;
-
+        }
+        first = false;
         std::stringstream ss;
         DeviceOption::header(ss);
         for(const auto& itr : options)
@@ -328,10 +339,10 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
     auto print_selection = [&](DeviceOption& selected_opt) {
         static bool first = true;
         if(!first)
+        {
             return;
-        else
-            first = false;
-
+        }
+        first = false;
         std::stringstream ss;
         DeviceOption::spacer(ss, '-');
         ss << "Selected device: " << selected_opt << "\n";
@@ -359,9 +370,11 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
                                   [&](const DeviceOption& itr) { return (itr == key); });
 
     if(selection == options.end())
+    {
         selection =
             std::find_if(options.begin(), options.end(),
                          [&](const DeviceOption& itr) { return itr == default_key; });
+    }
 
     print_selection(*selection);
 
