@@ -17,7 +17,7 @@ list(APPEND TARGET_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/source ${PTL_INCLUD
 # OpenCV
 #
 set(OpenCV_COMPONENTS opencv_core opencv_imgproc opencv_highgui)
-find_package(OpenCV COMPONENTS ${OpenCV_COMPONENTS})
+find_package(OpenCV QUIET COMPONENTS ${OpenCV_COMPONENTS})
 if(NOT OpenCV_FOUND)
     message(STATUS "OpenCV not found! Skipping example '${PROJECT_NAME}'...")
     return()
