@@ -50,14 +50,17 @@ class ThreadPool;
 //--------------------------------------------------------------------------------------//
 
 template <typename _Tp, typename _Arg = _Tp>
-class TaskGroup : public VTaskGroup
+class TaskGroup
+: public VTaskGroup
+, public TaskAllocator<TaskGroup<_Tp, _Arg>>
 {
 protected:
+    //----------------------------------------------------------------------------------//
     template <typename _JTp, typename _JArg>
     struct JoinFunction
     {
     public:
-        typedef std::function<_Tp(_Tp&, _Arg)> Type;
+        typedef std::function<_JTp(_JTp&, _JArg&&)> Type;
 
     public:
         template <typename _Func>
@@ -67,15 +70,15 @@ protected:
         }
 
         template <typename... _Args>
-        void operator()(_Args&&... args)
+        _JTp& operator()(_Args&&... args)
         {
-            m_func(std::forward<_Args>(args)...);
+            return std::move(m_func(std::forward<_Args>(args)...));
         }
 
     private:
         Type m_func;
     };
-
+    //----------------------------------------------------------------------------------//
     template <typename _JArg>
     struct JoinFunction<void, _JArg>
     {
@@ -94,21 +97,20 @@ protected:
     private:
         Type m_func;
     };
+    //----------------------------------------------------------------------------------//
 
 public:
     //------------------------------------------------------------------------//
-    typedef typename std::remove_const<typename std::remove_reference<_Arg>::type>::type
-        ArgTp;
+    template <typename _Type>
+    using remove_reference_t = typename std::remove_reference<_Type>::type;
     //------------------------------------------------------------------------//
-    template <typename... _Args>
-    using task_type = Task<ArgTp, _Args...>;
-    //------------------------------------------------------------------------//
-    template <typename... _Args>
-    using task_pointer = std::shared_ptr<task_type<_Args...>>;
+    template <typename _Type>
+    using remove_const_t = typename std::remove_const<_Type>::type;
     //------------------------------------------------------------------------//
     template <bool B, class T = void>
     using enable_if_t = typename std::enable_if<B, T>::type;
     //------------------------------------------------------------------------//
+    typedef remove_const_t<remove_reference_t<_Arg>>     ArgTp;
     typedef _Tp                                          result_type;
     typedef TaskGroup<_Tp, _Arg>                         this_type;
     typedef std::promise<ArgTp>                          promise_type;
@@ -120,6 +122,10 @@ public:
     typedef typename task_list_t::reverse_iterator       reverse_iterator;
     typedef typename task_list_t::const_iterator         const_iterator;
     typedef typename task_list_t::const_reverse_iterator const_reverse_iterator;
+    //------------------------------------------------------------------------//
+    template <typename... _Args>
+    using task_type = Task<ArgTp, _Args...>;
+    //------------------------------------------------------------------------//
 
 public:
     // Constructor
@@ -136,7 +142,7 @@ public:
     {
     }
     // Destructor
-    virtual ~TaskGroup() {}
+    virtual ~TaskGroup() { this->clear(); }
 
     // delete copy-construct
     TaskGroup(const this_type&) = delete;
@@ -150,7 +156,7 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename... _Args>
-    task_pointer<_Args...>& operator+=(task_pointer<_Args...>& _task)
+    task_type<_Args...>* operator+=(task_type<_Args...>* _task)
     {
         // store in list
         vtask_list.push_back(_task);
@@ -165,12 +171,10 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
+    task_type<_Args...>* wrap(_Func&& func, _Args&&... args)
     {
-        auto _task = task_pointer<_Args...>(
-            new task_type<_Args...>(this, std::forward<_Func>(func),
-                                    std::forward<_Args>(args)...));
-        return operator+=(_task);
+        return operator+=(new task_type<_Args...>(this, std::forward<_Func>(func),
+                                                  std::forward<_Args>(args)...));
     }
 
 public:
@@ -239,7 +243,10 @@ public:
     {
         this->wait();
         for(auto& itr : m_task_set)
-            accum = m_join(std::ref(accum), std::forward<ArgTp>(itr.get()));
+        {
+            using RetType = decltype(itr.get());
+            accum = std::move(m_join(std::ref(accum), std::forward<RetType>(itr.get())));
+        }
         this->clear();
         return accum;
     }
@@ -256,7 +263,7 @@ public:
     }
     //------------------------------------------------------------------------//
     // clear the task result history
-    void clear() override
+    void clear()
     {
         m_task_set.clear();
         VTaskGroup::clear();

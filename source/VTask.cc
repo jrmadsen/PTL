@@ -44,10 +44,10 @@ VTask::VTask()
 
 //======================================================================================//
 
-VTask::VTask(VTaskGroup* group)
+VTask::VTask(VTaskGroup* task_group)
 : m_depth(0)
-, m_group(group)
-, m_pool((m_group) ? group->pool() : nullptr)
+, m_group(task_group)
+, m_pool((m_group) ? task_group->pool() : nullptr)
 {
 }
 

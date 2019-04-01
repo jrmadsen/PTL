@@ -54,19 +54,16 @@ class TBBTaskGroup : public TaskGroup<_Tp, _Arg>
 {
 public:
     //------------------------------------------------------------------------//
-    typedef typename std::remove_const<typename std::remove_reference<_Arg>::type>::type
-        ArgTp;
+    template <typename _Type>
+    using remove_reference_t = typename std::remove_reference<_Type>::type;
     //------------------------------------------------------------------------//
-    template <typename... _Args>
-    using task_type = Task<ArgTp, _Args...>;
-    //------------------------------------------------------------------------//
-    template <typename... _Args>
-    using task_pointer = std::shared_ptr<task_type<_Args...>>;
+    template <typename _Type>
+    using remove_const_t = typename std::remove_const<_Type>::type;
     //------------------------------------------------------------------------//
     template <bool B, class T = void>
     using enable_if_t = typename std::enable_if<B, T>::type;
     //------------------------------------------------------------------------//
-
+    typedef remove_const_t<remove_reference_t<_Arg>>                   ArgTp;
     typedef TBBTaskGroup<_Tp, _Arg>                                    this_type;
     typedef TaskGroup<_Tp, _Arg>                                       base_type;
     typedef typename base_type::result_type                            result_type;
@@ -75,6 +72,10 @@ public:
     typedef typename base_type::promise_type                           promise_type;
     typedef typename base_type::template JoinFunction<_Tp, _Arg>::Type join_type;
     typedef tbb::task_group                                            tbb_task_group_t;
+    //------------------------------------------------------------------------//
+    template <typename... _Args>
+    using task_type = Task<ArgTp, _Args...>;
+    //------------------------------------------------------------------------//
 
 public:
     // Constructor
@@ -92,7 +93,11 @@ public:
     }
 
     // Destructor
-    virtual ~TBBTaskGroup() { delete m_tbb_task_group; }
+    virtual ~TBBTaskGroup()
+    {
+        delete m_tbb_task_group;
+        this->clear();
+    }
 
     // delete copy-construct
     TBBTaskGroup(const this_type&) = delete;
@@ -107,7 +112,7 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename... _Args>
-    task_pointer<_Args...>& operator+=(task_pointer<_Args...>& _task)
+    task_type<_Args...>* operator+=(task_type<_Args...>* _task)
     {
         // store in list
         vtask_list.push_back(_task);
@@ -122,12 +127,10 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
-    task_pointer<_Args...> wrap(_Func&& func, _Args&&... args)
+    task_type<_Args...>* wrap(_Func&& func, _Args&&... args)
     {
-        auto _task = task_pointer<_Args...>(
-            new task_type<_Args...>(this, std::forward<_Func>(func),
-                                    std::forward<_Args>(args)...));
-        return operator+=(_task);
+        return operator+=(new task_type<_Args...>(this, std::forward<_Func>(func),
+                                                  std::forward<_Args>(args)...));
     }
 
 public:
@@ -148,7 +151,7 @@ public:
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args, typename _Up = _Tp,
               enable_if_t<std::is_same<_Up, void>::value, int> = 0>
-    void parallel_for(uintmax_t nitr, uintmax_t chunks, _Func&& func, _Args&&... args)
+    void parallel_for(uintmax_t nitr, uintmax_t, _Func&& func, _Args&&... args)
     {
         tbb::parallel_for(tbb::blocked_range<size_t>(0, nitr),
                           [&](const tbb::blocked_range<size_t>& range) {

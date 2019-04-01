@@ -105,7 +105,8 @@ VTaskGroup::wait()
 
     tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
     taskq = (tpool) ? tpool->get_queue() : ((data) ? data->current_queue : nullptr);
-    bool ext_is_master = (data) ? data->is_master : false;
+    bool is_master   = (data) ? data->is_master : false;
+    bool within_task = (data) ? data->within_task : true;
 
     // for external threads
     if(!data)
@@ -123,14 +124,15 @@ VTaskGroup::wait()
             return;
 
         // only want to process if within a task
-        if(!ext_is_master || tpool->size() < 2)
+        if((!is_master || tpool->size() < 2) && within_task)
         {
-            int        bin = static_cast<int>(taskq->GetThreadBin());
-            const auto nitr =
-                pending() * ((tpool) ? tpool->size() : Thread::hardware_concurrency());
+            int bin = static_cast<int>(taskq->GetThreadBin());
+            // const auto nitr = (tpool) ? tpool->size() : Thread::hardware_concurrency();
             while(this->pending() > 0)
             {
-                taskq->GetTask(bin, nitr * nitr);
+                task_pointer _task = taskq->GetTask(bin);
+                if(_task)
+                    (*_task)();
             }
         }
     };
@@ -139,7 +141,7 @@ VTaskGroup::wait()
     if(!is_native_task_group())
     {
         // for external threads
-        if(!ext_is_master || tpool->size() < 2)
+        if(!is_master || tpool->size() < 2)
             return;
     }
     else if(f_verbose > 0)
@@ -150,7 +152,8 @@ VTaskGroup::wait()
             fprintf(
                 stderr,
                 "%s @ %i :: Warning! nullptr to thread data (%p) or task-queue (%p)\n",
-                __FUNCTION__, __LINE__, tpool, taskq);
+                __FUNCTION__, __LINE__, static_cast<void*>(tpool),
+                static_cast<void*>(taskq));
         }
         // return if thread pool isn't built
         else if(is_native_task_group() && !tpool->is_alive())
@@ -165,46 +168,37 @@ VTaskGroup::wait()
         }
     }
 
-    intmax_t _pool_size = m_pool->size();
+    intmax_t wake_size = 2;
     AutoLock _lock(m_task_lock, std::defer_lock);
 
     while(is_active_state())
     {
         execute_this_threads_tasks();
 
-        intmax_t _pending = 0;
         // while loop protects against spurious wake-ups
-        while((_pending = pending()) > 0 && is_active_state())
+        while(is_master && pending() > 0 && is_active_state())
         {
-            // auto _wake = [&]() { return (pending() < _pool_size || !is_active_state());
-            // };
+            auto _wake = [&]() { return (wake_size > pending() || !is_active_state()); };
 
             // lock before sleeping on condition
             if(!_lock.owns_lock())
                 _lock.lock();
+
             // Wait until signaled that a task has been competed
             // Unlock mutex while wait, then lock it back when signaled
             // when true, this wakes the thread
-            if(pending() > _pool_size)
-            {
-                // m_task_cond.wait(_lock);
-                m_task_cond.wait(_lock);
-            }
+            if(pending() >= wake_size)
+                m_task_cond.wait(_lock, _wake);
             else
-            {
-                // m_task_cond.wait(_lock, _wake);
-                m_task_cond.wait_for(_lock, std::chrono::milliseconds(1));
-            }
+                m_task_cond.wait_for(_lock, std::chrono::microseconds(100));
+
             // unlock
             if(_lock.owns_lock())
                 _lock.unlock();
-
-            // if(pending() > 0)
-            //    execute_this_threads_tasks();
         }
 
         // if pending is not greater than zero, we are joined
-        if((_pending = pending()) <= 0)
+        if(pending() <= 0)
             break;
     }
 

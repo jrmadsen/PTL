@@ -45,8 +45,8 @@ if(PTL_USE_ARCH)
 endif()
 
 if(PTL_USE_SANITIZER)
-    add_feature(PTL_SANITITZER_TYPE "Sanitizer type (-fsanitize=<type>)")
-    set(PTL_SANITITZER_TYPE leak CACHE STRING "Sanitizer type (-fsanitize=<type>)")
+    add_feature(PTL_SANITIZER_TYPE "Sanitizer type (-fsanitize=<type>)")
+    set(PTL_SANITIZER_TYPE leak CACHE STRING "Sanitizer type (-fsanitize=<type>)")
 endif()
 
 if(PTL_USE_GPU)

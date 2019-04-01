@@ -68,11 +68,11 @@ public:
     typedef std::atomic<int>      pool_state_type;
     typedef std::atomic<bool>     atomic_bool_type;
     // objects
-    typedef VTask                      task_type;
-    typedef Mutex                      lock_t;
-    typedef std::condition_variable    condition_t;
-    typedef std::shared_ptr<task_type> task_pointer;
-    typedef VUserTaskQueue             task_queue_t;
+    typedef VTask                   task_type;
+    typedef Mutex                   lock_t;
+    typedef std::condition_variable condition_t;
+    typedef task_type*              task_pointer;
+    typedef VUserTaskQueue          task_queue_t;
     // containers
     typedef std::vector<Thread*>          thread_list_t;
     typedef std::vector<bool>             bool_list_t;
@@ -113,7 +113,7 @@ public:
 
 public:
     // add tasks for threads to process
-    size_type add_task(const task_pointer& task, int bin = -1);
+    size_type add_task(task_pointer&& task, int bin = -1);
     // size_type add_thread_task(ThreadId id, task_pointer&& task);
     // add a generic container with iterator
     template <typename _List_t>
@@ -142,27 +142,23 @@ public:
     // set the thread pool size
     void resize(size_type _n);
     // affinity assigns threads to cores, assignment at constructor
-    bool      using_affinity() const { return m_use_affinity; }
-    bool      is_alive() { return m_alive_flag.load(); }
-    void      notify();
-    void      notify_all();
-    void      notify(size_type);
-    bool      is_initialized() const;
-    int       get_active_threads_count() const { return m_thread_awake->load(); }
-    size_type get_recursive_limit() const { return m_recursive_limit; }
-    void      set_recursive_limit(const size_type& val) { m_recursive_limit = val; }
+    bool using_affinity() const { return m_use_affinity; }
+    bool is_alive() { return m_alive_flag.load(); }
+    void notify();
+    void notify_all();
+    void notify(size_type);
+    bool is_initialized() const;
+    int  get_active_threads_count() const { return m_thread_awake->load(); }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = f; }
     void set_affinity(intmax_t);
 
     void SetVerbose(int n) { m_verbose = n; }
     int  GetVerbose() const { return m_verbose; }
-    bool query_create_task() const;
     bool is_master() const { return ThisThread::get_id() == m_master_tid; }
 
 public:
     // read FORCE_NUM_THREADS environment variable
-    static intmax_t                  GetEnvNumThreads(intmax_t _default = -1);
     static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
     static const thread_index_map_t& GetThreadIndexes() { return f_thread_indexes; }
     static uintmax_t                 GetThisThreadID();
@@ -170,7 +166,7 @@ public:
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
     int  insert(const task_pointer&, int = -1);
-    int  run_on_this(const task_pointer&);
+    int  run_on_this(task_pointer&&);
 
 protected:
     // called in THREAD INIT
@@ -184,7 +180,6 @@ private:
     atomic_bool_type m_alive_flag;
     int              m_verbose;
     size_type        m_pool_size;
-    size_type        m_recursive_limit;
     pool_state_type  m_pool_state;
     ThreadId         m_master_tid;
     atomic_int_type* m_thread_awake;
@@ -229,38 +224,6 @@ ThreadPool::get_thread(ThreadId id) const
         if(itr->get_id() == id)
             return itr;
     return nullptr;
-}
-//--------------------------------------------------------------------------------------//
-template <typename _List_t>
-ThreadPool::size_type
-ThreadPool::add_tasks(_List_t& c)
-{
-    if(!m_alive_flag)  // if we haven't built thread-pool, just execute
-    {
-        for(auto& itr : c)
-            run(itr);
-        c.clear();
-        return 0;
-    }
-
-    // TODO: put a limit on how many tasks can be added at most
-    auto c_size = c.size();
-    for(auto& itr : c)
-    {
-        if(!itr->is_native_task())
-            --c_size;
-        else
-        {
-            //++(m_task_queue);
-            m_task_queue->InsertTask(itr);
-        }
-    }
-    c.clear();
-
-    // notify sleeping threads
-    notify(c_size);
-
-    return c_size;
 }
 //--------------------------------------------------------------------------------------//
 inline void
@@ -310,18 +273,90 @@ ThreadPool::tbb_task_scheduler()
     return _instance;
 }
 //--------------------------------------------------------------------------------------//
-// run directly or not
-inline bool
-ThreadPool::query_create_task() const
+inline void
+ThreadPool::resize(size_type _n)
 {
-    ThreadData* _data = ThreadData::GetInstance();
-    if(!_data->is_master && _data->within_task)
-    {
-        return (static_cast<uintmax_t>(_data->task_depth) < get_recursive_limit())
-                   ? true
-                   : false;
-    }
-    return true;
+    if(_n == m_pool_size)
+        return;
+    initialize_threadpool(_n);
+    m_task_queue->resize(static_cast<intmax_t>(_n));
 }
+//--------------------------------------------------------------------------------------//
+inline int
+ThreadPool::run_on_this(task_pointer&& task)
+{
+    auto _func = [=]() {
+        (*task)();
+        if(!task->group())
+            delete task;
+    };
 
+    if(m_tbb_tp && m_tbb_task_group)
+    {
+        m_tbb_task_group->run(_func);
+    }
+    else
+    {
+        _func();
+    }
+    // return the number of tasks added to task-list
+    return 0;
+}
+//--------------------------------------------------------------------------------------//
+inline int
+ThreadPool::insert(const task_pointer& task, int bin)
+{
+    ThreadLocalStatic ThreadData* _data = ThreadData::GetInstance();
+
+    // pass the task to the queue
+    auto ibin = m_task_queue->InsertTask(task, _data, bin);
+    notify();
+    return ibin;
+}
+//--------------------------------------------------------------------------------------//
+inline ThreadPool::size_type
+ThreadPool::add_task(task_pointer&& task, int bin)
+{
+    // if not native (i.e. TBB) then return
+    if(!std::forward<task_pointer>(task)->is_native_task())
+        return 0;
+
+    // if we haven't built thread-pool, just execute
+    if(!m_alive_flag.load())
+        return static_cast<size_type>(run_on_this(std::forward<task_pointer>(task)));
+
+    return static_cast<size_type>(insert(std::forward<task_pointer>(task), bin));
+}
+//--------------------------------------------------------------------------------------//
+template <typename _List_t>
+inline ThreadPool::size_type
+ThreadPool::add_tasks(_List_t& c)
+{
+    if(!m_alive_flag)  // if we haven't built thread-pool, just execute
+    {
+        for(auto& itr : c)
+            run(itr);
+        c.clear();
+        return 0;
+    }
+
+    // TODO: put a limit on how many tasks can be added at most
+    auto c_size = c.size();
+    for(auto& itr : c)
+    {
+        if(!itr->is_native_task())
+            --c_size;
+        else
+        {
+            //++(m_task_queue);
+            m_task_queue->InsertTask(itr);
+        }
+    }
+    c.clear();
+
+    // notify sleeping threads
+    notify(c_size);
+
+    return c_size;
+}
 //======================================================================================//

@@ -47,9 +47,9 @@ public:
     template <typename _Tp>
     using container = std::deque<_Tp>;
 
-    typedef std::shared_ptr<VTask>             VTaskPtr;
-    typedef container<VTaskPtr>                container_type;
-    typedef typename container_type::size_type size_type;
+    typedef VTask*                    task_pointer;
+    typedef container<task_pointer>   container_type;
+    typedef container_type::size_type size_type;
 
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);
@@ -61,8 +61,8 @@ public:
     bool AcquireClaim();
     void ReleaseClaim();
 
-    void PushTask(VTaskPtr);
-    void PopTask(bool front = true);
+    void         PushTask(task_pointer);
+    task_pointer PopTask(bool front = true);
 
     size_type size() const;
     bool      empty() const;
@@ -133,7 +133,7 @@ TaskSubQueue::empty() const
 //======================================================================================//
 
 inline void
-TaskSubQueue::PushTask(VTaskPtr task)
+TaskSubQueue::PushTask(task_pointer task)
 {
     // no need to lock these if claim is acquired via atomic
     assert(m_available.load(std::memory_order_relaxed) == false);
@@ -144,18 +144,18 @@ TaskSubQueue::PushTask(VTaskPtr task)
 
 //======================================================================================//
 
-inline void
+inline TaskSubQueue::task_pointer
 TaskSubQueue::PopTask(bool front)
 {
     // no need to lock -- claim is acquired via atomic
     assert(m_available.load(std::memory_order_relaxed) == false);
     if(m_task_queue.empty())
-        return;
+        return nullptr;
 
     --m_ntasks;
     --(*m_all_tasks);
 
-    VTaskPtr _task;
+    task_pointer _task;
     if(front)
     {
         _task = std::move(m_task_queue.front());
@@ -167,9 +167,10 @@ TaskSubQueue::PopTask(bool front)
         m_task_queue.pop_back();
     }
     // release the claim on the bin
-    ReleaseClaim();
-    if(_task.get())
-        (*_task)();
+    // ReleaseClaim();
+    return _task;
+    // if(!_task->group())
+    //    delete _task;
 
     /*
     size_type nmax  = (front) ? 1 : 4;
@@ -181,7 +182,7 @@ TaskSubQueue::PopTask(bool front)
 
     if(nexec == 1)
     {
-        VTaskPtr _task;
+        task_pointer _task;
         if(front)
         {
             _task = std::move(m_task_queue.front());
@@ -198,7 +199,7 @@ TaskSubQueue::PopTask(bool front)
     }
     else
     {
-        using TaskContainer = std::vector<VTaskPtr>;
+        using TaskContainer = std::vector<task_pointer>;
         static thread_local TaskContainer exec_container;
         exec_container.clear();
         if(front)

@@ -45,11 +45,11 @@ class ThreadData;
 class VUserTaskQueue
 {
 public:
-    typedef std::shared_ptr<VTask> VTaskPtr;
-    typedef std::atomic<intmax_t>  AtomicInt;
-    typedef uintmax_t              size_type;
-    typedef std::function<void()>  function_type;
-    typedef std::set<ThreadId>     ThreadIdSet;
+    typedef VTask*                task_pointer;
+    typedef std::atomic<intmax_t> AtomicInt;
+    typedef uintmax_t             size_type;
+    typedef std::function<void()> function_type;
+    typedef std::set<ThreadId>    ThreadIdSet;
 
 public:
     // Constructor - accepting the number of workers
@@ -65,7 +65,7 @@ public:
     //      2. int - number of iterations
     // returns:
     //      VTask* - a task or nullptr
-    virtual void GetTask(intmax_t subq = -1, intmax_t nitr = -1) = 0;
+    virtual task_pointer GetTask(intmax_t subq = -1, intmax_t nitr = -1) = 0;
 
     // Virtual function for inserting a task into the queue
     // parameters:
@@ -73,7 +73,8 @@ public:
     //      2. int - sub-queue to inserting into
     // return:
     //      int - subqueue inserted into
-    virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr, intmax_t subq = -1) = 0;
+    virtual intmax_t InsertTask(task_pointer, ThreadData* = nullptr,
+                                intmax_t subq = -1) = 0;
 
     // Overload this function to hold threads
     virtual void     Wait()               = 0;
@@ -152,18 +153,18 @@ public:
         _Executor<0, _N - 1, _Tuple>(std::forward<_Tuple>(__t));
     }
 
-    template <
-        typename Container,
-        typename std::enable_if<std::is_same<Container, VTaskPtr>::value, int>::type = 0>
+    template <typename Container,
+              typename std::enable_if<std::is_same<Container, task_pointer>::value,
+                                      int>::type = 0>
     static void Execute(Container& obj)
     {
         if(obj.get())
             (*obj)();
     }
 
-    template <
-        typename Container,
-        typename std::enable_if<!std::is_same<Container, VTaskPtr>::value, int>::type = 0>
+    template <typename Container,
+              typename std::enable_if<!std::is_same<Container, task_pointer>::value,
+                                      int>::type = 0>
     static void Execute(Container& tasks)
     {
         /*

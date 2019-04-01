@@ -143,18 +143,19 @@ UserTaskQueue::GetInsertBin() const
 
 //======================================================================================//
 
-void
+UserTaskQueue::task_pointer
 UserTaskQueue::GetThreadBinTask()
 {
     intmax_t      tbin      = GetThreadBin();
     TaskSubQueue* task_subq = (*m_subqueues)[tbin % (m_workers + 1)];
+    task_pointer  _task     = nullptr;
 
     //------------------------------------------------------------------------//
     auto get_task = [&]() {
         if(task_subq->AcquireClaim())
         {
             // run task
-            task_subq->PopTask(true);
+            _task = std::move(task_subq->PopTask(true));
             return true;
         }
         return false;
@@ -167,31 +168,30 @@ UserTaskQueue::GetThreadBinTask()
         if(get_task())
             break;
     }
+    return _task;
 }
 
 //======================================================================================//
 
-void
+UserTaskQueue::task_pointer
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 {
     // exit if empty
     if(this->true_empty())
-        return;
+        return nullptr;
 
+    // ensure the thread has a bin assignment
     intmax_t tbin = GetThreadBin();
     intmax_t n    = (subq < 0) ? tbin : subq;
     if(nitr < 1)
-        nitr = (m_workers + 1) * m_ntasks->load(std::memory_order_relaxed);
-    // ensure the thread has a bin assignment
-    if(!(subq < 0))
-        GetThreadBin();
+        nitr = (m_workers + 1);  // * m_ntasks->load(std::memory_order_relaxed);
 
     if(m_hold->load(std::memory_order_relaxed))
     {
-        GetThreadBinTask();
-        return;
+        return GetThreadBinTask();
     }
 
+    task_pointer _task = nullptr;
     //------------------------------------------------------------------------//
     auto get_task = [&](intmax_t _n) {
         TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
@@ -200,9 +200,11 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         if(!task_subq->empty() && task_subq->AcquireClaim())
         {
             // pop task out of bin
-            task_subq->PopTask(n == tbin);
-            // return success
-            return true;
+            _task = std::move(task_subq->PopTask(n == tbin));
+            // release the claim on the bin
+            task_subq->ReleaseClaim();
+            // return success if valid pointer
+            return (_task) ? true : false;
         }
         // return failure
         return false;
@@ -216,7 +218,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         for(intmax_t i = 0; i < nitr; ++i, ++n)
         {
             if(get_task(n % (m_workers + 1)))
-                return;
+                return _task;
         }
     }
 
@@ -224,17 +226,18 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     // and found no work so return an empty task and the thread will be put to
     // sleep if there is still no work by the time it reaches its
     // condition variable
+    return _task;
 }
 
 //======================================================================================//
 
 intmax_t
-UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
+UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
 {
     // skip increment here (handled externally)
     ++(*m_ntasks);
 
-    bool spin = m_hold->load(std::memory_order_relaxed);
+    bool     spin = m_hold->load(std::memory_order_relaxed);
     intmax_t tbin = GetThreadBin();
 
     if(data && data->within_task)

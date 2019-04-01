@@ -143,17 +143,37 @@ struct Measurement
 
     bool operator==(const Measurement& rhs) const
     {
-        return cutoff == rhs.cutoff && num_task_groups == rhs.num_task_groups;
+        return num_task_groups == rhs.num_task_groups;
     }
 
     bool operator!=(const Measurement& rhs) const { return !(*this == rhs); }
 
-    bool operator<(const Measurement& rhs) const { return cutoff > rhs.cutoff; }
+    bool operator()(const Measurement& rhs) const
+    {
+        return num_task_groups < rhs.num_task_groups;
+    }
+
+    bool operator<(const Measurement& rhs) const
+    {
+        return num_task_groups < rhs.num_task_groups;
+    }
+
+    bool operator>(const Measurement& rhs) const
+    {
+        return !(*this < rhs || *this == rhs);
+    }
+
+    bool operator>=(const Measurement& rhs) const { return !(*this < rhs); }
+
+    bool operator<=(const Measurement& rhs) const
+    {
+        return (*this < rhs || *this == rhs);
+    }
 
     Measurement& operator+=(const Timer& _timer)
     {
         real += _timer.GetRealElapsed();
-        auto _cpu = _timer.GetUserElapsed() + _timer.GetSystemElapsed();
+        double _cpu = _timer.GetUserElapsed() + _timer.GetSystemElapsed();
         cpu += _cpu;
         cpu_per_thread += _cpu / nthreads;
         cpu_util += (_cpu / _timer.GetRealElapsed()) * 100.0;
@@ -165,7 +185,7 @@ struct Measurement
     {
         os << m.cutoff << ", " << m.num_task_groups << ", " << (m.real / m.ncount) << ", "
            << (m.cpu / m.ncount) << ", " << (m.cpu_per_thread / m.ncount) << ", "
-           << (m.cpu_util / m.ncount);
+           << (m.cpu_util / m.ncount) << ", " << m.ncount;
         return os;
     }
 };

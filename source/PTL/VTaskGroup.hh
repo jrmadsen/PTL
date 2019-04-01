@@ -65,7 +65,7 @@ public:
     typedef std::atomic_intmax_t         atomic_int;
     typedef std::atomic_uintmax_t        atomic_uint;
     typedef Condition                    condition_t;
-    typedef std::shared_ptr<task_type>   task_pointer;
+    typedef task_type*                   task_pointer;
     typedef container_type<task_pointer> vtask_list_type;
 
 public:
@@ -112,7 +112,7 @@ public:
     ThreadPool*& pool() { return m_pool; }
     ThreadPool*  pool() const { return m_pool; }
 
-    virtual void clear() { vtask_list.clear(); }
+    void         clear();
     virtual bool is_native_task_group() const { return true; }
     virtual bool is_master() const { return this_tid() == m_main_tid; }
 
@@ -147,10 +147,19 @@ protected:
     enum class state : int
     {
         STARTED = 0,
-        STOPPED = 1,
-        NONINIT = 2
+        PARTIAL = 1,
+        STOPPED = 2,
+        NONINIT = 3
     };
 };
+
+inline void
+VTaskGroup::clear()
+{
+    for(auto& itr : vtask_list)
+        delete itr;
+    vtask_list.clear();
+}
 
 //--------------------------------------------------------------------------------------//
 

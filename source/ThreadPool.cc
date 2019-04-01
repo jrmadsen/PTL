@@ -140,7 +140,6 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
 , m_alive_flag(false)
 , m_verbose(0)
 , m_pool_size(0)
-, m_recursive_limit(GetEnv<size_type>("TP_RECURSIVE_LIMIT", 20))
 , m_pool_state(state::NONINIT)
 , m_master_tid(ThisThread::get_id())
 , m_thread_awake(new atomic_int_type(0))
@@ -201,17 +200,6 @@ bool
 ThreadPool::is_initialized() const
 {
     return !(m_pool_state.load() == state::NONINIT);
-}
-
-//======================================================================================//
-
-void
-ThreadPool::resize(size_type _n)
-{
-    if(_n == m_pool_size)
-        return;
-    initialize_threadpool(_n);
-    m_task_queue->resize(static_cast<intmax_t>(_n));
 }
 
 //======================================================================================//
@@ -548,67 +536,6 @@ ThreadPool::stop_thread()
 
 //======================================================================================//
 
-int
-ThreadPool::run_on_this(const task_pointer& task)
-{
-    auto _func = [=]() { (*task)(); };
-    if(m_tbb_tp)
-    {
-        if(m_tbb_task_group)
-        {
-            m_tbb_task_group->run(_func);
-        }
-        else
-        {
-            _func();
-        }
-    }
-    else  // execute task
-        _func();
-
-    // return the number of tasks added to task-list
-    return 0;
-}
-
-//======================================================================================//
-
-int
-ThreadPool::insert(const task_pointer& task, int bin)
-{
-    ThreadLocalStatic ThreadData* _data = thread_data();
-
-    // pass the task to the queue
-    auto ibin = m_task_queue->InsertTask(task, _data, bin);
-    notify();
-    return ibin;
-}
-
-//======================================================================================//
-
-ThreadPool::size_type
-ThreadPool::add_task(const task_pointer& task, int bin)
-{
-    // if not native (i.e. TBB) then return
-    if(!task->is_native_task())
-        return 0;
-
-    // if we haven't built thread-pool, just execute
-    if(!m_alive_flag.load())
-        return static_cast<size_type>(run_on_this(task));
-
-    return static_cast<size_type>(insert(task, bin));
-}
-
-//======================================================================================//
-
-intmax_t
-ThreadPool::GetEnvNumThreads(intmax_t _default)
-{
-    return GetEnv<intmax_t>("PTL_NUM_THREADS", _default);
-}
-
-//======================================================================================//
-
 void
 ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
@@ -635,7 +562,13 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // essentially a dummy run
     {
         data->within_task = true;
-        _task_queue->GetTask();
+        auto _task        = std::move(_task_queue->GetTask());
+        if(_task)
+        {
+            (*_task)();
+            if(!_task->group())
+                delete _task;
+        }
         data->within_task = false;
     }
 
@@ -731,24 +664,25 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         if(leave_pool())
             return;
 
-        // get the size
-        // auto nitr = _task_queue->true_size();
-
         // activate guard against recursive deadlock
         data->within_task = true;
         //----------------------------------------------------------------//
 
         // execute the task(s)
-        _task_queue->GetTask();
+        while(!_task_queue->empty())
+        {
+            auto _task = std::move(_task_queue->GetTask());
+            if(_task)
+            {
+                (*_task)();
+                if(!_task->group())
+                    delete _task;
+            }
+        }
         //----------------------------------------------------------------//
 
         // disable guard against recursive deadlock
         data->within_task = false;
-        //----------------------------------------------------------------//
-
-        // release the lock
-        // if(_task_lock.owns_lock())
-        //    _task_lock.unlock();
         //----------------------------------------------------------------//
     }
 }

@@ -45,7 +45,7 @@ class TaskSubQueue;  // definition in UserTaskQueue.icc
 class UserTaskQueue : public VUserTaskQueue
 {
 public:
-    typedef std::shared_ptr<VTask>             VTaskPtr;
+    typedef VTask*                             task_pointer;
     typedef std::vector<TaskSubQueue*>         TaskSubQueueContainer;
     typedef std::default_random_engine         random_engine_t;
     typedef std::uniform_int_distribution<int> int_dist_t;
@@ -59,13 +59,13 @@ public:
 
 public:
     // Virtual  function for getting a task from the queue
-    virtual void GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
+    virtual task_pointer GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
     // Virtual function for inserting a task into the queue
-    virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr,
+    virtual intmax_t InsertTask(task_pointer, ThreadData* = nullptr,
                                 intmax_t subq = -1) override;
 
     // if executing only tasks in threads bin
-    void GetThreadBinTask();
+    task_pointer GetThreadBinTask();
 
     // Overload this function to hold threads
     virtual void Wait() override {}
@@ -183,7 +183,7 @@ UserTaskQueue::true_empty() const
     // return !std::any_of(m_subqueues->begin(), m_subqueues->end(), [](TaskSubQueue* itr)
     // { return !itr->empty(); });
     for(const auto& itr : *m_subqueues)
-        if(itr->size() > 0)
+        if(!itr->empty())
             return false;
     return true;
 }
