@@ -245,9 +245,9 @@ main(int argc, char** argv)
             if(measurement)
                 *measurement += singleTimer;
 
-            cout << cprefix << "[recur test] fibonacci(" << cutoff_value << ") * "
-                 << cutoff_tasks << " = " << fib_recur << " ... " << singleTimer
-                 << " ... [# task grp] " << num_task_groups << " (cutoff = " << cutoff
+            cout << cprefix << "[recur test] fibonacci(" << cutoff_value << ") * " << i
+                 << " = " << fib_recur << " ... " << singleTimer << " ... [# task grp] "
+                 << num_task_groups << " (cutoff = " << cutoff
                  << ") "
                  //<< measurement->real
                  << endl;

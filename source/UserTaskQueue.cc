@@ -243,7 +243,7 @@ UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
     if(data && data->within_task)
     {
         subq = tbin;
-        spin = true;
+        // spin = true;
     }
 
     // subq is -1 unless specified so unless specified
@@ -255,10 +255,10 @@ UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
     //------------------------------------------------------------------------//
     auto insert_task = [&](intmax_t _n) {
         TaskSubQueue* task_subq = (*m_subqueues)[_n];
-        TaskSubQueue* next_subq = (*m_subqueues)[(_n + 1) % (m_workers + 1)];
+        // TaskSubQueue* next_subq = (*m_subqueues)[(_n + 1) % (m_workers + 1)];
         // if not threads bin and size difference, insert into smaller
-        if(n != tbin && next_subq->size() < task_subq->size())
-            task_subq = next_subq;
+        // if(n != tbin && next_subq->size() < task_subq->size())
+        //    task_subq = next_subq;
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
         if(task_subq->AcquireClaim())
