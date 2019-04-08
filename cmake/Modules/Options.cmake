@@ -80,7 +80,10 @@ if(PTL_USE_GPU)
 endif()
 
 # RPATH settings
-set(_RPATH_LINK ${APPLE})
+set(_RPATH_LINK OFF)
+if(APPLE)
+    set(_RPATH_LINK ON)
+endif()
 add_option(CMAKE_INSTALL_RPATH_USE_LINK_PATH "Hardcode installation rpath based on link path" ${_RPATH_LINK} ${_FEATURE})
 unset(_RPATH_LINK)
 
