@@ -160,7 +160,6 @@ public:
 public:
     // read FORCE_NUM_THREADS environment variable
     static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
-    static const thread_index_map_t& GetThreadIndexes() { return f_thread_indexes; }
     static uintmax_t                 GetThisThreadID();
 
 protected:
@@ -170,7 +169,7 @@ protected:
 
 protected:
     // called in THREAD INIT
-    static void start_thread(ThreadPool*);
+    static void start_thread(ThreadPool*, intmax_t = -1);
 
 private:
     // Private variables
@@ -206,7 +205,6 @@ private:
 private:
     // Private static variables
     static thread_id_map_t    f_thread_ids;
-    static thread_index_map_t f_thread_indexes;
     static bool               f_use_tbb;
 };
 

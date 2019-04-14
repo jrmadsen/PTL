@@ -53,7 +53,6 @@ ncores()
 //======================================================================================//
 
 ThreadPool::thread_id_map_t    ThreadPool::f_thread_ids;
-ThreadPool::thread_index_map_t ThreadPool::f_thread_indexes;
 
 //======================================================================================//
 
@@ -74,16 +73,15 @@ bool ThreadPool::f_use_tbb = false;
 // static member function that calls the member function we want the thread to
 // run
 void
-ThreadPool::start_thread(ThreadPool* tp)
+ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
 {
     {
         AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
         if(!lock.owns_lock())
             lock.lock();
-        auto _idx                                = f_thread_ids.size();
+        if(_idx < 0)
+            _idx                                = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
-        f_thread_indexes[_idx]                   = std::this_thread::get_id();
-        // tp->get_queue()->ThisThreadNumber() = _idx;
     }
     static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
     thread_data() = _unique_data.get();
@@ -116,7 +114,6 @@ ThreadPool::GetThisThreadID()
         {
             auto _idx              = f_thread_ids.size();
             f_thread_ids[_tid]     = _idx;
-            f_thread_indexes[_idx] = _tid;
         }
     }
     return f_thread_ids[_tid];
@@ -177,9 +174,6 @@ ThreadPool::~ThreadPool()
 
     if(f_thread_ids.find(_tid) != f_thread_ids.end())
         f_thread_ids.erase(f_thread_ids.find(_tid));
-
-    if(f_thread_indexes.find(_idx) != f_thread_indexes.end())
-        f_thread_indexes.erase(f_thread_indexes.find(_idx));
 
     // deleted by ThreadData
     // delete m_task_queue;
@@ -330,13 +324,14 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         m_is_joined.reserve(proposed_size);
     }
 
+    auto this_tid = GetThisThreadID();
     for(size_type i = m_pool_size; i < proposed_size; ++i)
     {
         // add the threads
         Thread* tid = new Thread;
         try
         {
-            *tid = Thread(ThreadPool::start_thread, this);
+            *tid = Thread(ThreadPool::start_thread, this, this_tid + i + 1);
             // only reaches here if successful creation of thread
             ++m_pool_size;
             // store thread
@@ -454,11 +449,6 @@ ThreadPool::destroy_threadpool()
         // erase thread from thread ID list
         if(f_thread_ids.find(_tid) != f_thread_ids.end())
             f_thread_ids.erase(f_thread_ids.find(_tid));
-
-        //--------------------------------------------------------------------//
-        // erase thread from thread index list
-        if(f_thread_indexes.find(_idx) != f_thread_indexes.end())
-            f_thread_indexes.erase(f_thread_indexes.find(_idx));
 
         //--------------------------------------------------------------------//
         // it's joined
