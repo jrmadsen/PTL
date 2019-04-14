@@ -90,37 +90,6 @@ public:
     virtual intmax_t GetThreadBin() const override;
 
 protected:
-    template <typename _Tp>
-    class binner
-    {
-    public:
-        binner(_Tp tot, _Tp n)
-        : m_tot(tot)
-        , m_incr((n % 2 == 0) ? -1 : 1)
-        , m_idx(m_incr * n)
-        , m_base(m_incr * tot)
-        , m_last(m_incr * ((m_base - m_idx) % (m_incr * m_tot)))
-        {
-        }
-
-        _Tp operator()()
-        {
-            auto _idx = m_base - m_idx;
-            m_idx     = (m_idx + 1) % m_tot;
-            return (m_last = m_incr * ((_idx) % (m_incr * m_tot)));
-        }
-
-        const _Tp& last() const { return m_last; }
-
-    private:
-        _Tp m_tot;
-        _Tp m_incr;
-        _Tp m_idx;
-        _Tp m_base;
-        _Tp m_last;
-    };
-
-protected:
     intmax_t GetInsertBin() const;
 
 private:
@@ -180,8 +149,6 @@ UserTaskQueue::bin_empty(size_type bin) const
 inline bool
 UserTaskQueue::true_empty() const
 {
-    // return !std::any_of(m_subqueues->begin(), m_subqueues->end(), [](TaskSubQueue* itr)
-    // { return !itr->empty(); });
     for(const auto& itr : *m_subqueues)
         if(!itr->empty())
             return false;
@@ -193,9 +160,6 @@ UserTaskQueue::true_empty() const
 inline UserTaskQueue::size_type
 UserTaskQueue::true_size() const
 {
-    // return std::accumulate<TaskSubQueueContainer::iterator, size_type>(
-    //    m_subqueues->begin(), m_subqueues->end(), 0,
-    //    [](size_type& n, TaskSubQueue* itr) { return n += itr->size(); });
     size_type _n = 0;
     for(const auto& itr : *m_subqueues)
         _n += itr->size();

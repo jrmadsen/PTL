@@ -58,16 +58,15 @@ VTaskGroup::VTaskGroup(ThreadPool* tp)
 , m_task_lock()
 , m_main_tid(std::this_thread::get_id())
 {
-    if(!m_pool && TaskRunManager::GetMasterRunManager())
-        m_pool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
 
-#ifdef DEBUG
-    if(!m_pool && GetEnv<int>("PTL_VERBOSE", 0) > 0)
+    if(!m_pool)
     {
         std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
                   << "nullptr to thread pool!" << std::endl;
     }
-#endif
+
+    if(!m_pool && TaskRunManager::GetMasterRunManager())
+        m_pool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
 }
 
 //======================================================================================//
@@ -101,20 +100,14 @@ VTaskGroup::wait()
     }
 
     ThreadData*     data  = ThreadData::GetInstance();
-    ThreadPool*     tpool = nullptr;
-    VUserTaskQueue* taskq = nullptr;
+    if(!data)
+        return;
 
-    tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
-    taskq = (tpool) ? tpool->get_queue() : ((data) ? data->current_queue : nullptr);
+    ThreadPool*     tpool = (m_pool) ? m_pool : data->thread_pool;
+    VUserTaskQueue* taskq = (tpool) ? tpool->get_queue() : data->current_queue;
+
     bool is_master   = (data) ? data->is_master : false;
     bool within_task = (data) ? data->within_task : true;
-
-    // for external threads
-    if(!data)
-    {
-        tpool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
-        taskq = (tpool) ? tpool->get_queue() : nullptr;
-    }
 
     auto is_active_state = [&]() {
         return (tpool->state().load(std::memory_order_relaxed) !=
@@ -180,7 +173,7 @@ VTaskGroup::wait()
         // while loop protects against spurious wake-ups
         while(is_master && pending() > 0 && is_active_state())
         {
-            auto _wake = [&]() { return (wake_size > pending() || !is_active_state()); };
+            //auto _wake = [&]() { return (wake_size > pending() || !is_active_state()); };
 
             // lock before sleeping on condition
             if(!_lock.owns_lock())
@@ -191,7 +184,7 @@ VTaskGroup::wait()
             // when true, this wakes the thread
             if(pending() >= wake_size)
             {
-                m_task_cond.wait(_lock, _wake);
+                m_task_cond.wait(_lock);
             }
             else
             {
