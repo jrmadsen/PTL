@@ -309,6 +309,52 @@ GetEnv(const std::string& env_id, const EnvChoiceList<_Tp>& _choices, _Tp _defau
 
 //--------------------------------------------------------------------------------------//
 
+template <typename _Tp>
+_Tp
+GetChoice(const EnvChoiceList<_Tp>& _choices, const std::string str_var)
+{
+    auto asupper = [](std::string var) {
+        for(auto& itr : var)
+            itr = toupper(itr);
+        return var;
+    };
+
+    std::string upp_var = asupper(str_var);
+    _Tp         var     = _Tp();
+    // check to see if string matches a choice
+    for(const auto& itr : _choices)
+    {
+        if(asupper(std::get<1>(itr)) == upp_var)
+        {
+            // record value defined by environment
+            return std::get<0>(itr);
+        }
+    }
+    std::istringstream iss(str_var);
+    iss >> var;
+    // check to see if string matches a choice
+    for(const auto& itr : _choices)
+    {
+        if(var == std::get<0>(itr))
+        {
+            // record value defined by environment
+            return var;
+        }
+    }
+    // the value set in env did not match any choices
+    std::stringstream ss;
+    ss << "\n### Environment setting error @ " << __FUNCTION__ << " (line "
+       << __LINE__ << ")! Invalid selection \"" << str_var
+       << "\". Valid choices are:\n";
+    for(const auto& itr : _choices)
+        ss << "\t\"" << std::get<0>(itr) << "\" or \"" << std::get<1>(itr) << "\" ("
+           << std::get<2>(itr) << ")\n";
+    std::cerr << ss.str() << std::endl;
+    abort();
+}
+
+//--------------------------------------------------------------------------------------//
+
 inline void
 PrintEnv(std::ostream& os = std::cout)
 {
