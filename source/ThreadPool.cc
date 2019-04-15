@@ -170,7 +170,6 @@ ThreadPool::~ThreadPool()
 
     // delete thread-local allocator and erase thread IDS
     auto      _tid = std::this_thread::get_id();
-    uintmax_t _idx = ThreadPool::GetThreadIDs().find(_tid)->second;
 
     if(f_thread_ids.find(_tid) != f_thread_ids.end())
         f_thread_ids.erase(f_thread_ids.find(_tid));
@@ -443,7 +442,6 @@ ThreadPool::destroy_threadpool()
         //--------------------------------------------------------------------//
         // thread id and index
         auto _tid = m_main_threads[i]->get_id();
-        auto _idx = f_thread_ids[_tid];
 
         //--------------------------------------------------------------------//
         // erase thread from thread ID list

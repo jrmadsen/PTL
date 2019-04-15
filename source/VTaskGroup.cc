@@ -58,15 +58,14 @@ VTaskGroup::VTaskGroup(ThreadPool* tp)
 , m_task_lock()
 , m_main_tid(std::this_thread::get_id())
 {
+    if(!m_pool && TaskRunManager::GetMasterRunManager())
+        m_pool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
 
     if(!m_pool)
     {
         std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
                   << "nullptr to thread pool!" << std::endl;
     }
-
-    if(!m_pool && TaskRunManager::GetMasterRunManager())
-        m_pool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
 }
 
 //======================================================================================//
