@@ -135,10 +135,7 @@ UserTaskQueue::GetThreadBin() const
 intmax_t
 UserTaskQueue::GetInsertBin() const
 {
-    // return (m_is_clone)
-    //        ? ((m_insert_bin) % (m_workers + 1))
-    //        : ((++m_insert_bin) % (m_workers + 1));
-    return ++m_insert_bin;
+    return (++m_insert_bin % (m_workers + 1));
 }
 
 //======================================================================================//
@@ -156,9 +153,11 @@ UserTaskQueue::GetThreadBinTask()
         {
             // run task
             _task = task_subq->PopTask(true);
-            return true;
         }
-        return false;
+        if(_task)
+            --(*m_ntasks);
+        // return success if valid pointer
+        return (_task != nullptr);
     };
     //------------------------------------------------------------------------//
 
@@ -194,6 +193,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     task_pointer _task = nullptr;
     //------------------------------------------------------------------------//
     auto get_task = [&](intmax_t _n) {
+
         TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
@@ -203,11 +203,11 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
             _task = task_subq->PopTask(n == tbin);
             // release the claim on the bin
             task_subq->ReleaseClaim();
-            // return success if valid pointer
-            return (_task) ? true : false;
         }
-        // return failure
-        return false;
+        if(_task)
+            --(*m_ntasks);
+        // return success if valid pointer
+        return (_task != nullptr);
     };
     //------------------------------------------------------------------------//
 

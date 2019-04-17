@@ -74,7 +74,7 @@ public:
     typedef task_type*              task_pointer;
     typedef VUserTaskQueue          task_queue_t;
     // containers
-    typedef std::vector<Thread*>          thread_list_t;
+    typedef std::deque<ThreadId>         thread_list_t;
     typedef std::vector<bool>             bool_list_t;
     typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
     typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
@@ -148,10 +148,10 @@ public:
     void notify_all();
     void notify(size_type);
     bool is_initialized() const;
-    int  get_active_threads_count() const { return m_thread_awake->load(); }
+    int  get_active_threads_count() const {return (m_thread_awake) ? m_thread_awake->load() : 0; }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = f; }
-    void set_affinity(intmax_t);
+    void set_affinity(intmax_t i, Thread&);
 
     void SetVerbose(int n) { m_verbose = n; }
     int  GetVerbose() const { return m_verbose; }
@@ -160,7 +160,6 @@ public:
 public:
     // read FORCE_NUM_THREADS environment variable
     static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
-    static const thread_index_map_t& GetThreadIndexes() { return f_thread_indexes; }
     static uintmax_t                 GetThisThreadID();
 
 protected:
@@ -170,7 +169,7 @@ protected:
 
 protected:
     // called in THREAD INIT
-    static void start_thread(ThreadPool*);
+    static void start_thread(ThreadPool*, intmax_t = -1);
 
 private:
     // Private variables
@@ -206,31 +205,15 @@ private:
 private:
     // Private static variables
     static thread_id_map_t    f_thread_ids;
-    static thread_index_map_t f_thread_indexes;
     static bool               f_use_tbb;
 };
 
-//--------------------------------------------------------------------------------------//
-inline Thread*
-ThreadPool::get_thread(size_type _n) const
-{
-    return (_n < m_main_threads.size()) ? m_main_threads[_n] : nullptr;
-}
-//--------------------------------------------------------------------------------------//
-inline Thread*
-ThreadPool::get_thread(ThreadId id) const
-{
-    for(const auto& itr : m_main_threads)
-        if(itr->get_id() == id)
-            return itr;
-    return nullptr;
-}
 //--------------------------------------------------------------------------------------//
 inline void
 ThreadPool::notify()
 {
     // wake up one thread that is waiting for a task to be available
-    if(m_thread_awake->load() < m_pool_size)
+    if(m_thread_awake && m_thread_awake->load() < m_pool_size)
     {
         AutoLock l(m_task_lock);
         m_task_cond.notify_one();
@@ -252,7 +235,7 @@ ThreadPool::notify(size_type ntasks)
         return;
 
     // wake up as many threads that tasks just added
-    if(m_thread_awake->load() < m_pool_size)
+    if(m_thread_awake && m_thread_awake->load() < m_pool_size)
     {
         AutoLock l(m_task_lock);
         if(ntasks < this->size())

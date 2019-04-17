@@ -67,7 +67,7 @@
 
 #pragma once
 
-#ifndef WIN32
+#if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
 #    include <sys/times.h>
 #    include <unistd.h>
 #else

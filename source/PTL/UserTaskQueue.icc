@@ -53,7 +53,10 @@ public:
 
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);
+    TaskSubQueue(const TaskSubQueue&);
     ~TaskSubQueue();
+
+    TaskSubQueue& operator=(const TaskSubQueue&) = delete;
 
 public:
     int GetId() const;
@@ -69,7 +72,7 @@ public:
 
 private:
     // used internally to keep number of tasks
-    size_type m_ntasks;
+    std::atomic<size_type> m_ntasks;
     // for checking if being modified
     std::atomic_bool m_available;
     // used my master queue to keep track of number of tasks
@@ -85,7 +88,15 @@ inline TaskSubQueue::TaskSubQueue(std::atomic_uintmax_t* _ntasks)
 , m_available(true)
 , m_all_tasks(_ntasks)
 {
-    m_available.store(true);
+}
+
+//======================================================================================//
+
+inline TaskSubQueue::TaskSubQueue(const TaskSubQueue& rhs)
+    : m_ntasks(0)
+    , m_available(true)
+    , m_all_tasks(rhs.m_all_tasks)
+{
 }
 
 //======================================================================================//
@@ -119,7 +130,7 @@ TaskSubQueue::ReleaseClaim()
 inline TaskSubQueue::size_type
 TaskSubQueue::size() const
 {
-    return m_ntasks;
+    return m_ntasks.load();
 }
 
 //======================================================================================//
@@ -127,7 +138,7 @@ TaskSubQueue::size() const
 inline bool
 TaskSubQueue::empty() const
 {
-    return (m_ntasks == 0);
+    return (m_ntasks.load() == 0);
 }
 
 //======================================================================================//
@@ -152,9 +163,6 @@ TaskSubQueue::PopTask(bool front)
     if(m_task_queue.empty())
         return nullptr;
 
-    --m_ntasks;
-    --(*m_all_tasks);
-
     task_pointer _task;
     if(front)
     {
@@ -166,63 +174,9 @@ TaskSubQueue::PopTask(bool front)
         _task = std::move(m_task_queue.back());
         m_task_queue.pop_back();
     }
-    // release the claim on the bin
-    // ReleaseClaim();
+    --m_ntasks;
+
     return _task;
-    // if(!_task->group())
-    //    delete _task;
-
-    /*
-    size_type nmax  = (front) ? 1 : 4;
-    size_type nexec = std::min(nmax, m_task_queue.size());
-
-    m_ntasks -= nexec;
-    for(size_type i = 0; i < nexec; ++i)
-        --(*m_all_tasks);
-
-    if(nexec == 1)
-    {
-        task_pointer _task;
-        if(front)
-        {
-            _task = std::move(m_task_queue.front());
-            m_task_queue.pop_front();
-        }
-        else
-        {
-            _task = std::move(m_task_queue.back());
-            m_task_queue.pop_back();
-        }
-        // release the claim on the bin
-        ReleaseClaim();
-        VUserTaskQueue::Execute(_task);
-    }
-    else
-    {
-        using TaskContainer = std::vector<task_pointer>;
-        static thread_local TaskContainer exec_container;
-        exec_container.clear();
-        if(front)
-        {
-            for(size_type i = 0; i < nexec; ++i)
-            {
-                exec_container.push_back(std::move(m_task_queue.front()));
-                m_task_queue.pop_front();
-            }
-        }
-        else
-        {
-            for(size_type i = 0; i < nexec; ++i)
-            {
-                exec_container.push_back(std::move(m_task_queue.back()));
-                m_task_queue.pop_back();
-            }
-        }
-        // release the claim on the bin
-        ReleaseClaim();
-        VUserTaskQueue::Execute<TaskContainer>(exec_container);
-    }
-    */
 }
 
 //======================================================================================//
