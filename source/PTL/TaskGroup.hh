@@ -190,22 +190,6 @@ public:
     {
         m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
     }
-    //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args, typename _Up = _Tp,
-              enable_if_t<std::is_same<_Up, void>::value, int> = 0>
-    void parallel_for(uintmax_t nitr, uintmax_t chunks, _Func&& func, _Args&&... args)
-    {
-        auto nsplit     = nitr / chunks;
-        auto nmod       = nitr % chunks;
-        auto chunk_func = [&](const uintmax_t& n) {
-            auto beg = n * nsplit;
-            auto end = (n + 1) * nsplit + ((n + 1 == chunks) ? nmod : 0);
-            for(uintmax_t i = beg; i < end; ++i)
-                func(std::forward<_Args>(args)...);
-        };
-        for(uintmax_t i = 0; i < chunks; ++i)
-            m_pool->add_task(wrap(chunk_func, i));
-    }
 
 protected:
     //------------------------------------------------------------------------//
