@@ -76,7 +76,6 @@ public:
     // containers
     typedef std::deque<ThreadId>                 thread_list_t;
     typedef std::vector<bool>                    bool_list_t;
-    typedef std::vector<std::future<void>>       future_list_t;
     typedef std::vector<std::unique_ptr<Thread>> thread_pointers_t;
     typedef std::map<ThreadId, uintmax_t>        thread_id_map_t;
     typedef std::map<uintmax_t, ThreadId>        thread_index_map_t;
@@ -86,13 +85,14 @@ public:
 
 public:
     // Constructor and Destructors
-    ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-               bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               const affinity_func_t& = [](intmax_t) {
-                   static std::atomic<intmax_t> assigned;
-                   intmax_t                     _assign = assigned++;
-                   return _assign % Thread::hardware_concurrency();
-               });
+    ThreadPool(
+        const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
+        bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+        const affinity_func_t& = [](intmax_t) {
+            static std::atomic<intmax_t> assigned;
+            intmax_t                     _assign = assigned++;
+            return _assign % Thread::hardware_concurrency();
+        });
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~ThreadPool();
@@ -123,12 +123,6 @@ public:
 
     Thread* get_thread(size_type _n) const;
     Thread* get_thread(std::thread::id id) const;
-
-    // add a future to wait on when destroying
-    void add_future(std::future<void>&& fut)
-    {
-        m_future_list.push_back(std::forward<std::future<void>>(fut));
-    }
 
     task_queue_t* get_queue() const { return m_task_queue; }
 
@@ -174,8 +168,7 @@ public:
     static uintmax_t              GetThisThreadID();
 
 protected:
-    void execute_thread(VUserTaskQueue*,
-                        std::promise<void>&&);  // function thread sits in
+    void execute_thread(VUserTaskQueue*);  // function thread sits in
     int  insert(const task_pointer&, int = -1);
     int  run_on_this(task_pointer&&);
 
@@ -205,7 +198,6 @@ private:
     bool_list_t       m_is_stopped;      // lets thread know to stop
     thread_list_t     m_main_threads;    // storage for active threads
     thread_list_t     m_stop_threads;    // storage for stopped threads
-    future_list_t     m_future_list;     // notify thread exited
     thread_pointers_t m_unique_threads;  // unique pointers to threads
 
     // task queue
@@ -303,10 +295,10 @@ ThreadPool::run_on_this(task_pointer&& task)
 inline int
 ThreadPool::insert(const task_pointer& task, int bin)
 {
-    ThreadLocalStatic ThreadData* _data = ThreadData::GetInstance();
+    auto& _data = ThreadData::GetInstance();
 
     // pass the task to the queue
-    auto ibin = m_task_queue->InsertTask(task, _data, bin);
+    auto ibin = m_task_queue->InsertTask(task, _data.get(), bin);
     notify();
     return ibin;
 }

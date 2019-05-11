@@ -89,23 +89,28 @@ class VUserTaskQueue;
 class ThreadData
 {
 public:
+    using pointer_t = std::unique_ptr<ThreadData>;
+
     template <typename _Tp>
     using TaskStack = std::deque<_Tp>;
 
+    ThreadData();
     ThreadData(ThreadPool* tp);
     ~ThreadData();
 
+    ThreadData& operator=(ThreadPool*);
+
 public:
-    bool                       is_master;
-    bool                       within_task;
-    intmax_t                   task_depth;
-    ThreadPool*                thread_pool;
-    VUserTaskQueue*            current_queue;
+    bool                       is_master     = false;
+    bool                       within_task   = false;
+    intmax_t                   task_depth    = 0;
+    ThreadPool*                thread_pool   = nullptr;
+    VUserTaskQueue*            current_queue = nullptr;
     TaskStack<VUserTaskQueue*> queue_stack;
 
 public:
     // Public functions
-    static ThreadData*& GetInstance();
+    static pointer_t& GetInstance();
 };
 
 //--------------------------------------------------------------------------------------//

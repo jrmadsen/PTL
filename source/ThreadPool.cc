@@ -58,7 +58,7 @@ ThreadPool::thread_id_map_t ThreadPool::f_thread_ids;
 
 namespace
 {
-ThreadData*&
+ThreadData::pointer_t&
 thread_data()
 {
     return ThreadData::GetInstance();
@@ -83,12 +83,8 @@ ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
             _idx = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
     }
-    static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
-    thread_data() = _unique_data.get();
-    std::promise<void> prom;
-    std::future<void>  fut = prom.get_future();
-    tp->execute_thread(thread_data()->current_queue, std::move(prom));
-    tp->add_future(std::move(fut));
+    thread_data().reset(new ThreadData(tp));
+    tp->execute_thread(thread_data()->current_queue);
 }
 
 //======================================================================================//
@@ -148,7 +144,7 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
     if(master_id != 0 && m_verbose > 1)
         std::cerr << "ThreadPool created on non-master slave" << std::endl;
 
-    thread_data() = new ThreadData(this);
+    thread_data().reset(new ThreadData(this));
 
     // initialize after GetThisThreadID so master is zero
     this->initialize_threadpool(pool_size);
@@ -421,14 +417,9 @@ ThreadPool::destroy_threadpool()
     // try waking up a bunch of threads that are still waiting
     m_task_cond.notify_all();
 
-    // wait on promises that thread has exited
-    for(auto& itr : m_future_list)
-        itr.wait();
-
     for(auto& itr : m_unique_threads)
         itr->join();
 
-    m_future_list.clear();
     m_main_threads.clear();
     m_is_joined.clear();
     m_unique_threads.clear();
@@ -484,7 +475,7 @@ ThreadPool::stop_thread()
 //======================================================================================//
 
 void
-ThreadPool::execute_thread(VUserTaskQueue* _task_queue, std::promise<void>&& prom)
+ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
 #if defined(PTL_USE_GPERF)
     ProfilerRegisterThread();
@@ -498,8 +489,8 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue, std::promise<void>&& pro
     // initialization function
     m_init_func();
 
-    ThreadId    tid  = ThisThread::get_id();
-    ThreadData* data = thread_data();
+    ThreadId tid  = ThisThread::get_id();
+    auto&    data = thread_data();
     // auto        thread_bin = _task_queue->GetThreadBin();
     // auto        workers    = _task_queue->workers();
 
@@ -535,7 +526,6 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue, std::promise<void>&& pro
                 // stop whole pool
                 if(_pool_state == thread_pool::state::STOPPED)
                 {
-                    prom.set_value();
                     return true;
                 }
                 // single thread stoppage
@@ -547,7 +537,6 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue, std::promise<void>&& pro
                     {
                         m_stop_threads.push_back(tid);
                         m_is_stopped.pop_back();
-                        prom.set_value();
                         return true;
                     }
                     if(_task_lock.owns_lock())

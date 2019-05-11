@@ -98,7 +98,7 @@ VTaskGroup::wait()
         }
     }
 
-    ThreadData* data = ThreadData::GetInstance();
+    auto& data = ThreadData::GetInstance();
     if(!data)
         return;
 

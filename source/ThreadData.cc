@@ -29,11 +29,23 @@
 
 //======================================================================================//
 
-ThreadData*&
+ThreadData::pointer_t&
 ThreadData::GetInstance()
 {
-    ThreadLocalStatic ThreadData* _instance = nullptr;
+    static thread_local pointer_t _instance(nullptr);
     return _instance;
+}
+
+//======================================================================================//
+
+ThreadData::ThreadData()
+: is_master(false)
+, within_task(false)
+, task_depth(0)
+, thread_pool(nullptr)
+, current_queue(nullptr)
+, queue_stack()
+{
 }
 
 //======================================================================================//
@@ -46,6 +58,21 @@ ThreadData::ThreadData(ThreadPool* tp)
 , current_queue(tp->get_queue())
 , queue_stack({ current_queue })
 {
+}
+
+//======================================================================================//
+
+ThreadData&
+ThreadData::operator=(ThreadPool* tp)
+{
+    if(tp)
+    {
+        is_master     = tp->is_master();
+        thread_pool   = tp;
+        current_queue = tp->get_queue();
+        queue_stack.push_back(current_queue);
+    }
+    return *this;
 }
 
 //======================================================================================//

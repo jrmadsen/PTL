@@ -345,7 +345,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         //--------------------------------------------------------------------//
 
         auto _task = tg->wrap(thread_specific_func);
-        InsertTask(_task, ThreadData::GetInstance(), i);
+        InsertTask(_task, ThreadData::GetInstance().get(), i);
     }
 
     tp->notify_all();
@@ -419,7 +419,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
             continue;
 
         auto _task = tg->wrap(thread_specific_func);
-        InsertTask(_task, ThreadData::GetInstance(), i);
+        InsertTask(_task, ThreadData::GetInstance().get(), i);
     }
     tp->notify_all();
     int nexecuted = tg->join();
