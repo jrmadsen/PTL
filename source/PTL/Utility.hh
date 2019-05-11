@@ -343,9 +343,8 @@ GetChoice(const EnvChoiceList<_Tp>& _choices, const std::string str_var)
     }
     // the value set in env did not match any choices
     std::stringstream ss;
-    ss << "\n### Environment setting error @ " << __FUNCTION__ << " (line "
-       << __LINE__ << ")! Invalid selection \"" << str_var
-       << "\". Valid choices are:\n";
+    ss << "\n### Environment setting error @ " << __FUNCTION__ << " (line " << __LINE__
+       << ")! Invalid selection \"" << str_var << "\". Valid choices are:\n";
     for(const auto& itr : _choices)
         ss << "\t\"" << std::get<0>(itr) << "\" or \"" << std::get<1>(itr) << "\" ("
            << std::get<2>(itr) << ")\n";

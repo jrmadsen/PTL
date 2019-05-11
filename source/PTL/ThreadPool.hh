@@ -74,11 +74,13 @@ public:
     typedef task_type*              task_pointer;
     typedef VUserTaskQueue          task_queue_t;
     // containers
-    typedef std::deque<ThreadId>         thread_list_t;
-    typedef std::vector<bool>             bool_list_t;
-    typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
-    typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
-    typedef std::function<void()>         initialize_func_t;
+    typedef std::deque<ThreadId>                 thread_list_t;
+    typedef std::vector<bool>                    bool_list_t;
+    typedef std::vector<std::future<void>>       future_list_t;
+    typedef std::vector<std::unique_ptr<Thread>> thread_pointers_t;
+    typedef std::map<ThreadId, uintmax_t>        thread_id_map_t;
+    typedef std::map<uintmax_t, ThreadId>        thread_index_map_t;
+    typedef std::function<void()>                initialize_func_t;
     // functions
     typedef std::function<intmax_t(intmax_t)> affinity_func_t;
 
@@ -122,6 +124,12 @@ public:
     Thread* get_thread(size_type _n) const;
     Thread* get_thread(std::thread::id id) const;
 
+    // add a future to wait on when destroying
+    void add_future(std::future<void>&& fut)
+    {
+        m_future_list.push_back(std::forward<std::future<void>>(fut));
+    }
+
     task_queue_t* get_queue() const { return m_task_queue; }
 
     // only relevant when compiled with PTL_USE_TBB
@@ -148,7 +156,10 @@ public:
     void notify_all();
     void notify(size_type);
     bool is_initialized() const;
-    int  get_active_threads_count() const {return (m_thread_awake) ? m_thread_awake->load() : 0; }
+    int  get_active_threads_count() const
+    {
+        return (m_thread_awake) ? m_thread_awake->load() : 0;
+    }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = f; }
     void set_affinity(intmax_t i, Thread&);
@@ -159,11 +170,12 @@ public:
 
 public:
     // read FORCE_NUM_THREADS environment variable
-    static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
-    static uintmax_t                 GetThisThreadID();
+    static const thread_id_map_t& GetThreadIDs() { return f_thread_ids; }
+    static uintmax_t              GetThisThreadID();
 
 protected:
-    void execute_thread(VUserTaskQueue*);  // function thread sits in
+    void execute_thread(VUserTaskQueue*,
+                        std::promise<void>&&);  // function thread sits in
     int  insert(const task_pointer&, int = -1);
     int  run_on_this(task_pointer&&);
 
@@ -189,10 +201,12 @@ private:
     condition_t m_task_cond;
 
     // containers
-    bool_list_t   m_is_joined;     // join list
-    bool_list_t   m_is_stopped;    // lets thread know to stop
-    thread_list_t m_main_threads;  // storage for active threads
-    thread_list_t m_stop_threads;  // storage for stopped threads
+    bool_list_t       m_is_joined;       // join list
+    bool_list_t       m_is_stopped;      // lets thread know to stop
+    thread_list_t     m_main_threads;    // storage for active threads
+    thread_list_t     m_stop_threads;    // storage for stopped threads
+    future_list_t     m_future_list;     // notify thread exited
+    thread_pointers_t m_unique_threads;  // unique pointers to threads
 
     // task queue
     task_queue_t*     m_task_queue;
@@ -204,8 +218,8 @@ private:
 
 private:
     // Private static variables
-    static thread_id_map_t    f_thread_ids;
-    static bool               f_use_tbb;
+    static thread_id_map_t f_thread_ids;
+    static bool            f_use_tbb;
 };
 
 //--------------------------------------------------------------------------------------//

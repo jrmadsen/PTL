@@ -193,7 +193,6 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     task_pointer _task = nullptr;
     //------------------------------------------------------------------------//
     auto get_task = [&](intmax_t _n) {
-
         TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
