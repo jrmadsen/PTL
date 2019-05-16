@@ -233,7 +233,7 @@ private:
 inline TaskManager*&
 TaskManager::fgInstance()
 {
-    ThreadLocalStatic TaskManager* _instance = nullptr;
+    static thread_local TaskManager* _instance = nullptr;
     return _instance;
 }
 

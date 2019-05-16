@@ -208,7 +208,7 @@ get_seed()
     static const uint32_t        seed_base   = 6734525;
     static const uint32_t        seed_factor = 1000;
     static std::atomic<uint32_t> _counter;
-    ThreadLocalStatic uint32_t _tid = ++_counter;
+    static thread_local uint32_t _tid = ++_counter;
     return seed_base + (_tid * seed_factor);
 }
 
@@ -217,7 +217,7 @@ get_seed()
 inline random_engine_t&
 get_engine()
 {
-    ThreadLocalStatic random_engine_t* _engine = new random_engine_t(get_seed());
+    static thread_local random_engine_t* _engine = new random_engine_t(get_seed());
     return (*_engine);
 }
 
@@ -235,7 +235,7 @@ get_random()
 inline int16_t
 get_random_int(int16_t _range = rng_range)
 {
-    ThreadLocalStatic std::uniform_int_distribution<int16_t>* _instance =
+    static thread_local std::uniform_int_distribution<int16_t>* _instance =
         new std::uniform_int_distribution<int16_t>(-_range, _range);
     return (*_instance)(get_engine());
 }

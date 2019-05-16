@@ -43,7 +43,7 @@
 
 namespace
 {
-ThreadLocal int ThreadID = Threading::MASTER_ID;
+thread_local int ThreadID = Threading::MASTER_ID;
 std::atomic_int numActThreads(0);
 }
 

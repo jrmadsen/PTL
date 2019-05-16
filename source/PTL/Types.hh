@@ -58,7 +58,6 @@
 
 // Definitions for Thread Local Storage
 //
-#include "PTL/ThreadLocalStatic.hh"
 
 //--------------------------------------------------------------------------------------//
 

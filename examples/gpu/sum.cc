@@ -411,8 +411,8 @@ compute_sum(farray_t& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_cuda_sum);
 
-    ThreadLocalStatic uint64_t tid         = ThreadPool::GetThisThreadID();
-    ThreadLocalStatic cudaStream_t& stream = cuda_streams::instance()->get(tid);
+    static thread_local uint64_t tid         = ThreadPool::GetThisThreadID();
+    static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[cuda]");
 
@@ -475,8 +475,8 @@ compute_sum(thrust::host_vector<float>& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_thrust_sum);
 
-    ThreadLocalStatic uint64_t tid         = ThreadPool::GetThisThreadID();
-    ThreadLocalStatic cudaStream_t& stream = cuda_streams::instance()->get(tid);
+    static thread_local uint64_t tid         = ThreadPool::GetThisThreadID();
+    static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[thrust]");
 

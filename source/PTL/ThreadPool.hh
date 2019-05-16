@@ -252,7 +252,7 @@ ThreadPool::notify(size_type ntasks)
 inline tbb_task_scheduler_t*&
 ThreadPool::tbb_task_scheduler()
 {
-    ThreadLocalStatic tbb_task_scheduler_t* _instance = nullptr;
+    static thread_local tbb_task_scheduler_t* _instance = nullptr;
     return _instance;
 }
 //--------------------------------------------------------------------------------------//
@@ -289,7 +289,7 @@ ThreadPool::run_on_this(task_pointer&& task)
 inline int
 ThreadPool::insert(const task_pointer& task, int bin)
 {
-    ThreadLocalStatic ThreadData* _data = ThreadData::GetInstance();
+    static thread_local ThreadData* _data = ThreadData::GetInstance();
 
     // pass the task to the queue
     auto ibin = m_task_queue->InsertTask(task, _data, bin);

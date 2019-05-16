@@ -32,7 +32,7 @@
 ThreadData*&
 ThreadData::GetInstance()
 {
-    ThreadLocalStatic ThreadData* _instance = nullptr;
+    static thread_local ThreadData* _instance = nullptr;
     return _instance;
 }
 

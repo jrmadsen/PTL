@@ -51,7 +51,7 @@ VUserTaskQueue::~VUserTaskQueue() {}
 intmax_t& VUserTaskQueue::ThisThreadNumber() const
 {
     // get a thread id number
-    ThreadLocalStatic intmax_t _tid;
+    static thread_local intmax_t _tid;
     return _tid;
 }
 */

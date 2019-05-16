@@ -97,7 +97,7 @@ this_thread_device()
 {
 #if defined(PTL_USE_CUDA)
     static std::atomic<int> _ntid(0);
-    ThreadLocalStatic int   _instance =
+    static thread_local int   _instance =
         (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
     return _instance;
 #else

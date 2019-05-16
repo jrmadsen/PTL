@@ -29,7 +29,6 @@
 #pragma once
 
 #include "PTL/Globals.hh"
-#include "PTL/ThreadLocalStatic.hh"
 #include <vector>
 
 class TaskAllocatorBase;

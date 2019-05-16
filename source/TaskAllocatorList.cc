@@ -30,7 +30,7 @@
 TaskAllocatorList*&
 TaskAllocatorList::fAllocatorList()
 {
-    ThreadLocalStatic TaskAllocatorList* _instance = nullptr;
+    static thread_local TaskAllocatorList* _instance = nullptr;
     return _instance;
 }
 

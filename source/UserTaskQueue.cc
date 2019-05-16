@@ -125,7 +125,7 @@ intmax_t
 UserTaskQueue::GetThreadBin() const
 {
     // get a thread id number
-    ThreadLocalStatic intmax_t tl_bin =
+    static thread_local intmax_t tl_bin =
         (m_thread_bin + ThreadPool::GetThisThreadID()) % (m_workers + 1);
     return tl_bin;
 }
