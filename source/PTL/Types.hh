@@ -56,9 +56,8 @@
 #include <complex>
 #include <limits>
 
-// Definitions for Thread Local Storage
-//
-
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 
 template <typename CountedType>
@@ -154,11 +153,7 @@ bool CountedObject<CountedType>::fenabled = true;
 
 //======================================================================================//
 
-// Typedefs to decouple from library classes
-// Typedefs for numeric types
-//
-// typedef std::complex<double>    complex_d;
-// typedef std::complex<float>     complex_f;
+}  // namespace PTL
 
 // Forward declation of void type argument for usage in direct object
 // persistency to define fake default constructors

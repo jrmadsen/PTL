@@ -33,6 +33,8 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTaskGroup.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 VTask::VTask()

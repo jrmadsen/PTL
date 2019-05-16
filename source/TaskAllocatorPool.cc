@@ -28,6 +28,8 @@
 
 #include "PTL/TaskAllocatorPool.hh"
 
+using namespace PTL;
+
 // ************************************************************
 // TaskAllocatorPool constructor
 // ************************************************************

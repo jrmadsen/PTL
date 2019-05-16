@@ -21,7 +21,7 @@
 // ------------------------------------------------------------
 
 inline void
-Timer::Start()
+PTL::Timer::Start()
 {
     fValidTimes = false;
     times(&fStartTimes);
@@ -29,7 +29,7 @@ Timer::Start()
 }
 
 inline void
-Timer::Stop()
+PTL::Timer::Stop()
 {
     times(&fEndTimes);
     fEndRealTime = clock_type::now();
@@ -37,13 +37,13 @@ Timer::Stop()
 }
 
 inline bool
-Timer::IsValid() const
+PTL::Timer::IsValid() const
 {
     return fValidTimes;
 }
 
 inline const char*
-Timer::GetClockTime() const
+PTL::Timer::GetClockTime() const
 {
     time_t     rawtime;
     struct tm* timeinfo;

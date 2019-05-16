@@ -42,6 +42,8 @@
 #    include <gperftools/profiler.h>
 #endif
 
+using namespace PTL;
+
 //======================================================================================//
 
 inline intmax_t
@@ -52,7 +54,7 @@ ncores()
 
 //======================================================================================//
 
-ThreadPool::thread_id_map_t    ThreadPool::f_thread_ids;
+ThreadPool::thread_id_map_t ThreadPool::f_thread_ids;
 
 //======================================================================================//
 
@@ -80,7 +82,7 @@ ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
         if(!lock.owns_lock())
             lock.lock();
         if(_idx < 0)
-            _idx                                = f_thread_ids.size();
+            _idx = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
     }
     static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
@@ -112,8 +114,8 @@ ThreadPool::GetThisThreadID()
             lock.lock();
         if(f_thread_ids.find(_tid) == f_thread_ids.end())
         {
-            auto _idx              = f_thread_ids.size();
-            f_thread_ids[_tid]     = _idx;
+            auto _idx          = f_thread_ids.size();
+            f_thread_ids[_tid] = _idx;
         }
     }
     return f_thread_ids[_tid];

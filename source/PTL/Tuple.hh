@@ -23,6 +23,8 @@
 #include <tuple>
 #include <type_traits>
 
+namespace PTL
+{
 template <typename _Tp, typename _Up>
 struct SmallerThanT
 {
@@ -442,3 +444,5 @@ apply(Func func, std::tuple<Elements...> const& t)
 {
     return applyImpl(func, t, std::make_index_sequence<N>());
 }
+
+}  // namespace PTL

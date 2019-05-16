@@ -34,6 +34,9 @@
 #include <string>
 #include <tuple>
 
+namespace PTL
+{
+
 //--------------------------------------------------------------------------------------//
 // use this function to get rid of "unused parameter" warnings
 //
@@ -362,3 +365,5 @@ PrintEnv(std::ostream& os = std::cout)
 }
 
 //--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

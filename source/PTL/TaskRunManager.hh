@@ -34,6 +34,8 @@
 #include <list>
 #include <map>
 
+namespace PTL
+{
 class ThreadPool;
 class TaskManager;
 
@@ -97,3 +99,5 @@ protected:
 public:
     virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
 };
+
+}  // namespace PTL

@@ -37,6 +37,8 @@
 #include <type_traits>
 #include <utility>
 
+namespace PTL
+{
 class VTask;
 class VTaskGroup;
 class ThreadPool;
@@ -215,3 +217,5 @@ public:
 protected:
     intmax_t m_workers;
 };
+
+}  // namespace PTL

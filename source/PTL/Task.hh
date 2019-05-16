@@ -38,6 +38,8 @@
 #include <functional>
 #include <stdexcept>
 
+namespace PTL
+{
 class VTaskGroup;
 class ThreadPool;
 
@@ -220,3 +222,5 @@ private:
 };
 
 //======================================================================================//
+
+}  // namespace PTL

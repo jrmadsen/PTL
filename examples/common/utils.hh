@@ -31,6 +31,8 @@
 #include "PTL/Timer.hh"
 #include "PTL/Utility.hh"
 
+using namespace PTL;
+
 // C headers
 #include <cstdlib>  // setenv
 #include <stdlib.h>

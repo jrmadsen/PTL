@@ -28,15 +28,19 @@
 #include <cstdint>
 #include <deque>
 
+#if defined(PTL_USE_TBB)
+#    include <tbb/task_group.h>
+#    include <tbb/task_scheduler_init.h>
+#endif
+
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 
 #if defined(PTL_USE_TBB)
 
-#    include <tbb/task_group.h>
-#    include <tbb/task_scheduler_init.h>
-
-typedef tbb::task_group          tbb_task_group_t;
-typedef tbb::task_scheduler_init tbb_task_scheduler_t;
+typedef ::tbb::task_group          tbb_task_group_t;
+typedef ::tbb::task_scheduler_init tbb_task_scheduler_t;
 
 #else
 
@@ -109,3 +113,5 @@ public:
 };
 
 //--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

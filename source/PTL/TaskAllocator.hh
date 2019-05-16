@@ -38,6 +38,9 @@
 #include "PTL/TaskAllocatorPool.hh"
 #include "PTL/Threading.hh"
 
+namespace PTL
+{
+
 //--------------------------------------------------------------------------------------//
 
 class TaskAllocatorBase
@@ -336,3 +339,5 @@ operator!=(const TaskAllocatorImpl<T1>&, const TaskAllocatorImpl<T2>&) throw()
 {
     return false;
 }
+
+}  // namespace PTL

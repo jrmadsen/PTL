@@ -45,6 +45,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace PTL
+{
 class ThreadPool;
 
 #define _MOVE_MEMBER(_member) _member = std::move(rhs._member)
@@ -156,3 +158,5 @@ VTaskGroup::clear()
 
 // don't pollute
 #undef _MOVE_MEMBER
+
+}  // namespace PTL

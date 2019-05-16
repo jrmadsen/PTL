@@ -36,6 +36,8 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTask.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 std::atomic_uintmax_t&
@@ -98,7 +100,7 @@ VTaskGroup::wait()
         }
     }
 
-    ThreadData*     data  = ThreadData::GetInstance();
+    ThreadData* data = ThreadData::GetInstance();
     if(!data)
         return;
 
@@ -172,7 +174,8 @@ VTaskGroup::wait()
         // while loop protects against spurious wake-ups
         while(is_master && pending() > 0 && is_active_state())
         {
-            //auto _wake = [&]() { return (wake_size > pending() || !is_active_state()); };
+            // auto _wake = [&]() { return (wake_size > pending() || !is_active_state());
+            // };
 
             // lock before sleeping on condition
             if(!_lock.owns_lock())

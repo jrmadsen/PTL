@@ -55,6 +55,9 @@
 #    include <tbb/tbb.h>
 #endif
 
+namespace PTL
+{
+
 class ThreadPool
 {
 public:
@@ -343,3 +346,5 @@ ThreadPool::add_tasks(_List_t& c)
     return c_size;
 }
 //======================================================================================//
+
+}  // namespace PTL

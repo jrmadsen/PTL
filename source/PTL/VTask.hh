@@ -43,6 +43,8 @@
 #include <tuple>
 #include <utility>
 
+namespace PTL
+{
 class VTaskGroup;
 class ThreadPool;
 
@@ -102,3 +104,5 @@ protected:
 };
 
 //======================================================================================//
+
+}  // namespace PTL

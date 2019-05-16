@@ -33,18 +33,21 @@
 #include <functional>
 #include <memory>
 
+#if defined(PTL_USE_TBB)
+#    include <tbb/tbb.h>
+#endif
+
+namespace PTL
+{
 class ThreadPool;
 
 //--------------------------------------------------------------------------------------//
 #if defined(PTL_USE_TBB)
-//--------------------------------------------------------------------------------------//
-
-#    include <tbb/tbb.h>
 
 class ThreadPool;
 namespace
 {
-typedef tbb::task_group tbb_task_group_t;
+typedef ::tbb::task_group tbb_task_group_t;
 }
 
 //--------------------------------------------------------------------------------------//
@@ -224,3 +227,5 @@ using TBBTaskGroup = TaskGroup<_Tp, _Arg>;
 //--------------------------------------------------------------------------------------//
 #endif
 //--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

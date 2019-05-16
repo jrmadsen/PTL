@@ -42,6 +42,8 @@
 #include <cstdint>
 #include <iomanip>
 
+namespace PTL
+{
 //======================================================================================//
 
 class TaskManager
@@ -224,14 +226,15 @@ private:
     static TaskManager*& fgInstance();
 };
 
+}  // namespace PTL
 //======================================================================================//
 
 #include "TaskRunManager.hh"
 
 //--------------------------------------------------------------------------------------//
 
-inline TaskManager*&
-TaskManager::fgInstance()
+inline PTL::TaskManager*&
+PTL::TaskManager::fgInstance()
 {
     static thread_local TaskManager* _instance = nullptr;
     return _instance;
@@ -239,8 +242,8 @@ TaskManager::fgInstance()
 
 //--------------------------------------------------------------------------------------//
 
-inline TaskManager*
-TaskManager::GetInstance()
+inline PTL::TaskManager*
+PTL::TaskManager::GetInstance()
 {
     if(!fgInstance())
     {
@@ -254,15 +257,15 @@ TaskManager::GetInstance()
 
 //--------------------------------------------------------------------------------------//
 
-inline TaskManager*
-TaskManager::GetInstanceIfExists()
+inline PTL::TaskManager*
+PTL::TaskManager::GetInstanceIfExists()
 {
     return fgInstance();
 }
 
 //--------------------------------------------------------------------------------------//
 
-inline TaskManager::TaskManager(ThreadPool* _pool)
+inline PTL::TaskManager::TaskManager(ThreadPool* _pool)
 : m_pool(_pool)
 {
     if(!fgInstance())
@@ -271,7 +274,7 @@ inline TaskManager::TaskManager(ThreadPool* _pool)
 
 //--------------------------------------------------------------------------------------//
 
-inline TaskManager::~TaskManager()
+inline PTL::TaskManager::~TaskManager()
 {
     finalize();
     if(fgInstance() == this)

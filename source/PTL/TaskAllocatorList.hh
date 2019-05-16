@@ -31,6 +31,8 @@
 #include "PTL/Globals.hh"
 #include <vector>
 
+namespace PTL
+{
 class TaskAllocatorBase;
 
 class TaskAllocatorList
@@ -52,3 +54,5 @@ private:
     static TaskAllocatorList*&      fAllocatorList();
     std::vector<TaskAllocatorBase*> fList;
 };
+
+}  // namespace PTL

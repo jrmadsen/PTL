@@ -39,6 +39,8 @@
 #include <type_traits>
 #include <utility>
 
+namespace PTL
+{
 // for pre-C++14 tuple expansion to arguments
 namespace details
 {
@@ -179,3 +181,5 @@ static const short NONINIT = 3;
 }  // namespace thread_pool
 
 //--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

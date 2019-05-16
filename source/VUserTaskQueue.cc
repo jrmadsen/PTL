@@ -28,6 +28,8 @@
 #include "PTL/VUserTaskQueue.hh"
 #include "PTL/TaskRunManager.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)

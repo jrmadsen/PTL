@@ -45,6 +45,8 @@
 #    include <tbb/tbb.h>
 #endif
 
+namespace PTL
+{
 class ThreadPool;
 
 //--------------------------------------------------------------------------------------//
@@ -275,3 +277,5 @@ protected:
     task_list_t m_task_set;
     join_type   m_join;
 };
+
+}  // namespace PTL

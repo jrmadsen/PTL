@@ -38,6 +38,8 @@
 #include <set>
 #include <stack>
 
+namespace PTL
+{
 class VTask;
 class VTaskGroup;
 class TaskSubQueue;  // definition in UserTaskQueue.icc
@@ -108,6 +110,8 @@ private:
     std::vector<int>::iterator m_rand_itr;
 };
 
+}  // namespace PTL
+
 //======================================================================================//
 
 #include "PTL/UserTaskQueue.icc"
@@ -115,23 +119,23 @@ private:
 //======================================================================================//
 
 inline bool
-UserTaskQueue::empty() const
+PTL::UserTaskQueue::empty() const
 {
     return (m_ntasks->load(std::memory_order_relaxed) == 0);
 }
 
 //======================================================================================//
 
-inline UserTaskQueue::size_type
-UserTaskQueue::size() const
+inline PTL::UserTaskQueue::size_type
+PTL::UserTaskQueue::size() const
 {
     return m_ntasks->load(std::memory_order_relaxed);
 }
 
 //======================================================================================//
 
-inline UserTaskQueue::size_type
-UserTaskQueue::bin_size(size_type bin) const
+inline PTL::UserTaskQueue::size_type
+PTL::UserTaskQueue::bin_size(size_type bin) const
 {
     return (*m_subqueues)[bin]->size();
 }
@@ -139,7 +143,7 @@ UserTaskQueue::bin_size(size_type bin) const
 //======================================================================================//
 
 inline bool
-UserTaskQueue::bin_empty(size_type bin) const
+PTL::UserTaskQueue::bin_empty(size_type bin) const
 {
     return (*m_subqueues)[bin]->empty();
 }
@@ -147,7 +151,7 @@ UserTaskQueue::bin_empty(size_type bin) const
 //======================================================================================//
 
 inline bool
-UserTaskQueue::true_empty() const
+PTL::UserTaskQueue::true_empty() const
 {
     for(const auto& itr : *m_subqueues)
         if(!itr->empty())
@@ -157,8 +161,8 @@ UserTaskQueue::true_empty() const
 
 //======================================================================================//
 
-inline UserTaskQueue::size_type
-UserTaskQueue::true_size() const
+inline PTL::UserTaskQueue::size_type
+PTL::UserTaskQueue::true_size() const
 {
     size_type _n = 0;
     for(const auto& itr : *m_subqueues)
