@@ -28,6 +28,8 @@
 #include "macros.hh"
 #include "typedefs.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 //
 //      NVTX macros

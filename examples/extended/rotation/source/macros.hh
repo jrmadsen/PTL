@@ -162,6 +162,8 @@
 #include "PTL/Types.hh"
 #include "PTL/Utility.hh"
 
+using namespace PTL;
+
 //--------------------------------------------------------------------------------------//
 
 #if defined(PTL_USE_CUDA)
