@@ -155,6 +155,8 @@ UserTaskQueue::GetThreadBinTask()
         {
             // run task
             _task = task_subq->PopTask(true);
+            // release the claim on the bin
+            task_subq->ReleaseClaim();
         }
         if(_task)
             --(*m_ntasks);
@@ -315,7 +317,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         ref += i;
         return ref;
     };
-    task_group_type* tg = new task_group_type(join_func);
+    task_group_type* tg = new task_group_type(join_func, tp);
 
     // wait for all threads to finish any work
     // NOTE: will cause deadlock if called from a task
@@ -347,6 +349,9 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         //--------------------------------------------------------------------//
 
         auto _task = tg->wrap(thread_specific_func);
+        //++(*m_ntasks);
+        //TaskSubQueue* task_subq = (*m_subqueues)[i];
+        //task_subq->PushTask(_task);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
 
@@ -378,7 +383,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         ref += i;
         return ref;
     };
-    task_group_type* tg = new task_group_type(join_func);
+    task_group_type* tg = new task_group_type(join_func, tp);
 
     // wait for all threads to finish any work
     // NOTE: will cause deadlock if called from a task

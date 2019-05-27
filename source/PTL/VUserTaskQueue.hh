@@ -215,7 +215,7 @@ public:
     }
 
 protected:
-    intmax_t m_workers;
+    intmax_t m_workers = 0;
 };
 
 }  // namespace PTL

@@ -114,8 +114,8 @@ public:
     template <typename _Ret, typename _Func>
     std::future<_Ret> async(_Func&& func)
     {
-        typedef PackagedTask<_Ret, _Ret> task_type;
-        typedef task_type*               task_pointer;
+        typedef PackagedTask<_Ret> task_type;
+        typedef task_type*         task_pointer;
 
         task_pointer      _ptask = new task_type(std::forward<_Func>(func));
         std::future<_Ret> _f     = _ptask->get_future();

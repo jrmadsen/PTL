@@ -64,12 +64,12 @@ TaskRunManager::GetInstance(bool useTBB)
 //======================================================================================//
 
 TaskRunManager::TaskRunManager(bool useTBB)
-: isInitialized(false)
-, verbose(0)
-, nworkers(std::thread::hardware_concurrency())
-, taskQueue(nullptr)
-, threadPool(nullptr)
-, taskManager(nullptr)
+: m_is_initialized(false)
+, m_verbose(0)
+, m_workers(std::thread::hardware_concurrency())
+, m_task_queue(nullptr)
+, m_thread_pool(nullptr)
+, m_task_manager(nullptr)
 {
     if(!GetPrivateMasterRunManager(false))
     {
@@ -84,14 +84,7 @@ TaskRunManager::TaskRunManager(bool useTBB)
 
     // handle TBB
     ThreadPool::set_use_tbb(useTBB);
-
-    nworkers = GetEnv<uint64_t>("PTL_NUM_THREADS", nworkers);
-
-    /*
-#if defined(PTL_USE_TIMEMORY)
-    tim::manager::instance()->set_get_num_threads_func([=] () { return nworkers;
-}); #endif
-    */
+    m_workers = GetEnv<uint64_t>("PTL_NUM_THREADS", m_workers);
 }
 
 //======================================================================================//
@@ -103,51 +96,45 @@ TaskRunManager::~TaskRunManager() {}
 void
 TaskRunManager::Initialize(uint64_t n)
 {
-    nworkers = n;
+    m_workers = n;
 
     // create threadpool if needed + task manager
-    if(!threadPool)
+    if(!m_thread_pool)
     {
-        if(verbose > 0)
+        if(m_verbose > 0)
             std::cout << "TaskRunManager :: Creating thread pool..." << std::endl;
-        threadPool = new ThreadPool(nworkers, taskQueue);
-        if(verbose > 0)
+        m_thread_pool = new ThreadPool(m_workers, m_task_queue);
+        if(m_verbose > 0)
             std::cout << "TaskRunManager :: Creating task manager..." << std::endl;
-        taskManager = new TaskManager(threadPool);
+        m_task_manager = new TaskManager(m_thread_pool);
     }
     // or resize
-    else if(nworkers != threadPool->size())
+    else if(m_workers != m_thread_pool->size())
     {
-        if(verbose > 0)
+        if(m_verbose > 0)
         {
             std::cout << "TaskRunManager :: Resizing thread pool from "
-                      << threadPool->size() << " to " << nworkers << " threads ..."
+                      << m_thread_pool->size() << " to " << m_workers << " threads ..."
                       << std::endl;
         }
-        threadPool->resize(nworkers);
+        m_thread_pool->resize(m_workers);
     }
 
     // create the joiners
     if(ThreadPool::using_tbb())
     {
-        if(verbose > 0)
+        if(m_verbose > 0)
             std::cout << "TaskRunManager :: Using TBB..." << std::endl;
     }
     else
     {
-        if(verbose > 0)
+        if(m_verbose > 0)
             std::cout << "TaskRunManager :: Using ThreadPool..." << std::endl;
     }
 
-    isInitialized = true;
-    if(verbose > 0)
+    m_is_initialized = true;
+    if(m_verbose > 0)
         std::cout << "TaskRunManager :: initialized..." << std::endl;
-
-    /*
-#if defined(PTL_USE_TIMEMORY)
-    tim::manager::instance()->set_get_num_threads_func([=] () { return nworkers;
-}); #endif
-    */
 }
 
 //======================================================================================//
@@ -155,11 +142,11 @@ TaskRunManager::Initialize(uint64_t n)
 void
 TaskRunManager::Terminate()
 {
-    isInitialized = false;
-    delete taskManager;
-    delete threadPool;
-    taskManager = nullptr;
-    threadPool  = nullptr;
+    m_is_initialized = false;
+    delete m_task_manager;
+    delete m_thread_pool;
+    m_task_manager = nullptr;
+    m_thread_pool  = nullptr;
 }
 
 //======================================================================================//
@@ -178,7 +165,7 @@ TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
 
         if(fname.length() > 0)
         {
-            fname += "_x" + std::to_string(threadPool->size());
+            fname += "_x" + std::to_string(m_thread_pool->size());
             timemory_manager->write_report(fname + ".txt");
             timemory_manager->write_serialization(fname + ".json");
         }

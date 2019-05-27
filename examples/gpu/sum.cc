@@ -271,19 +271,18 @@ cuda_device_query()
         printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
                deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
 
-        const char* sComputeMode[] = {
-            "Default (multiple host threads can use ::cudaSetDevice() with "
-            "device "
-            "simultaneously)",
-            "Exclusive (only one host thread in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Prohibited (no host thread can use ::cudaSetDevice() with this "
-            "device)",
-            "Exclusive Process (many threads in one process is able to use "
-            "::cudaSetDevice() with this device)",
-            "Unknown",
-            NULL
-        };
+        const char* sComputeMode[] =
+            { "Default (multiple host threads can use ::cudaSetDevice() with "
+              "device "
+              "simultaneously)",
+              "Exclusive (only one host thread in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Prohibited (no host thread can use ::cudaSetDevice() with this "
+              "device)",
+              "Exclusive Process (many threads in one process is able to use "
+              "::cudaSetDevice() with this device)",
+              "Unknown",
+              NULL };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }
@@ -411,7 +410,7 @@ compute_sum(farray_t& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_cuda_sum);
 
-    static thread_local uint64_t tid         = ThreadPool::GetThisThreadID();
+    static thread_local uint64_t      tid    = ThreadPool::GetThisThreadID();
     static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[cuda]");
@@ -475,7 +474,7 @@ compute_sum(thrust::host_vector<float>& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_thrust_sum);
 
-    static thread_local uint64_t tid         = ThreadPool::GetThisThreadID();
+    static thread_local uint64_t      tid    = ThreadPool::GetThisThreadID();
     static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[thrust]");

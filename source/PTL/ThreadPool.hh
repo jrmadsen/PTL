@@ -57,7 +57,6 @@
 
 namespace PTL
 {
-
 class ThreadPool
 {
 public:
@@ -77,7 +76,7 @@ public:
     typedef task_type*              task_pointer;
     typedef VUserTaskQueue          task_queue_t;
     // containers
-    typedef std::deque<ThreadId>         thread_list_t;
+    typedef std::deque<ThreadId>          thread_list_t;
     typedef std::vector<bool>             bool_list_t;
     typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
     typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
@@ -151,7 +150,10 @@ public:
     void notify_all();
     void notify(size_type);
     bool is_initialized() const;
-    int  get_active_threads_count() const {return (m_thread_awake) ? m_thread_awake->load() : 0; }
+    int  get_active_threads_count() const
+    {
+        return (m_thread_awake) ? m_thread_awake->load() : 0;
+    }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = f; }
     void set_affinity(intmax_t i, Thread&);
@@ -162,8 +164,8 @@ public:
 
 public:
     // read FORCE_NUM_THREADS environment variable
-    static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
-    static uintmax_t                 GetThisThreadID();
+    static const thread_id_map_t& GetThreadIDs() { return f_thread_ids; }
+    static uintmax_t              GetThisThreadID();
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
@@ -207,8 +209,8 @@ private:
 
 private:
     // Private static variables
-    static thread_id_map_t    f_thread_ids;
-    static bool               f_use_tbb;
+    static thread_id_map_t f_thread_ids;
+    static bool            f_use_tbb;
 };
 
 //--------------------------------------------------------------------------------------//

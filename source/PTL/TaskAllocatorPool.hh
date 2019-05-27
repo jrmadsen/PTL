@@ -38,7 +38,6 @@
 
 namespace PTL
 {
-
 class TaskAllocatorPool
 {
 public:

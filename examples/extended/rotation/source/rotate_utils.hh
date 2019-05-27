@@ -83,11 +83,10 @@ DEFINE_OPENCV_DATA_TYPE(uint16_t, CV_16U)
 inline int
 GetOpenCVInterpolationMode()
 {
-    static EnvChoiceList<int> choices = {
-        EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation")
-    };
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(CPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(CPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(CPU_CUBIC, "CUBIC", "bicubic interpolation") };
     static int eInterp = GetEnv<int>("PTL_OPENCV_INTER", choices,
                                      GetEnv<int>("PTL_INTER", choices, CPU_NN));
     return eInterp;
@@ -252,11 +251,10 @@ ComputeGridDims(const dim3& dims, const dim3& blocks = GetBlockDims())
 inline int
 GetNppInterpolationMode()
 {
-    static EnvChoiceList<int> choices = {
-        EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
-        EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
-        EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation")
-    };
+    static EnvChoiceList<int> choices =
+        { EnvChoice<int>(GPU_NN, "NN", "nearest neighbor interpolation"),
+          EnvChoice<int>(GPU_LINEAR, "LINEAR", "bilinear interpolation"),
+          EnvChoice<int>(GPU_CUBIC, "CUBIC", "bicubic interpolation") };
     static int eInterp =
         GetEnv<int>("PTL_NPP_INTER", choices, GetEnv<int>("PTL_INTER", choices, GPU_NN));
     return eInterp;
