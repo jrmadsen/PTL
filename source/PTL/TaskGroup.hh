@@ -182,13 +182,13 @@ public:
     template <typename _Func, typename... _Args>
     void exec(_Func&& func, _Args&&... args)
     {
-        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<_Func>(func), std::move(args)...));
     }
     //------------------------------------------------------------------------//
     template <typename _Func, typename... _Args>
     void run(_Func&& func, _Args&&... args)
     {
-        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<_Func>(func), std::move(args)...));
     }
 
 protected:

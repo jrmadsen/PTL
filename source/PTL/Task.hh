@@ -87,8 +87,7 @@ public:
     // execution operator
     virtual void operator()() override
     {
-        details::apply(std::forward<packaged_task_type>(m_ptask),
-                       std::forward<tuple_type>(m_args));
+        details::apply(std::move(m_ptask), std::move(m_args));
     }
     future_type  get_future() { return m_ptask.get_future(); }
     virtual bool is_native_task() const override { return true; }
@@ -137,14 +136,21 @@ public:
     {
     }
 
+    template <typename _Func>
+    Task(VTaskGroup* tg, _Func&& func, std::tuple<_Args...>&& args)
+    : VTask(tg)
+    , m_ptask(std::forward<_Func>(func))
+    , m_args(std::forward<std::tuple<_Args...>>(args))
+    {
+    }
+
     virtual ~Task() {}
 
 public:
     // execution operator
     virtual void operator()() override
     {
-        details::apply(std::forward<packaged_task_type>(m_ptask),
-                       std::forward<tuple_type>(m_args));
+        details::apply(std::move(m_ptask), std::move(m_args));
         // decrements the task-group counter on active tasks
         // when the counter is < 2, if the thread owning the task group is
         // sleeping at the TaskGroup::wait(), it signals the thread to wake

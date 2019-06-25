@@ -124,7 +124,7 @@ template <typename _Fn, typename _Tuple, size_t... _Idx>
 static void
 apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 {
-    __f(std::get<_Idx>(std::forward<_Tuple>(__t))...);
+    std::forward<_Fn>(__f)(std::get<_Idx>(std::forward<_Tuple>(__t))...);
 }
 
 //--------------------------------------------------------------------------------------//
