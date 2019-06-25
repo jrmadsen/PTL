@@ -85,14 +85,13 @@ public:
 
 public:
     // Constructor and Destructors
-    ThreadPool(
-        const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-        bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-        const affinity_func_t& = [](intmax_t) {
-            static std::atomic<intmax_t> assigned;
-            intmax_t                     _assign = assigned++;
-            return _assign % Thread::hardware_concurrency();
-        });
+    ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
+               bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               const affinity_func_t& = [](intmax_t) {
+                   static std::atomic<intmax_t> assigned;
+                   intmax_t                     _assign = assigned++;
+                   return _assign % Thread::hardware_concurrency();
+               });
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~ThreadPool();

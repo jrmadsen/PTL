@@ -15,6 +15,11 @@ if(CLANG_FORMATTER)
     set(_Source_DIR     ${PROJECT_SOURCE_DIR}/source)
     set(_Example_DIR    ${PROJECT_SOURCE_DIR}/examples)
 
+    # dummy directory
+    if(NOT PTL_BUILD_EXAMPLES)
+        set(_Example_DIR    ${PROJECT_SOURCE_DIR}/nonexistent)
+    endif()
+
     set(_Header_DIR     ${_Source_DIR}/PTL)
     set(_Basic_DIR      ${_Example_DIR}/basic)
     set(_Common_DIR     ${_Example_DIR}/common)

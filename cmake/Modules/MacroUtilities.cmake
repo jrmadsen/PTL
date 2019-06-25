@@ -891,7 +891,7 @@ macro(BUILD_LIBRARY)
             SOVERSION ${${PROJECT_NAME}_VERSION_MAJOR})
     endif()
 
-    target_link_libraries(${LIB_TARGET_NAME} PUBLIC
+    target_link_libraries(${LIB_TARGET_NAME} PRIVATE
         ${EXTERNAL_LIBRARIES} ${LIB_LINK_LIBRARIES}
         PRIVATE ${PRIVATE_EXTERNAL_LIBRARIES})
 
@@ -903,18 +903,18 @@ macro(BUILD_LIBRARY)
             POSITION_INDEPENDENT_CODE   ON
             ${LIB_EXTRA_ARGS})
 
-    target_compile_definitions(${LIB_TARGET_NAME} PUBLIC
+    target_compile_definitions(${LIB_TARGET_NAME} PRIVATE
         ${${PROJECT_NAME}_DEFINITIONS})
 
     get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
 
     if("CUDA" IN_LIST languages)
-        target_compile_options(${LIB_TARGET_NAME} PUBLIC
+        target_compile_options(${LIB_TARGET_NAME} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
             $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>
             $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS} ${LIB_CUDAFLAGS}>)
     else()
-        target_compile_options(${LIB_TARGET_NAME} PUBLIC
+        target_compile_options(${LIB_TARGET_NAME} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
             $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>)
     endif()
