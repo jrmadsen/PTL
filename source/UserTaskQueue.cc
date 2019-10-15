@@ -350,8 +350,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 
         auto _task = tg->wrap(thread_specific_func);
         //++(*m_ntasks);
-        //TaskSubQueue* task_subq = (*m_subqueues)[i];
-        //task_subq->PushTask(_task);
+        // TaskSubQueue* task_subq = (*m_subqueues)[i];
+        // task_subq->PushTask(_task);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
 
