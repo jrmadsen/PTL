@@ -38,8 +38,8 @@
 #include <functional>
 #include <stdexcept>
 
-#define _forward_args_t(_Args, _args) std::forward<_Args>(_args)...
-
+namespace PTL
+{
 class VTaskGroup;
 class ThreadPool;
 
@@ -51,7 +51,6 @@ class PackagedTask : public VTask
 {
 public:
     typedef PackagedTask<_Ret, _Args...>       this_type;
-    typedef std::function<_Ret(_Args...)>      function_type;
     typedef std::promise<_Ret>                 promise_type;
     typedef std::future<_Ret>                  future_type;
     typedef std::packaged_task<_Ret(_Args...)> packaged_task_type;
@@ -60,23 +59,26 @@ public:
 
 public:
     // pass a free function pointer
-    PackagedTask(function_type&& func, _Args&&... args)
+    template <typename _Func>
+    PackagedTask(_Func&& func, _Args&&... args)
     : VTask()
-    , m_ptask(func)
+    , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
 
-    PackagedTask(VTaskGroup* group, function_type&& func, _Args&&... args)
-    : VTask(group)
-    , m_ptask(func)
+    template <typename _Func>
+    PackagedTask(VTaskGroup* tg, _Func&& func, _Args&&... args)
+    : VTask(tg)
+    , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
 
-    PackagedTask(ThreadPool* pool, function_type&& func, _Args&&... args)
+    template <typename _Func>
+    PackagedTask(ThreadPool* pool, _Func&& func, _Args&&... args)
     : VTask(pool)
-    , m_ptask(func)
+    , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
@@ -106,7 +108,6 @@ class Task : public VTask
 {
 public:
     typedef Task<_Ret, _Args...>               this_type;
-    typedef std::function<_Ret(_Args...)>      function_type;
     typedef std::promise<_Ret>                 promise_type;
     typedef std::future<_Ret>                  future_type;
     typedef std::packaged_task<_Ret(_Args...)> packaged_task_type;
@@ -114,23 +115,26 @@ public:
     typedef std::tuple<_Args...>               tuple_type;
 
 public:
-    Task(function_type&& func, _Args&&... args)
+    template <typename _Func>
+    Task(_Func&& func, _Args&&... args)
     : VTask()
-    , m_ptask(func)
+    , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
 
-    Task(VTaskGroup* group, function_type&& func, _Args&&... args)
-    : VTask(group)
-    , m_ptask(func)
+    template <typename _Func>
+    Task(VTaskGroup* tg, _Func&& func, _Args&&... args)
+    : VTask(tg)
+    , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
 
-    Task(ThreadPool* pool, function_type&& func, _Args&&... args)
-    : VTask(pool)
-    , m_ptask(func)
+    template <typename _Func>
+    Task(ThreadPool* tp, _Func&& func, _Args&&... args)
+    : VTask(tp)
+    , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {
     }
@@ -168,28 +172,30 @@ class Task<void, void> : public VTask
 public:
     typedef void                       _Ret;
     typedef Task<void, void>           this_type;
-    typedef std::function<_Ret()>      function_type;
     typedef std::promise<_Ret>         promise_type;
     typedef std::future<_Ret>          future_type;
     typedef std::packaged_task<_Ret()> packaged_task_type;
     typedef _Ret                       result_type;
 
 public:
-    explicit Task(function_type&& func)
+    template <typename _Func>
+    explicit Task(_Func&& func)
     : VTask()
-    , m_ptask(func)
+    , m_ptask(std::forward<_Func>(func))
     {
     }
 
-    Task(VTaskGroup* group, function_type&& func)
-    : VTask(group)
-    , m_ptask(func)
+    template <typename _Func>
+    Task(VTaskGroup* tg, _Func&& func)
+    : VTask(tg)
+    , m_ptask(std::forward<_Func>(func))
     {
     }
 
-    Task(ThreadPool* pool, function_type&& func)
-    : VTask(pool)
-    , m_ptask(func)
+    template <typename _Func>
+    Task(ThreadPool* tp, _Func&& func)
+    : VTask(tp)
+    , m_ptask(std::forward<_Func>(func))
     {
     }
 
@@ -217,5 +223,4 @@ private:
 
 //======================================================================================//
 
-// don't pollute
-#undef _forward_args_t
+}  // namespace PTL

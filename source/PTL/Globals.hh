@@ -39,11 +39,16 @@
 #include <type_traits>
 #include <utility>
 
+namespace PTL
+{
 // for pre-C++14 tuple expansion to arguments
 namespace details
 {
+//--------------------------------------------------------------------------------------//
+
 namespace impl
 {
+//--------------------------------------------------------------------------------------//
 // Stores a tuple of indices.  Used by tuple and pair, and by bind() to
 // extract the elements in a tuple.
 template <size_t... _Indexes>
@@ -123,10 +128,30 @@ apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 {
     __f(std::get<_Idx>(std::forward<_Tuple>(__t))...);
 }
-}
 
-template <class T>
+//--------------------------------------------------------------------------------------//
+
+}  // namespace impl
+
+//--------------------------------------------------------------------------------------//
+
+template <typename T>
 using decay_t = typename std::decay<T>::type;
+
+template <bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
+/// Alias template index_sequence
+template <size_t... _Idx>
+using index_sequence = impl::integer_sequence<size_t, _Idx...>;
+
+/// Alias template make_index_sequence
+template <size_t _Num>
+using make_index_sequence = impl::make_integer_sequence<size_t, _Num>;
+
+/// Alias template index_sequence_for
+template <typename... _Types>
+using index_sequence_for = impl::make_index_sequence<sizeof...(_Types)>;
 
 template <typename _Fn, typename _Tuple,
           std::size_t _N    = std::tuple_size<decay_t<_Tuple>>::value,
@@ -137,4 +162,24 @@ apply(_Fn&& __f, _Tuple&& __t)
     impl::apply<_Fn, _Tuple>(std::forward<_Fn>(__f), std::forward<_Tuple>(__t),
                              _Indices{});
 }
-}
+
+//--------------------------------------------------------------------------------------//
+
+}  // namespace details
+
+namespace thread_pool
+{
+namespace state
+{
+static const short STARTED = 0;
+static const short PARTIAL = 1;
+static const short STOPPED = 2;
+static const short NONINIT = 3;
+
+}  // namespace state
+
+}  // namespace thread_pool
+
+//--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

@@ -14,12 +14,11 @@ endif()
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0042 NEW)
 
-# Check if pybind11 is being used directly or via add_subdirectory
+# Check if project is being used directly or via add_subdirectory
 set(PTL_MASTER_PROJECT ON)
 if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(PTL_MASTER_PROJECT OFF)
 endif()
-
 
 ################################################################################
 #   version
@@ -39,6 +38,7 @@ if(NOT PTL_MASTER_PROJECT)
     unset(${PROJECT_NAME}_C_FLAGS CACHE)
     unset(${PROJECT_NAME}_CXX_FLAGS CACHE)
 endif()
+set(CMAKE_DIRECTORY_LABELS "PTL")
 
 ################################################################################
 #

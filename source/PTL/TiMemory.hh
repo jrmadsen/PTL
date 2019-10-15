@@ -26,10 +26,14 @@
 
 #include "Globals.hh"
 
+#ifdef PTL_USE_TIMEMORY
+#    include <timemory/timemory.hpp>
+#endif
+
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 #ifdef PTL_USE_TIMEMORY
-
-#    include <timemory/timemory.hpp>
 
 typedef tim::auto_timer AutoTimer;
 
@@ -62,3 +66,5 @@ InitializeTiMemory()
 
 #endif
 //--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

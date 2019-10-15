@@ -15,7 +15,6 @@ include_directories(${EXTERNAL_INCLUDE_DIRS})
 if(NOT DEFINED common_headers)
     get_filename_component(COMMON_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
     include_directories(${COMMON_DIR})
-    file(GLOB common_headers ${COMMON_DIR}/*.hh)
 endif()
 
 
@@ -39,14 +38,14 @@ if(PTL_USE_CUDA)
     cuda_add_library(sum STATIC sum.cc sum.h sum.hh sum.cu)
     target_link_libraries(sum ${EXTERNAL_CUDA_LIBRARIES})
 
-    cuda_add_executable(gpu_tasking gpu_tasking.cc ${headers} ${common_headers})
+    cuda_add_executable(gpu_tasking gpu_tasking.cc ${headers})
     target_link_libraries(gpu_tasking sum ${EXTERNAL_LIBRARIES})
     set_target_properties(gpu_tasking
         PROPERTIES COMPILE_DEFINITIONS USE_CUDA_TASKS)
     install(TARGETS gpu_tasking DESTINATION bin)
 
     if(PTL_USE_TBB)
-        add_executable(gpu_tbb_tasking gpu_tasking.cc ${headers} ${common_headers})
+        add_executable(gpu_tbb_tasking gpu_tasking.cc ${headers})
         set_target_properties(gpu_tbb_tasking
             PROPERTIES COMPILE_DEFINITIONS "USE_TBB_TASKS")
         target_link_libraries(gpu_tbb_tasking sum ${EXTERNAL_LIBRARIES})

@@ -45,6 +45,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace PTL
+{
 class ThreadPool;
 
 #define _MOVE_MEMBER(_member) _member = std::move(rhs._member)
@@ -65,7 +67,7 @@ public:
     typedef std::atomic_intmax_t         atomic_int;
     typedef std::atomic_uintmax_t        atomic_uint;
     typedef Condition                    condition_t;
-    typedef std::shared_ptr<task_type>   task_pointer;
+    typedef task_type*                   task_pointer;
     typedef container_type<task_pointer> vtask_list_type;
 
 public:
@@ -112,13 +114,15 @@ public:
     ThreadPool*& pool() { return m_pool; }
     ThreadPool*  pool() const { return m_pool; }
 
-    virtual void clear() { vtask_list.clear(); }
+    void         clear();
     virtual bool is_native_task_group() const { return true; }
     virtual bool is_master() const { return this_tid() == m_main_tid; }
 
     //------------------------------------------------------------------------//
     // check if any tasks are still pending
     virtual intmax_t pending() { return m_tot_task_count.load(); }
+
+    static void set_verbose(int level) { f_verbose = level; }
 
 protected:
     //------------------------------------------------------------------------//
@@ -130,10 +134,6 @@ protected:
     atomic_int&       task_count() { return m_tot_task_count; }
     const atomic_int& task_count() const { return m_tot_task_count; }
 
-    //------------------------------------------------------------------------//
-    // process tasks in personal bin
-    void execute_this_threads_tasks();
-
 protected:
     // Private variables
     atomic_int      m_tot_task_count;
@@ -143,17 +143,20 @@ protected:
     lock_t          m_task_lock;
     tid_type        m_main_tid;
     vtask_list_type vtask_list;
-
-protected:
-    enum class state : int
-    {
-        STARTED = 0,
-        STOPPED = 1,
-        NONINIT = 2
-    };
+    static int      f_verbose;
 };
+
+inline void
+VTaskGroup::clear()
+{
+    for(auto& itr : vtask_list)
+        delete itr;
+    vtask_list.clear();
+}
 
 //--------------------------------------------------------------------------------------//
 
 // don't pollute
 #undef _MOVE_MEMBER
+
+}  // namespace PTL

@@ -24,6 +24,8 @@
 #include "PTL/TaskAllocator.hh"
 #include "PTL/TaskAllocatorList.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 TaskAllocatorBase::TaskAllocatorBase()

@@ -33,6 +33,8 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTaskGroup.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 VTask::VTask()
@@ -44,19 +46,19 @@ VTask::VTask()
 
 //======================================================================================//
 
-VTask::VTask(VTaskGroup* group)
+VTask::VTask(VTaskGroup* task_group)
 : m_depth(0)
-, m_group(group)
-, m_pool((m_group) ? group->pool() : nullptr)
+, m_group(task_group)
+, m_pool((m_group) ? task_group->pool() : nullptr)
 {
 }
 
 //======================================================================================//
 
-VTask::VTask(ThreadPool* pool)
+VTask::VTask(ThreadPool* tp)
 : m_depth(0)
 , m_group(nullptr)
-, m_pool(pool)
+, m_pool(tp)
 {
 }
 

@@ -67,7 +67,7 @@
 
 #pragma once
 
-#ifndef WIN32
+#if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
 #    include <sys/times.h>
 #    include <unistd.h>
 #else
@@ -96,9 +96,10 @@ extern "C"
 #endif /* WIN32 */
 
 #include "PTL/Types.hh"
-
 #include <chrono>
 
+namespace PTL
+{
 class Timer
 {
     typedef std::chrono::high_resolution_clock clock_type;
@@ -121,7 +122,9 @@ private:
     tms                                 fStartTimes, fEndTimes;
 };
 
+}  // namespace PTL
+
 std::ostream&
-operator<<(std::ostream& os, const Timer& t);
+operator<<(std::ostream& os, const PTL::Timer& t);
 
 #include "PTL/Timer.icc"

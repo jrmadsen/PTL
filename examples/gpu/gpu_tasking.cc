@@ -36,7 +36,7 @@
 ThreadPool*&
 GetGpuPool()
 {
-    ThreadLocalStatic ThreadPool* _instance = nullptr;
+    static thread_local ThreadPool* _instance = nullptr;
     return _instance;
 }
 
@@ -45,7 +45,7 @@ GetGpuPool()
 TaskManager*&
 GetGpuManager()
 {
-    ThreadLocalStatic TaskManager* _instance = nullptr;
+    static thread_local TaskManager* _instance = nullptr;
     return _instance;
 }
 

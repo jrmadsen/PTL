@@ -36,6 +36,8 @@
 
 #pragma once
 
+namespace PTL
+{
 class TaskAllocatorPool
 {
 public:
@@ -167,3 +169,5 @@ TaskAllocatorPool::GrowPageSize(unsigned int sz)
 {
     csize = (sz) ? sz * csize : csize;
 }
+
+}  // namespace PTL

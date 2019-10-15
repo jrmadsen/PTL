@@ -38,6 +38,8 @@
 #include "PTL/TaskAllocatorPool.hh"
 #include "PTL/Threading.hh"
 
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 
 class TaskAllocatorBase
@@ -198,7 +200,7 @@ private:
     static allocator_type* get_allocator()
     {
         typedef std::unique_ptr<allocator_type> allocator_ptr;
-        ThreadLocalStatic allocator_ptr _allocator = allocator_ptr(new allocator_type);
+        static thread_local allocator_ptr _allocator = allocator_ptr(new allocator_type);
         return _allocator.get();
     }
 };
@@ -336,3 +338,5 @@ operator!=(const TaskAllocatorImpl<T1>&, const TaskAllocatorImpl<T2>&) throw()
 {
     return false;
 }
+
+}  // namespace PTL

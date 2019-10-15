@@ -55,6 +55,8 @@
 #    include <tbb/tbb.h>
 #endif
 
+namespace PTL
+{
 class ThreadPool
 {
 public:
@@ -65,16 +67,16 @@ public:
     typedef size_t                size_type;
     typedef std::atomic_uintmax_t task_count_type;
     typedef std::atomic_uintmax_t atomic_int_type;
-    typedef std::atomic<int>      pool_state_type;
-    typedef std::atomic<bool>     atomic_bool_type;
+    typedef std::atomic_short     pool_state_type;
+    typedef std::atomic_bool      atomic_bool_type;
     // objects
-    typedef VTask                      task_type;
-    typedef Mutex                      lock_t;
-    typedef std::condition_variable    condition_t;
-    typedef std::shared_ptr<task_type> task_pointer;
-    typedef VUserTaskQueue             task_queue_t;
+    typedef VTask                   task_type;
+    typedef Mutex                   lock_t;
+    typedef std::condition_variable condition_t;
+    typedef task_type*              task_pointer;
+    typedef VUserTaskQueue          task_queue_t;
     // containers
-    typedef std::vector<Thread*>          thread_list_t;
+    typedef std::deque<ThreadId>          thread_list_t;
     typedef std::vector<bool>             bool_list_t;
     typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
     typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
@@ -113,7 +115,7 @@ public:
 
 public:
     // add tasks for threads to process
-    size_type add_task(const task_pointer& task, int bin = -1);
+    size_type add_task(task_pointer&& task, int bin = -1);
     // size_type add_thread_task(ThreadId id, task_pointer&& task);
     // add a generic container with iterator
     template <typename _List_t>
@@ -142,39 +144,37 @@ public:
     // set the thread pool size
     void resize(size_type _n);
     // affinity assigns threads to cores, assignment at constructor
-    bool      using_affinity() const { return m_use_affinity; }
-    bool      is_alive() { return m_alive_flag.load(); }
-    void      notify();
-    void      notify_all();
-    void      notify(size_type);
-    bool      is_initialized() const;
-    int       get_active_threads_count() const { return m_thread_awake->load(); }
-    size_type get_recursive_limit() const { return m_recursive_limit; }
-    void      set_recursive_limit(const size_type& val) { m_recursive_limit = val; }
+    bool using_affinity() const { return m_use_affinity; }
+    bool is_alive() { return m_alive_flag.load(); }
+    void notify();
+    void notify_all();
+    void notify(size_type);
+    bool is_initialized() const;
+    int  get_active_threads_count() const
+    {
+        return (m_thread_awake) ? m_thread_awake->load() : 0;
+    }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = f; }
-    void set_affinity(intmax_t);
+    void set_affinity(intmax_t i, Thread&);
 
     void SetVerbose(int n) { m_verbose = n; }
     int  GetVerbose() const { return m_verbose; }
-    bool query_create_task() const;
     bool is_master() const { return ThisThread::get_id() == m_master_tid; }
 
 public:
     // read FORCE_NUM_THREADS environment variable
-    static intmax_t                  GetEnvNumThreads(intmax_t _default = -1);
-    static const thread_id_map_t&    GetThreadIDs() { return f_thread_ids; }
-    static const thread_index_map_t& GetThreadIndexes() { return f_thread_indexes; }
-    static uintmax_t                 GetThisThreadID();
+    static const thread_id_map_t& GetThreadIDs() { return f_thread_ids; }
+    static uintmax_t              GetThisThreadID();
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
     int  insert(const task_pointer&, int = -1);
-    int  run_on_this(const task_pointer&);
+    int  run_on_this(task_pointer&&);
 
 protected:
     // called in THREAD INIT
-    static void start_thread(ThreadPool*);
+    static void start_thread(ThreadPool*, intmax_t = -1);
 
 private:
     // Private variables
@@ -184,7 +184,6 @@ private:
     atomic_bool_type m_alive_flag;
     int              m_verbose;
     size_type        m_pool_size;
-    size_type        m_recursive_limit;
     pool_state_type  m_pool_state;
     ThreadId         m_master_tid;
     atomic_int_type* m_thread_awake;
@@ -210,29 +209,115 @@ private:
 
 private:
     // Private static variables
-    static thread_id_map_t    f_thread_ids;
-    static thread_index_map_t f_thread_indexes;
-    static bool               f_use_tbb;
+    static thread_id_map_t f_thread_ids;
+    static bool            f_use_tbb;
 };
 
 //--------------------------------------------------------------------------------------//
-inline Thread*
-ThreadPool::get_thread(size_type _n) const
+inline void
+ThreadPool::notify()
 {
-    return (_n < m_main_threads.size()) ? m_main_threads[_n] : nullptr;
+    // wake up one thread that is waiting for a task to be available
+    if(m_thread_awake && m_thread_awake->load() < m_pool_size)
+    {
+        AutoLock l(m_task_lock);
+        m_task_cond.notify_one();
+    }
 }
 //--------------------------------------------------------------------------------------//
-inline Thread*
-ThreadPool::get_thread(ThreadId id) const
+inline void
+ThreadPool::notify_all()
 {
-    for(const auto& itr : m_main_threads)
-        if(itr->get_id() == id)
-            return itr;
-    return nullptr;
+    // wake all threads
+    AutoLock l(m_task_lock);
+    m_task_cond.notify_all();
+}
+//--------------------------------------------------------------------------------------//
+inline void
+ThreadPool::notify(size_type ntasks)
+{
+    if(ntasks == 0)
+        return;
+
+    // wake up as many threads that tasks just added
+    if(m_thread_awake && m_thread_awake->load() < m_pool_size)
+    {
+        AutoLock l(m_task_lock);
+        if(ntasks < this->size())
+        {
+            for(size_type i = 0; i < ntasks; ++i)
+                m_task_cond.notify_one();
+        }
+        else
+            m_task_cond.notify_all();
+    }
+}
+//--------------------------------------------------------------------------------------//
+// local function for getting the tbb task scheduler
+inline tbb_task_scheduler_t*&
+ThreadPool::tbb_task_scheduler()
+{
+    static thread_local tbb_task_scheduler_t* _instance = nullptr;
+    return _instance;
+}
+//--------------------------------------------------------------------------------------//
+inline void
+ThreadPool::resize(size_type _n)
+{
+    if(_n == m_pool_size)
+        return;
+    initialize_threadpool(_n);
+    m_task_queue->resize(static_cast<intmax_t>(_n));
+}
+//--------------------------------------------------------------------------------------//
+inline int
+ThreadPool::run_on_this(task_pointer&& task)
+{
+    auto _func = [=]() {
+        (*task)();
+        if(!task->group())
+            delete task;
+    };
+
+    if(m_tbb_tp && m_tbb_task_group)
+    {
+        m_tbb_task_group->run(_func);
+    }
+    else
+    {
+        _func();
+    }
+    // return the number of tasks added to task-list
+    return 0;
+}
+//--------------------------------------------------------------------------------------//
+inline int
+ThreadPool::insert(const task_pointer& task, int bin)
+{
+    static thread_local ThreadData* _data = ThreadData::GetInstance();
+
+    // pass the task to the queue
+    auto ibin = m_task_queue->InsertTask(task, _data, bin);
+    notify();
+    return ibin;
+}
+//--------------------------------------------------------------------------------------//
+inline ThreadPool::size_type
+ThreadPool::add_task(task_pointer&& task, int bin)
+{
+    // if not native (i.e. TBB) then return
+    if(!std::forward<task_pointer>(task)->is_native_task())
+        return 0;
+
+    // if we haven't built thread-pool, just execute
+    if(!m_alive_flag.load())
+        return static_cast<size_type>(run_on_this(std::forward<task_pointer>(task)));
+
+    return static_cast<size_type>(insert(std::forward<task_pointer>(task), bin));
 }
 //--------------------------------------------------------------------------------------//
 template <typename _List_t>
-ThreadPool::size_type
+inline ThreadPool::size_type
 ThreadPool::add_tasks(_List_t& c)
 {
     if(!m_alive_flag)  // if we haven't built thread-pool, just execute
@@ -262,66 +347,6 @@ ThreadPool::add_tasks(_List_t& c)
 
     return c_size;
 }
-//--------------------------------------------------------------------------------------//
-inline void
-ThreadPool::notify()
-{
-    // wake up one thread that is waiting for a task to be available
-    if(m_thread_awake->load() < m_pool_size)
-    {
-        AutoLock l(m_task_lock);
-        m_task_cond.notify_one();
-    }
-}
-//--------------------------------------------------------------------------------------//
-inline void
-ThreadPool::notify_all()
-{
-    // wake all threads
-    AutoLock l(m_task_lock);
-    m_task_cond.notify_all();
-}
-//--------------------------------------------------------------------------------------//
-inline void
-ThreadPool::notify(size_type ntasks)
-{
-    if(ntasks == 0)
-        return;
-
-    // wake up as many threads that tasks just added
-    if(m_thread_awake->load() < m_pool_size)
-    {
-        AutoLock l(m_task_lock);
-        if(ntasks < this->size())
-        {
-            for(size_type i = 0; i < ntasks; ++i)
-                m_task_cond.notify_one();
-        }
-        else
-            m_task_cond.notify_all();
-    }
-}
-//--------------------------------------------------------------------------------------//
-// local function for getting the tbb task scheduler
-inline tbb_task_scheduler_t*&
-ThreadPool::tbb_task_scheduler()
-{
-    ThreadLocalStatic tbb_task_scheduler_t* _instance = nullptr;
-    return _instance;
-}
-//--------------------------------------------------------------------------------------//
-// run directly or not
-inline bool
-ThreadPool::query_create_task() const
-{
-    ThreadData* _data = ThreadData::GetInstance();
-    if(!_data->is_master && _data->within_task)
-    {
-        return (static_cast<uintmax_t>(_data->task_depth) < get_recursive_limit())
-                   ? true
-                   : false;
-    }
-    return true;
-}
-
 //======================================================================================//
+
+}  // namespace PTL

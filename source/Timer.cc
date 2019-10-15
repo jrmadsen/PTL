@@ -27,13 +27,15 @@
 #include <iomanip>
 #include <stdexcept>
 
+using namespace PTL;
+
 #if defined(IRIX6_2)
 #    if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED == 1)
 #        define __vfork vfork
 #    endif
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 #    include <sys/types.h>
 #    include <windows.h>
 
@@ -86,7 +88,7 @@ times(struct tms* t)
 
 // Print timer status n std::ostream
 std::ostream&
-operator<<(std::ostream& os, const Timer& t)
+operator<<(std::ostream& os, const PTL::Timer& t)
 {
     // so fixed doesn't propagate
     std::stringstream ss;

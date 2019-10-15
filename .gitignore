@@ -38,7 +38,12 @@
 # Build folders
 /build-*
 /install-*
+/build*
+/install*
+/*-build
+/*-install
 
 # Edit files
 *~
 *.bak
+

@@ -43,6 +43,8 @@
 #include <tuple>
 #include <utility>
 
+namespace PTL
+{
 class VTaskGroup;
 class ThreadPool;
 
@@ -62,7 +64,7 @@ public:
 
 public:
     VTask();
-    explicit VTask(VTaskGroup* group);
+    explicit VTask(VTaskGroup* task_group);
     explicit VTask(ThreadPool* pool);
     virtual ~VTask();
 
@@ -75,6 +77,7 @@ public:
     void                operator--();
     virtual bool        is_native_task() const;
     virtual ThreadPool* pool() const;
+    VTaskGroup*         group() const { return m_group; }
 
 public:
     // used by task tree
@@ -101,3 +104,5 @@ protected:
 };
 
 //======================================================================================//
+
+}  // namespace PTL

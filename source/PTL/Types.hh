@@ -21,7 +21,7 @@
 
 #pragma once
 
-#ifdef WIN32
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 // Disable warning C4786 on WIN32 architectures:
 // identifier was truncated to '255' characters
 // in the debug information
@@ -56,10 +56,8 @@
 #include <complex>
 #include <limits>
 
-// Definitions for Thread Local Storage
-//
-#include "PTL/ThreadLocalStatic.hh"
-
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 
 template <typename CountedType>
@@ -155,11 +153,7 @@ bool CountedObject<CountedType>::fenabled = true;
 
 //======================================================================================//
 
-// Typedefs to decouple from library classes
-// Typedefs for numeric types
-//
-// typedef std::complex<double>    complex_d;
-// typedef std::complex<float>     complex_f;
+}  // namespace PTL
 
 // Forward declation of void type argument for usage in direct object
 // persistency to define fake default constructors

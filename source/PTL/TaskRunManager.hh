@@ -34,6 +34,8 @@
 #include <list>
 #include <map>
 
+namespace PTL
+{
 class ThreadPool;
 class TaskManager;
 
@@ -48,7 +50,7 @@ public:
 
 public:
     // Parameters:
-    //      taskQueue: provide a custom task queue
+    //      m_task_queue: provide a custom task queue
     //      useTBB: only relevant if PTL_USE_TBB defined
     //      grainsize:  0 = auto
     explicit TaskRunManager(bool useTBB = false);
@@ -57,22 +59,22 @@ public:
 public:
     virtual int GetNumberOfThreads() const
     {
-        return (threadPool) ? threadPool->size() : 0;
+        return (m_thread_pool) ? m_thread_pool->size() : 0;
     }
     virtual size_t GetNumberActiveThreads() const
     {
-        return (threadPool) ? threadPool->size() : 0;
+        return (m_thread_pool) ? m_thread_pool->size() : 0;
     }
 
 public:
     // Inherited methods to re-implement for MT case
     virtual void Initialize(uint64_t n = std::thread::hardware_concurrency());
     virtual void Terminate();
-    ThreadPool*  GetThreadPool() const { return threadPool; }
-    TaskManager* GetTaskManager() const { return taskManager; }
-    bool         IsInitialized() const { return isInitialized; }
-    int          GetVerbose() const { return verbose; }
-    void         SetVerbose(int val) { verbose = val; }
+    ThreadPool*  GetThreadPool() const { return m_thread_pool; }
+    TaskManager* GetTaskManager() const { return m_task_manager; }
+    bool         IsInitialized() const { return m_is_initialized; }
+    int          GetVerbose() const { return m_verbose; }
+    void         SetVerbose(int val) { m_verbose = val; }
 
 private:
     // grainsize
@@ -87,13 +89,15 @@ private:
 
 protected:
     // Barriers: synch points between master and workers
-    bool            isInitialized;
-    int             verbose;
-    uint64_t        nworkers;
-    VUserTaskQueue* taskQueue;
-    ThreadPool*     threadPool;
-    TaskManager*    taskManager;
+    bool            m_is_initialized = false;
+    int             m_verbose        = 0;
+    uint64_t        m_workers        = 0;
+    VUserTaskQueue* m_task_queue     = nullptr;
+    ThreadPool*     m_thread_pool    = nullptr;
+    TaskManager*    m_task_manager   = nullptr;
 
 public:
     virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
 };
+
+}  // namespace PTL

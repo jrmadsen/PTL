@@ -30,6 +30,8 @@
 
 #include <cassert>
 
+using namespace PTL;
+
 //======================================================================================//
 
 UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
@@ -125,7 +127,7 @@ intmax_t
 UserTaskQueue::GetThreadBin() const
 {
     // get a thread id number
-    ThreadLocalStatic intmax_t tl_bin =
+    static thread_local intmax_t tl_bin =
         (m_thread_bin + ThreadPool::GetThisThreadID()) % (m_workers + 1);
     return tl_bin;
 }
@@ -135,37 +137,64 @@ UserTaskQueue::GetThreadBin() const
 intmax_t
 UserTaskQueue::GetInsertBin() const
 {
-    // return (m_is_clone)
-    //        ? ((m_insert_bin) % (m_workers + 1))
-    //        : ((++m_insert_bin) % (m_workers + 1));
-    return ++m_insert_bin;
+    return (++m_insert_bin % (m_workers + 1));
 }
 
 //======================================================================================//
 
-void
+UserTaskQueue::task_pointer
+UserTaskQueue::GetThreadBinTask()
+{
+    intmax_t      tbin      = GetThreadBin();
+    TaskSubQueue* task_subq = (*m_subqueues)[tbin % (m_workers + 1)];
+    task_pointer  _task     = nullptr;
+
+    //------------------------------------------------------------------------//
+    auto get_task = [&]() {
+        if(task_subq->AcquireClaim())
+        {
+            // run task
+            _task = task_subq->PopTask(true);
+            // release the claim on the bin
+            task_subq->ReleaseClaim();
+        }
+        if(_task)
+            --(*m_ntasks);
+        // return success if valid pointer
+        return (_task != nullptr);
+    };
+    //------------------------------------------------------------------------//
+
+    // while not empty
+    while(!task_subq->empty())
+    {
+        if(get_task())
+            break;
+    }
+    return _task;
+}
+
+//======================================================================================//
+
+UserTaskQueue::task_pointer
 UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 {
-    bool spin = m_hold->load(std::memory_order_relaxed);
-    // bool recursive = (nitr < 0);
-
     // exit if empty
     if(this->true_empty())
-        return;
-
-    // if not greater than zero, set to number of workers + 1
-    if(nitr < 1)
-        nitr = (m_workers + 1);
-
-    intmax_t tbin = GetThreadBin();
-    // subq is -1 unless specified so unless specified, a thread always
-    // looks in its own unique bin first
-    intmax_t n = (subq < 0) ? tbin : subq;
+        return nullptr;
 
     // ensure the thread has a bin assignment
-    if(!(subq < 0))
-        GetThreadBin();
+    intmax_t tbin = GetThreadBin();
+    intmax_t n    = (subq < 0) ? tbin : subq;
+    if(nitr < 1)
+        nitr = (m_workers + 1);  // * m_ntasks->load(std::memory_order_relaxed);
 
+    if(m_hold->load(std::memory_order_relaxed))
+    {
+        return GetThreadBinTask();
+    }
+
+    task_pointer _task = nullptr;
     //------------------------------------------------------------------------//
     auto get_task = [&](intmax_t _n) {
         TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
@@ -174,58 +203,50 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
         if(!task_subq->empty() && task_subq->AcquireClaim())
         {
             // pop task out of bin
-            task_subq->PopTask(n == tbin);
-            // debug
-            // printf("> Acquired task from bin %li [thread bin: %li]\n", _n,
-            // tbin);
-            return true;
+            _task = task_subq->PopTask(n == tbin);
+            // release the claim on the bin
+            task_subq->ReleaseClaim();
         }
-        return false;
+        if(_task)
+            --(*m_ntasks);
+        // return success if valid pointer
+        return (_task != nullptr);
     };
     //------------------------------------------------------------------------//
 
-    if(spin)
-    {
-        // if not in "hold/spin mode" (thread only processes tasks in its queue)
-        // then start looking in other bins for work to steal
-        for(intmax_t i = 0; i < nitr; ++i)
-            if(get_task(n % (m_workers + 1)))
-                return;
-        return;
-    }
-
-    // if(get_task(m_subqueues->at(GetRandomBin())))
-    //    return _task;
-
     // there are num_workers+1 bins so there is always a bin that is open
     // execute num_workers+2 iterations so the thread checks its bin twice
-    for(intmax_t i = 0; i < nitr; ++i, ++n)
+    // while(!empty())
     {
-        if(get_task(n % (m_workers + 1)))
-            return;
+        for(intmax_t i = 0; i < nitr; ++i, ++n)
+        {
+            if(get_task(n % (m_workers + 1)))
+                return _task;
+        }
     }
 
     // only reached if looped over all bins (and looked in own bin twice)
     // and found no work so return an empty task and the thread will be put to
     // sleep if there is still no work by the time it reaches its
     // condition variable
-    return;
+    return _task;
 }
 
 //======================================================================================//
 
 intmax_t
-UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
+UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
 {
     // skip increment here (handled externally)
     ++(*m_ntasks);
 
-    bool spin = m_hold->load(std::memory_order_relaxed);
+    bool     spin = m_hold->load(std::memory_order_relaxed);
+    intmax_t tbin = GetThreadBin();
 
     if(data && data->within_task)
     {
-        subq = GetThreadBin();
-        spin = true;
+        subq = tbin;
+        // spin = true;
     }
 
     // subq is -1 unless specified so unless specified
@@ -236,7 +257,11 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
 
     //------------------------------------------------------------------------//
     auto insert_task = [&](intmax_t _n) {
-        TaskSubQueue* task_subq = (*m_subqueues)[_n % (m_workers + 1)];
+        TaskSubQueue* task_subq = (*m_subqueues)[_n];
+        // TaskSubQueue* next_subq = (*m_subqueues)[(_n + 1) % (m_workers + 1)];
+        // if not threads bin and size difference, insert into smaller
+        // if(n != tbin && next_subq->size() < task_subq->size())
+        //    task_subq = next_subq;
         // try to acquire a claim for the bin
         // if acquired, no other threads will access bin until claim is released
         if(task_subq->AcquireClaim())
@@ -245,9 +270,6 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
             task_subq->PushTask(task);
             // release the claim on the bin
             task_subq->ReleaseClaim();
-            // debug
-            // printf("> Inserted task in bin %li [thread bin: %li]\n", _n,
-            // GetThreadBin());
             // return success
             return true;
         }
@@ -268,14 +290,12 @@ UserTaskQueue::InsertTask(VTaskPtr task, ThreadData* data, intmax_t subq)
 
     // there are num_workers+1 bins so there is always a bin that is open
     // execute num_workers+2 iterations so the thread checks its bin twice
-    for(intmax_t i = 0; i < (m_workers + 1); ++i, ++n)
+    while(true)
     {
-        if(insert_task(n % (m_workers + 1)))
-            return n % (m_workers + 1);
+        auto _n = (n++) % (m_workers + 1);
+        if(insert_task(_n))
+            return _n;
     }
-
-    // execute task
-    (*task)();
     return GetThreadBin();
 }
 
@@ -297,7 +317,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         ref += i;
         return ref;
     };
-    task_group_type* tg = new task_group_type(join_func);
+    task_group_type* tg = new task_group_type(join_func, tp);
 
     // wait for all threads to finish any work
     // NOTE: will cause deadlock if called from a task
@@ -329,6 +349,9 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         //--------------------------------------------------------------------//
 
         auto _task = tg->wrap(thread_specific_func);
+        //++(*m_ntasks);
+        //TaskSubQueue* task_subq = (*m_subqueues)[i];
+        //task_subq->PushTask(_task);
         InsertTask(_task, ThreadData::GetInstance(), i);
     }
 
@@ -360,7 +383,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         ref += i;
         return ref;
     };
-    task_group_type* tg = new task_group_type(join_func);
+    task_group_type* tg = new task_group_type(join_func, tp);
 
     // wait for all threads to finish any work
     // NOTE: will cause deadlock if called from a task

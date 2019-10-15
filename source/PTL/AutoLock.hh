@@ -250,6 +250,8 @@ int main()
 #include <mutex>
 #include <system_error>
 
+namespace PTL
+{
 // Note: Note that TemplateAutoLock by itself is not thread-safe and
 //       cannot be shared among threads due to the locked switch
 //
@@ -495,3 +497,5 @@ typedef TemplateAutoLock<RecursiveMutex> RecursiveAutoLock;
 // aside from above
 template <typename _Tp>
 using TAutoLock = TemplateAutoLock<_Tp>;
+
+}  // namespace PTL

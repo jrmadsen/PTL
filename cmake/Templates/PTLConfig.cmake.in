@@ -1,6 +1,8 @@
 #------------------------------------------------------------------------------#
 #
 #
+cmake_policy(SET CMP0012 NEW)
+
 get_filename_component(PTL_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 include(${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@ConfigVersion.cmake)
@@ -16,9 +18,9 @@ if(@BUILD_STATIC_LIBS@)
     list(APPEND _PTL_AVAILABLE_COMPONENTS static)
 endif()
 
-#find_dependency(Boost 1.55 REQUIRED COMPONENTS regex)
-#find_dependency(RapidJSON 1.0 REQUIRED MODULE)
-
+#------------------------------------------------------------------------------#
+#   package initialization
+#
 @PACKAGE_INIT@
 
 #------------------------------------------------------------------------------#
@@ -84,12 +86,12 @@ else(_PTL_INSTALL_TREE)
     foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
         # set the library
         if(NOT @PROJECT_NAME@_LIBRARY)
-            set(@PROJECT_NAME@_LIBRARY @LIBNAME@-${_COMPONENT} CACHE INTERNAL "@PROJECT_NAME@ library")
+            set(@PROJECT_NAME@_LIBRARY @LIBNAME@-${_COMPONENT})
         endif(NOT @PROJECT_NAME@_LIBRARY)
+        set_property(TARGET @LIBNAME@-${_COMPONENT} PROPERTY
+            IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${_COMPONENT}.cmake")
+        set(PROJECT_DEPENDS @LIBNAME@-${_COMPONENT})
     endforeach()
-
-    set_property(TARGET ${@PROJECT_NAME@_LIBRARY} PROPERTY
-        IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/PTLBuild.cmake")
 
     set(PROJECT_DEPENDS ${@PROJECT_NAME@_LIBRARY})
 

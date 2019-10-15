@@ -29,7 +29,7 @@
 #include "PTL/AutoLock.hh"
 #include "PTL/Globals.hh"
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 #    include <Windows.h>
 #else
 #    include <sys/syscall.h>
@@ -39,12 +39,14 @@
 
 #include <atomic>
 
+using namespace PTL;
+
 //======================================================================================//
 
 namespace
 {
-ThreadLocal int ThreadID = Threading::MASTER_ID;
-std::atomic_int numActThreads(0);
+thread_local int ThreadID = Threading::MASTER_ID;
+std::atomic_int  numActThreads(0);
 }
 
 //======================================================================================//

@@ -35,6 +35,8 @@
 #include <thread>
 #include <vector>
 
+namespace PTL
+{
 // Macro to put current thread to sleep
 //
 #define THREADSLEEP(tick) std::this_thread::sleep_for(std::chrono::seconds(tick))
@@ -233,3 +235,5 @@ WorkerThreadJoinsPool();
 int
 GetNumberOfRunningWorkerThreads();
 }
+
+}  // namespace PTL

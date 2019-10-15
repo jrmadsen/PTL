@@ -25,12 +25,14 @@
 #include "PTL/TaskAllocator.hh"
 #include "PTL/TaskAllocatorList.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 TaskAllocatorList*&
 TaskAllocatorList::fAllocatorList()
 {
-    ThreadLocalStatic TaskAllocatorList* _instance = nullptr;
+    static thread_local TaskAllocatorList* _instance = nullptr;
     return _instance;
 }
 

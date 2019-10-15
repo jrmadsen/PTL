@@ -28,6 +28,8 @@
 
 #include "PTL/TaskAllocatorPool.hh"
 
+using namespace PTL;
+
 // ************************************************************
 // TaskAllocatorPool constructor
 // ************************************************************
@@ -73,11 +75,7 @@ TaskAllocatorPool::operator=(const TaskAllocatorPool& right)
 // TaskAllocatorPool destructor
 // ************************************************************
 //
-TaskAllocatorPool::~TaskAllocatorPool()
-{
-    // disable reset since tasks are shared_ptrs
-    Reset();
-}
+TaskAllocatorPool::~TaskAllocatorPool() { Reset(); }
 
 // ************************************************************
 // Reset

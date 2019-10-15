@@ -36,29 +36,24 @@ uint64_t
 task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
 {
     if(n < 2)
-    {
         return n;
+
+    uint64_t    x, y;
+    TaskGroup_t g;
+    ++task_group_counter();
+    if(n >= cutoff)
+    {
+        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
     }
     else
     {
-        uint64_t    x, y;
-        TaskGroup_t g;
-        ++task_group_counter();
-        if(n >= cutoff)
-        {
-            g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-            g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
-        }
-        else
-        {
-            // cout << "Number of recursive task-groups: " << nrecur << endl;
-            g.run([&]() { x = fibonacci(n - 1); });
-            g.run([&]() { y = fibonacci(n - 2); });
-        }
-        // wait for both tasks to complete
-        g.wait();
-        return x + y;
+        g.run([&]() { x = fibonacci(n - 1); });
+        g.run([&]() { y = fibonacci(n - 2); });
     }
+    // wait for both tasks to complete
+    g.wait();
+    return x + y;
 }
 
 //============================================================================//
@@ -114,17 +109,17 @@ main(int argc, char** argv)
     ConsumeParameters(argc, argv);
 
     auto hwthreads        = std::thread::hardware_concurrency();
-    auto default_fib      = 36;
+    auto default_fib      = 20;
     auto default_tg       = 1;
-    auto default_grain    = pow(32, 1);
-    auto default_ntasks   = pow(32, 1);
+    auto default_grain    = pow(16, 1);
+    auto default_ntasks   = pow(16, 1);
     auto default_nthreads = hwthreads;
     // cutoff fields
-    auto cutoff_high  = 40;
-    auto cutoff_low   = 25;
+    long cutoff_value = 30;  // greater than 45 answer exceeds INT_MAX
+    auto cutoff_high  = cutoff_value;
+    auto cutoff_low   = 15;
     auto cutoff_incr  = 5;
     auto cutoff_tasks = 1;
-    long cutoff_value = 44;  // greater than 45 answer exceeds INT_MAX
 
     // default environment controls but don't overwrite
     setenv("NUM_THREADS", std::to_string(hwthreads).c_str(), 0);
@@ -146,11 +141,11 @@ main(int argc, char** argv)
     uint64_t num_groups =
         GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
 
-    cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_high);
-    cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
-    cutoff_low   = GetEnv<int>("CUTOFF_LOW", cutoff_low);
-    cutoff_tasks = GetEnv<int>("CUTOFF_TASKS", cutoff_tasks);
     cutoff_value = GetEnv<long>("CUTOFF_VALUE", cutoff_value);
+    cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_value);
+    cutoff_low   = GetEnv<int>("CUTOFF_LOW", cutoff_low);
+    cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
+    cutoff_tasks = GetEnv<int>("CUTOFF_TASKS", cutoff_tasks);
 
     PrintEnv();
 
@@ -184,6 +179,12 @@ main(int argc, char** argv)
         cout << prefix << "[async test] fibonacci(" << cutoff_value << ") * "
              << cutoff_tasks << " = " << fib_async << " ... " << singleTimer << endl;
     }
+
+#if defined(USE_TBB_TASKS)
+    cout << prefix << "Running with TBB task_group..." << std::endl;
+#else
+    cout << prefix << "Running with PTL task_group..." << std::endl;
+#endif
 
     std::vector<int> cutoffs;
     for(int i = cutoff_high; i >= cutoff_low; i -= cutoff_incr)
@@ -228,20 +229,21 @@ main(int argc, char** argv)
             auto num_task_groups = task_group_counter().load();
 
             Measurement* measurement = nullptr;
-            if(measurements.find(cutoff) != measurements.end())
-                measurement = measurements.find(cutoff)->second;
+            if(measurements.find(num_task_groups) != measurements.end())
+                measurement = measurements.find(num_task_groups)->second;
             if(!measurement)
             {
                 measurement =
                     new Measurement(cutoff, num_task_groups, taskManager->size());
-                measurements[cutoff] = measurement;
+                measurements[num_task_groups] = measurement;
             }
 
-            *measurement += singleTimer;
+            if(measurement)
+                *measurement += singleTimer;
 
-            cout << cprefix << "[recur test] fibonacci(" << cutoff_value << ") * "
-                 << cutoff_tasks << " = " << fib_recur << " ... " << singleTimer
-                 << " ... [# task grp] " << num_task_groups << " (cutoff = " << cutoff
+            cout << cprefix << "[recur test] fibonacci(" << cutoff_value << ") * " << i
+                 << " = " << fib_recur << " ... " << singleTimer << " ... [# task grp] "
+                 << num_task_groups << " (cutoff = " << cutoff
                  << ") "
                  //<< measurement->real
                  << endl;
@@ -260,12 +262,16 @@ main(int argc, char** argv)
     std::ofstream ofs(ss.str().c_str());
     if(ofs)
     {
+        std::set<Measurement> _measurements;
         for(auto itr : measurements)
-        {
-            ofs << *(itr.second) << endl;
-        }
+            _measurements.insert(*(itr.second));
+        for(const auto& itr : _measurements)
+            ofs << itr << endl;
     }
     ofs.close();
+    for(auto itr : measurements)
+        delete itr.second;
+    measurements.clear();
 
     cout << endl;
 
@@ -373,8 +379,8 @@ main(int argc, char** argv)
     Timer del_timer;
     del_timer.Start();
 
-    for(uint64_t i = 0; i < task_groups.size(); ++i)
-        del(task_groups[i]);
+    for(auto& itr : task_groups)
+        del(itr);
 
     del_timer.Stop();
     cout << cprefix << std::setw(_w) << "Task group deletion time: "
