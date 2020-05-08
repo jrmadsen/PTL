@@ -103,7 +103,8 @@ if(PTL_USE_PROFILE)
     add_cxx_flag_if_avail("-fbranch-probabilities")
     if(cxx_fbranch_probabilities)
         add_target_cxx_flag(ptl-compile-options "-fprofile-arcs")
-        target_link_options(ptl-compile-options INTERFACE "-fprofile-arcs")
+        set_target_properties(ptl-compile-options PROPERTIES
+            INTERFACE_LINK_OPTIONS -fprofile-arcs)
     endif()
 endif()
 
@@ -115,7 +116,8 @@ if(PTL_USE_COVERAGE)
     add_cxx_flag_if_avail("-ftest-coverage")
     if(cxx_ftest_coverage)
         add_target_cxx_flag(ptl-compile-options "-fprofile-arcs")
-        target_link_options(ptl-compile-options INTERFACE "-fprofile-arcs")
+        set_target_properties(ptl-compile-options PROPERTIES
+            INTERFACE_LINK_OPTIONS -fprofile-arcs)
     endif()
 endif()
 
