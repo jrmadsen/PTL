@@ -64,8 +64,7 @@ public:
     template <typename _Up>
     TupleElt(_Up&& other)
     : value(std::forward<_Up>(other))
-    {
-    }
+    {}
 
     _Tp&       get() { return value; }
     _Tp const& get() const { return value; }
@@ -83,8 +82,7 @@ public:
     template <typename _Up>
     explicit TupleElt(_Up&& other)
     : _Tp(std::forward<_Up>(other))
-    {
-    }
+    {}
 
     _Tp&       get() { return *this; }
     const _Tp& get() const { return *this; }
@@ -210,8 +208,7 @@ pushFront(std::tuple<Types...> const& tuple, V const& value)
 
 template <typename T, T... Values>
 struct Valuelist
-{
-};
+{};
 
 template <typename... Types>
 struct Front;
@@ -242,8 +239,7 @@ template <typename List, template <typename T> class MetaFun>
 class TransformT<List, MetaFun, false>
 : public PushFrontT<typename TransformT<PopFront<List>, MetaFun>::Type,
                     typename MetaFun<Front<List>>::Type>
-{
-};
+{};
 
 // basis case:
 template <typename List, template <typename T> class MetaFun>
@@ -317,9 +313,8 @@ template <typename Func, typename Tuple>
 void
 for_each_tuple_arg(Func&& func, Tuple&& _tuple)
 {
-    ForEachTupleArg<std::tuple_size<Tuple>::value>::apply(std::forward<Func>(func),
-                                                          std::forward<std::tuple>(
-                                                              _tuple));
+    ForEachTupleArg<std::tuple_size<Tuple>::value>::apply(
+        std::forward<Func>(func), std::forward<std::tuple>(_tuple));
 }
 
 //======================================================================================//

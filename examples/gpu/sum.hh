@@ -174,16 +174,15 @@ struct aligned_pointer
     :  // pointer to data
         ptr(nullptr)
     ,
-        // size of data
-        size(_size)
+    // size of data
+    size(_size)
     ,
-        // extra padding aligning to "_AlignWidth" byte width
-        padding((_size % _AlignWidth == 0) ? 0 : (_AlignWidth - (size % _AlignWidth)))
+    // extra padding aligning to "_AlignWidth" byte width
+    padding((_size % _AlignWidth == 0) ? 0 : (_AlignWidth - (size % _AlignWidth)))
     ,
-        // size of allocation
-        storage_size(size + padding)
-    {
-    }
+    // size of allocation
+    storage_size(size + padding)
+    {}
 
     this_type& allocate()
     {
@@ -366,14 +365,12 @@ gpu_malloc(uintmax_t size)
 template <typename _Tp>
 void
 gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 template <typename _Tp>
 void
 cpu_memcpy(const _Tp*, _Tp*, uintmax_t, cudaStream_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 template <typename _Tp>
 _Tp*
@@ -385,8 +382,7 @@ malloc_and_memcpy(const _Tp*, uintmax_t)
 template <typename _Tp>
 void
 memcpy_and_free(_Tp*, _Tp*, uintmax_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 template <typename _Tp>
 _Tp*
@@ -398,8 +394,7 @@ malloc_and_async_memcpy(const _Tp*, uintmax_t, cudaStream_t)
 template <typename _Tp>
 void
 async_memcpy_and_free(_Tp*, _Tp*, uintmax_t, cudaStream_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 inline cudaStream_t*
 create_streams(const int)
@@ -409,8 +404,7 @@ create_streams(const int)
 //----------------------------------------------------------------------------//
 inline void
 destroy_streams(cudaStream_t*, const int)
-{
-}
+{}
 //============================================================================//
 
 #endif  // if defined(PTL_USE_CUDA)
@@ -423,8 +417,7 @@ public:
     cuda_streams(uint64_t nstreams = 64)
     : m_nstreams(nstreams)
     , m_streams(create_streams(nstreams))
-    {
-    }
+    {}
 
     ~cuda_streams() { destroy_streams(m_streams, m_nstreams); }
 

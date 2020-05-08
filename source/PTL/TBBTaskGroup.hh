@@ -52,48 +52,37 @@ typedef ::tbb::task_group tbb_task_group_t;
 
 //--------------------------------------------------------------------------------------//
 
-template <typename _Tp, typename _Arg = _Tp>
-class TBBTaskGroup : public TaskGroup<_Tp, _Arg>
+template <typename Tp, typename Arg = Tp>
+class TBBTaskGroup : public TaskGroup<Tp, Arg>
 {
 public:
     //------------------------------------------------------------------------//
-    template <typename _Type>
-    using remove_reference_t = typename std::remove_reference<_Type>::type;
+    typedef decay_t<Arg>                                             ArgTp;
+    typedef TBBTaskGroup<Tp, Arg>                                    this_type;
+    typedef TaskGroup<Tp, Arg>                                       base_type;
+    typedef typename base_type::result_type                          result_type;
+    typedef typename base_type::packaged_task_type                   packaged_task_type;
+    typedef typename base_type::future_type                          future_type;
+    typedef typename base_type::promise_type                         promise_type;
+    typedef typename base_type::template JoinFunction<Tp, Arg>::Type join_type;
+    typedef tbb::task_group                                          tbb_task_group_t;
     //------------------------------------------------------------------------//
-    template <typename _Type>
-    using remove_const_t = typename std::remove_const<_Type>::type;
-    //------------------------------------------------------------------------//
-    template <bool B, class T = void>
-    using enable_if_t = typename std::enable_if<B, T>::type;
-    //------------------------------------------------------------------------//
-    typedef remove_const_t<remove_reference_t<_Arg>>                   ArgTp;
-    typedef TBBTaskGroup<_Tp, _Arg>                                    this_type;
-    typedef TaskGroup<_Tp, _Arg>                                       base_type;
-    typedef typename base_type::result_type                            result_type;
-    typedef typename base_type::packaged_task_type                     packaged_task_type;
-    typedef typename base_type::future_type                            future_type;
-    typedef typename base_type::promise_type                           promise_type;
-    typedef typename base_type::template JoinFunction<_Tp, _Arg>::Type join_type;
-    typedef tbb::task_group                                            tbb_task_group_t;
-    //------------------------------------------------------------------------//
-    template <typename... _Args>
-    using task_type = Task<ArgTp, _Args...>;
+    template <typename... Args>
+    using task_type = Task<ArgTp, Args...>;
     //------------------------------------------------------------------------//
 
 public:
     // Constructor
-    template <typename _Func>
-    TBBTaskGroup(_Func&& _join, ThreadPool* _tp = nullptr)
-    : base_type(std::forward<_Func>(_join), _tp)
+    template <typename Func>
+    TBBTaskGroup(Func&& _join, ThreadPool* _tp = nullptr)
+    : base_type(std::forward<Func>(_join), _tp)
     , m_tbb_task_group(new tbb_task_group_t)
-    {
-    }
-    template <typename _Up = _Tp, enable_if_t<std::is_same<_Up, void>::value, int> = 0>
+    {}
+    template <typename Up = Tp, enable_if_t<std::is_same<Up, void>::value, int> = 0>
     TBBTaskGroup(ThreadPool* _tp = nullptr)
     : base_type(_tp)
     , m_tbb_task_group(new tbb_task_group_t)
-    {
-    }
+    {}
 
     // Destructor
     virtual ~TBBTaskGroup()
@@ -114,8 +103,8 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    template <typename... _Args>
-    task_type<_Args...>* operator+=(task_type<_Args...>* _task)
+    template <typename Up>
+    Up* operator+=(Up* _task)
     {
         // store in list
         vtask_list.push_back(_task);
@@ -129,37 +118,37 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    task_type<_Args...>* wrap(_Func&& func, _Args&&... args)
+    template <typename Func, typename... Args>
+    task_type<Args...>* wrap(Func&& func, Args&&... args)
     {
-        return operator+=(new task_type<_Args...>(this, std::forward<_Func>(func),
-                                                  std::forward<_Args>(args)...));
+        return operator+=(new task_type<Args...>(this, std::forward<Func>(func),
+                                                 std::forward<Args>(args)...));
     }
 
 public:
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    void run(_Func&& func, _Args&&... args)
+    template <typename Func, typename... Args>
+    void run(Func&& func, Args&&... args)
     {
-        auto _task = wrap(std::forward<_Func>(func), std::forward<_Args>(args)...);
+        auto _task = wrap(std::forward<Func>(func), std::forward<Args>(args)...);
         auto _lamb = [=]() { (*_task)(); };
         m_tbb_task_group->run(_lamb);
     }
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    void exec(_Func&& func, _Args&&... args)
+    template <typename Func, typename... Args>
+    void exec(Func&& func, Args&&... args)
     {
-        run(std::forward<_Func>(func), std::forward<_Args>(args)...);
+        run(std::forward<Func>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args, typename _Up = _Tp,
-              enable_if_t<std::is_same<_Up, void>::value, int> = 0>
-    void parallel_for(uintmax_t nitr, uintmax_t, _Func&& func, _Args&&... args)
+    template <typename Func, typename... Args, typename Up = Tp,
+              enable_if_t<std::is_same<Up, void>::value, int> = 0>
+    void parallel_for(uintmax_t nitr, uintmax_t, Func&& func, Args&&... args)
     {
         tbb::parallel_for(tbb::blocked_range<size_t>(0, nitr),
                           [&](const tbb::blocked_range<size_t>& range) {
                               for(size_t i = range.begin(); i != range.end(); ++i)
-                                  func(std::forward<_Args>(args)...);
+                                  func(std::forward<Args>(args)...);
                           });
     }
 
@@ -186,8 +175,8 @@ public:
 
     //------------------------------------------------------------------------//
     // wait to finish
-    template <typename _Up = _Tp, enable_if_t<!std::is_same<_Up, void>::value, int> = 0>
-    inline _Up join(_Up accum = {})
+    template <typename Up = Tp, enable_if_t<!std::is_same<Up, void>::value, int> = 0>
+    inline Up join(Up accum = {})
     {
         this->wait();
         for(auto& itr : m_task_set)
@@ -197,7 +186,7 @@ public:
     }
     //------------------------------------------------------------------------//
     // wait to finish
-    template <typename _Up = _Tp, enable_if_t<std::is_same<_Up, void>::value, int> = 0>
+    template <typename Up = Tp, enable_if_t<std::is_same<Up, void>::value, int> = 0>
     inline void join()
     {
         this->wait();
@@ -221,8 +210,8 @@ protected:
 #else
 //--------------------------------------------------------------------------------------//
 
-template <typename _Tp, typename _Arg = _Tp>
-using TBBTaskGroup = TaskGroup<_Tp, _Arg>;
+template <typename Tp, typename Arg = Tp>
+using TBBTaskGroup = TaskGroup<Tp, Arg>;
 
 //--------------------------------------------------------------------------------------//
 #endif

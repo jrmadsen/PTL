@@ -271,18 +271,19 @@ cuda_device_query()
         printf("  Device PCI Domain ID / Bus ID / location ID:   %d / %d / %d\n",
                deviceProp.pciDomainID, deviceProp.pciBusID, deviceProp.pciDeviceID);
 
-        const char* sComputeMode[] =
-            { "Default (multiple host threads can use ::cudaSetDevice() with "
-              "device "
-              "simultaneously)",
-              "Exclusive (only one host thread in one process is able to use "
-              "::cudaSetDevice() with this device)",
-              "Prohibited (no host thread can use ::cudaSetDevice() with this "
-              "device)",
-              "Exclusive Process (many threads in one process is able to use "
-              "::cudaSetDevice() with this device)",
-              "Unknown",
-              NULL };
+        const char* sComputeMode[] = {
+            "Default (multiple host threads can use ::cudaSetDevice() with "
+            "device "
+            "simultaneously)",
+            "Exclusive (only one host thread in one process is able to use "
+            "::cudaSetDevice() with this device)",
+            "Prohibited (no host thread can use ::cudaSetDevice() with this "
+            "device)",
+            "Exclusive Process (many threads in one process is able to use "
+            "::cudaSetDevice() with this device)",
+            "Unknown",
+            NULL
+        };
         printf("  Compute Mode:\n");
         printf("     < %s >\n", sComputeMode[deviceProp.computeMode]);
     }
@@ -450,9 +451,8 @@ compute_sum(farray_t& cpu_data)
     }
     else
     {
-        aligned_ptr<float> gpu_data =
-            aligned_async_malloc_and_memcpy<float, 512>(cpu_data.data(), cpu_data.size(),
-                                                        stream);
+        aligned_ptr<float> gpu_data = aligned_async_malloc_and_memcpy<float, 512>(
+            cpu_data.data(), cpu_data.size(), stream);
         float _tmp_sum = compute_sum_host(gpu_data, stream, false, buffer);
 
         _sum += _tmp_sum;
@@ -479,10 +479,9 @@ compute_sum(thrust::host_vector<float>& cpu_data)
 
     TIMEMORY_AUTO_TIMER("[thrust]");
 
-    float*             buffer = nullptr;
-    aligned_ptr<float> gpu_data =
-        aligned_async_malloc_and_memcpy<float, 512>(cpu_data.data(), cpu_data.size(),
-                                                    stream);
+    float*             buffer   = nullptr;
+    aligned_ptr<float> gpu_data = aligned_async_malloc_and_memcpy<float, 512>(
+        cpu_data.data(), cpu_data.size(), stream);
     float _sum = compute_sum_host(gpu_data, stream, true, buffer);
 
     NVTX_RANGE_POP(stream);

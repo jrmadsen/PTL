@@ -40,8 +40,7 @@ TaskAllocatorPool::TaskAllocatorPool(unsigned int sz)
 , chunks(nullptr)
 , head(nullptr)
 , nchunks(0)
-{
-}
+{}
 
 // ************************************************************
 // TaskAllocatorPool copy constructor
@@ -53,8 +52,7 @@ TaskAllocatorPool::TaskAllocatorPool(const TaskAllocatorPool& right)
 , chunks(right.chunks)
 , head(right.head)
 , nchunks(right.nchunks)
-{
-}
+{}
 
 // ************************************************************
 // TaskAllocatorPool operator=

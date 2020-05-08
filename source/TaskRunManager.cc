@@ -150,29 +150,3 @@ TaskRunManager::Terminate()
 }
 
 //======================================================================================//
-
-void
-TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
-{
-#ifdef PTL_USE_TIMEMORY
-    if(fname.length() > 0 || echo_stdout)
-    {
-        std::cout << "\nOutputting TiMemory results...\n" << std::endl;
-        tim::manager* timemory_manager = tim::manager::instance();
-
-        if(echo_stdout)
-            timemory_manager->write_report(std::cout, true);
-
-        if(fname.length() > 0)
-        {
-            fname += "_x" + std::to_string(m_thread_pool->size());
-            timemory_manager->write_report(fname + ".txt");
-            timemory_manager->write_serialization(fname + ".json");
-        }
-    }
-#else
-    ConsumeParameters(std::move(fname), echo_stdout);
-#endif
-}
-
-//======================================================================================//

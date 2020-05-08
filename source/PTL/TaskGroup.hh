@@ -51,48 +51,46 @@ class ThreadPool;
 
 //--------------------------------------------------------------------------------------//
 
-template <typename _Tp, typename _Arg = _Tp>
+template <typename Tp, typename Arg = Tp>
 class TaskGroup
 : public VTaskGroup
-, public TaskAllocator<TaskGroup<_Tp, _Arg>>
+, public TaskAllocator<TaskGroup<Tp, Arg>>
 {
 protected:
     //----------------------------------------------------------------------------------//
-    template <typename _JTp, typename _JArg>
+    template <typename JoinT, typename JoinArg>
     struct JoinFunction
     {
     public:
-        typedef std::function<_JTp(_JTp&, _JArg&&)> Type;
+        typedef std::function<JoinT(JoinT&, JoinArg&&)> Type;
 
     public:
-        template <typename _Func>
-        JoinFunction(_Func&& func)
-        : m_func(std::forward<_Func>(func))
-        {
-        }
+        template <typename Func>
+        JoinFunction(Func&& func)
+        : m_func(std::forward<Func>(func))
+        {}
 
-        template <typename... _Args>
-        _JTp& operator()(_Args&&... args)
+        template <typename... Args>
+        JoinT& operator()(Args&&... args)
         {
-            return std::move(m_func(std::forward<_Args>(args)...));
+            return std::move(m_func(std::forward<Args>(args)...));
         }
 
     private:
         Type m_func;
     };
     //----------------------------------------------------------------------------------//
-    template <typename _JArg>
-    struct JoinFunction<void, _JArg>
+    template <typename JoinArg>
+    struct JoinFunction<void, JoinArg>
     {
     public:
         typedef std::function<void()> Type;
 
     public:
-        template <typename _Func>
-        JoinFunction(_Func&& func)
-        : m_func(std::forward<_Func>(func))
-        {
-        }
+        template <typename Func>
+        JoinFunction(Func&& func)
+        : m_func(std::forward<Func>(func))
+        {}
 
         void operator()() { m_func(); }
 
@@ -103,46 +101,35 @@ protected:
 
 public:
     //------------------------------------------------------------------------//
-    template <typename _Type>
-    using remove_reference_t = typename std::remove_reference<_Type>::type;
-    //------------------------------------------------------------------------//
-    template <typename _Type>
-    using remove_const_t = typename std::remove_const<_Type>::type;
-    //------------------------------------------------------------------------//
-    template <bool B, class T = void>
-    using enable_if_t = typename std::enable_if<B, T>::type;
-    //------------------------------------------------------------------------//
-    typedef remove_const_t<remove_reference_t<_Arg>>     ArgTp;
-    typedef _Tp                                          result_type;
-    typedef TaskGroup<_Tp, _Arg>                         this_type;
+    typedef decay_t<Arg>                                 ArgTp;
+    typedef Tp                                           result_type;
+    typedef TaskGroup<Tp, Arg>                           this_type;
     typedef std::promise<ArgTp>                          promise_type;
     typedef std::future<ArgTp>                           future_type;
     typedef std::packaged_task<ArgTp()>                  packaged_task_type;
     typedef list_type<future_type>                       task_list_t;
-    typedef typename JoinFunction<_Tp, _Arg>::Type       join_type;
+    typedef typename JoinFunction<Tp, Arg>::Type         join_type;
     typedef typename task_list_t::iterator               iterator;
     typedef typename task_list_t::reverse_iterator       reverse_iterator;
     typedef typename task_list_t::const_iterator         const_iterator;
     typedef typename task_list_t::const_reverse_iterator const_reverse_iterator;
     //------------------------------------------------------------------------//
-    template <typename... _Args>
-    using task_type = Task<ArgTp, _Args...>;
+    template <typename... Args>
+    using task_type = Task<ArgTp, Args...>;
     //------------------------------------------------------------------------//
 
 public:
     // Constructor
-    template <typename _Func>
-    TaskGroup(_Func&& _join, ThreadPool* _tp = nullptr)
+    template <typename Func>
+    TaskGroup(Func&& _join, ThreadPool* _tp = nullptr)
     : VTaskGroup(_tp)
-    , m_join(std::forward<_Func>(_join))
-    {
-    }
-    template <typename _Up = _Tp, enable_if_t<std::is_same<_Up, void>::value, int> = 0>
+    , m_join(std::forward<Func>(_join))
+    {}
+    template <typename Up = Tp, enable_if_t<std::is_same<Up, void>::value, int> = 0>
     explicit TaskGroup(ThreadPool* _tp = nullptr)
     : VTaskGroup(_tp)
     , m_join([]() {})
-    {
-    }
+    {}
     // Destructor
     virtual ~TaskGroup() { this->clear(); }
 
@@ -157,8 +144,8 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    template <typename... _Args>
-    task_type<_Args...>* operator+=(task_type<_Args...>* _task)
+    template <typename Up>
+    Up* operator+=(Up* _task)
     {
         // store in list
         vtask_list.push_back(_task);
@@ -172,30 +159,30 @@ public:
 
 public:
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    task_type<_Args...>* wrap(_Func&& func, _Args&&... args)
+    template <typename Func, typename... Args>
+    task_type<Args...>* wrap(Func&& func, Args&&... args)
     {
-        return operator+=(new task_type<_Args...>(this, std::forward<_Func>(func),
-                                                  std::forward<_Args>(args)...));
+        return operator+=(new task_type<Args...>(this, std::forward<Func>(func),
+                                                 std::forward<Args>(args)...));
     }
 
 public:
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    void exec(_Func&& func, _Args&&... args)
+    template <typename Func, typename... Args>
+    void exec(Func&& func, Args&&... args)
     {
-        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<Func>(func), std::forward<Args>(args)...));
     }
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    void run(_Func&& func, _Args&&... args)
+    template <typename Func, typename... Args>
+    void run(Func&& func, Args&&... args)
     {
-        m_pool->add_task(wrap(std::forward<_Func>(func), std::forward<_Args>(args)...));
+        m_pool->add_task(wrap(std::forward<Func>(func), std::forward<Args>(args)...));
     }
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    void parallel_for(const intmax_t& nitr, const intmax_t& chunks, _Func&& func,
-                      _Args&&... args)
+    template <typename Func, typename... Args>
+    void parallel_for(const intmax_t& nitr, const intmax_t& chunks, Func&& func,
+                      Args&&... args)
     {
         auto nsplit = nitr / chunks;
         auto nmod   = nitr % chunks;
@@ -205,8 +192,8 @@ public:
         {
             auto beg = n * chunks;
             auto end = (n + 1) * chunks + ((n + 1 == nsplit) ? nmod : 0);
-            run(std::forward<_Func>(func), std::move(beg), std::move(end),
-                std::forward<_Args>(args)...);
+            run(std::forward<Func>(func), std::move(beg), std::move(end),
+                std::forward<Args>(args)...);
         }
     }
 
@@ -241,8 +228,8 @@ public:
 
     //------------------------------------------------------------------------//
     // wait to finish
-    template <typename _Up = _Tp, enable_if_t<!std::is_same<_Up, void>::value, int> = 0>
-    inline _Up join(_Up accum = {})
+    template <typename Up = Tp, enable_if_t<!std::is_same<Up, void>::value, int> = 0>
+    inline Up join(Up accum = {})
     {
         this->wait();
         for(auto& itr : m_task_set)
@@ -255,7 +242,7 @@ public:
     }
     //------------------------------------------------------------------------//
     // wait to finish
-    template <typename _Up = _Tp, enable_if_t<std::is_same<_Up, void>::value, int> = 0>
+    template <typename Up = Tp, enable_if_t<std::is_same<Up, void>::value, int> = 0>
     inline void join()
     {
         this->wait();

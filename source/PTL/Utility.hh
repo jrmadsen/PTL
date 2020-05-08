@@ -42,8 +42,7 @@ namespace PTL
 template <typename... _Args>
 void
 ConsumeParameters(_Args...)
-{
-}
+{}
 
 //--------------------------------------------------------------------------------------//
 // a non-string environment option with a string identifier

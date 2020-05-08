@@ -78,8 +78,7 @@ typedef std::recursive_mutex RecursiveMutex;
 
 // mutex macros
 #define MUTEX_INITIALIZER                                                                \
-    {                                                                                    \
-    }
+    {}
 #define MUTEXINIT(mutex)                                                                 \
     ;                                                                                    \
     ;
@@ -189,8 +188,7 @@ THREADCREATE(_Worker*& worker, _Func func, _Args... args)
 //
 typedef std::condition_variable Condition;
 #define CONDITION_INITIALIZER                                                            \
-    {                                                                                    \
-    }
+    {}
 #define CONDITIONWAIT(cond, lock) (cond)->wait(*lock);
 #define CONDITIONWAITLAMBDA(cond, lock, lambda) (cond)->wait(*lock, lambda);
 #define CONDITIONNOTIFY(cond) (cond)->notify_one();
@@ -234,6 +232,6 @@ int
 WorkerThreadJoinsPool();
 int
 GetNumberOfRunningWorkerThreads();
-}
+}  // namespace Threading
 
 }  // namespace PTL

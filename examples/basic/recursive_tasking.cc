@@ -134,9 +134,8 @@ main(int argc, char** argv)
                                            "Getting the number of threads");
     uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
                                      "Setting the centerpoint of fib work distribution");
-    uint64_t grainsize =
-        GetEnv<uint64_t>("GRAINSIZE", numThreads,
-                         "Dividing number of task into grain of this size");
+    uint64_t grainsize  = GetEnv<uint64_t>(
+        "GRAINSIZE", numThreads, "Dividing number of task into grain of this size");
     uint64_t num_iter = numThreads * numThreads;
     uint64_t num_groups =
         GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");

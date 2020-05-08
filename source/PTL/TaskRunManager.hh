@@ -95,9 +95,6 @@ protected:
     VUserTaskQueue* m_task_queue     = nullptr;
     ThreadPool*     m_thread_pool    = nullptr;
     TaskManager*    m_task_manager   = nullptr;
-
-public:
-    virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
 };
 
 }  // namespace PTL

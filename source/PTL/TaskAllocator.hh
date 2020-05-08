@@ -106,8 +106,7 @@ public:  // without description
     TaskAllocatorImpl(const TaskAllocatorImpl<U>& right) throw()
     : mem(right.mem)
     , tname(right.name())
-    {
-    }
+    {}
     // Copy constructor
 
     pointer       address(reference r) const { return &r; }
@@ -212,8 +211,7 @@ template <class Type>
 TaskAllocatorImpl<Type>::TaskAllocatorImpl()
 : mem(sizeof(Type))
 , tname(typeid(Type).name())
-{
-}
+{}
 
 // ************************************************************
 // TaskAllocatorImpl destructor
@@ -221,8 +219,7 @@ TaskAllocatorImpl<Type>::TaskAllocatorImpl()
 //
 template <class Type>
 TaskAllocatorImpl<Type>::~TaskAllocatorImpl()
-{
-}
+{}
 
 // ************************************************************
 // MallocSingle

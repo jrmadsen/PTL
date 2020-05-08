@@ -120,8 +120,7 @@ operator<<(std::ostream& os, const PTL::Timer& t)
 
 Timer::Timer()
 : fValidTimes(false)
-{
-}
+{}
 
 //======================================================================================//
 

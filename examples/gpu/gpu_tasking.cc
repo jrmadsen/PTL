@@ -158,9 +158,8 @@ main(int argc, char** argv)
                                      "Setting the centerpoint of fib work distribution");
     uint64_t ngpu =
         GetEnv<uint64_t>("GPU_RANGE", default_gpu, "Setting the GPU range centerpoint");
-    uint64_t grainsize =
-        GetEnv<uint64_t>("GRAINSIZE", numThreads,
-                         "Dividing number of task into grain of this size");
+    uint64_t grainsize = GetEnv<uint64_t>(
+        "GRAINSIZE", numThreads, "Dividing number of task into grain of this size");
     uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
                                          "Setting the number of total tasks");
     uint64_t num_groups =

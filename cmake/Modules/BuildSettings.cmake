@@ -3,42 +3,17 @@
 #        Handles the build settings
 #
 ################################################################################
+#
+set(LIBNAME ptl)
 
 include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
+include(Compilers)
+include(MacroUtilities)
 
-# ---------------------------------------------------------------------------- #
-# check C flag
-macro(ADD_C_FLAG_IF_AVAIL FLAG)
-    if(NOT "${FLAG}" STREQUAL "")
-        string(REGEX REPLACE "^-" "c_" FLAG_NAME "${FLAG}")
-        string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE " " "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE "=" "_" FLAG_NAME "${FLAG_NAME}")
-        check_c_compiler_flag("${FLAG}" ${FLAG_NAME})
-        if(${FLAG_NAME})
-            list(APPEND ${PROJECT_NAME}_C_FLAGS "${FLAG}")
-        endif()
-    endif()
-endmacro()
-
-
-# ---------------------------------------------------------------------------- #
-# check CXX flag
-macro(ADD_CXX_FLAG_IF_AVAIL FLAG)
-    if(NOT "${FLAG}" STREQUAL "")
-        string(REGEX REPLACE "^-" "cxx_" FLAG_NAME "${FLAG}")
-        string(REPLACE "-" "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE " " "_" FLAG_NAME "${FLAG_NAME}")
-        string(REPLACE "=" "_" FLAG_NAME "${FLAG_NAME}")
-        check_cxx_compiler_flag("${FLAG}" ${FLAG_NAME})
-        if(${FLAG_NAME})
-            list(APPEND ${PROJECT_NAME}_CXX_FLAGS "${FLAG}")
-        endif()
-    endif()
-endmacro()
-
+ptl_add_interface_library(ptl-compile-options)
+ptl_add_interface_library(ptl-external-libraries)
 
 # ---------------------------------------------------------------------------- #
 #
@@ -69,20 +44,15 @@ foreach(_TYPE ARCHIVE LIBRARY RUNTIME)
     endif(WIN32)
 endforeach(_TYPE ARCHIVE LIBRARY RUNTIME)
 
-
-# ---------------------------------------------------------------------------- #
-# used by configure_package_*
-#
-set(LIBNAME ptl)
-
 # ---------------------------------------------------------------------------- #
 #  debug macro
 #
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    list(APPEND ${PROJECT_NAME}_DEFINITIONS DEBUG)
-else("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    list(APPEND ${PROJECT_NAME}_DEFINITIONS NDEBUG)
-endif("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+string(TOUPPER "${CMAKE_BUILD_TYPE}" UC_BUILD_TYPE)
+if("${UC_BUILD_TYPE}" STREQUAL "DEBUG")
+    target_compile_definitions(ptl-compile-options INTERFACE DEBUG)
+else()
+    target_compile_definitions(ptl-compile-options INTERFACE NDEBUG)
+endif()
 
 # ---------------------------------------------------------------------------- #
 # set the compiler flags
@@ -97,9 +67,6 @@ if(NOT c_std_c11)
     add_c_flag_if_avail("-std=c99")
 endif()
 
-# SIMD OpenMP
-add_c_flag_if_avail("-fopenmp-simd")
-
 # general warnings
 add_cxx_flag_if_avail("-W")
 if(NOT WIN32)
@@ -109,83 +76,17 @@ add_cxx_flag_if_avail("-Wextra")
 add_cxx_flag_if_avail("-Wshadow")
 add_cxx_flag_if_avail("-faligned-new")
 
-# SIMD OpenMP
-add_cxx_flag_if_avail("-fopenmp-simd")
-
-if(PTL_USE_ARCH)
-    if(CMAKE_C_COMPILER_IS_INTEL)
-        add_c_flag_if_avail("-xHOST")
-    else()
-        add_c_flag_if_avail("-march=native")
-        add_c_flag_if_avail("-mtune=native")
-        add_c_flag_if_avail("-msse2")
-        add_c_flag_if_avail("-msse3")
-        add_c_flag_if_avail("-mssse3")
-        add_c_flag_if_avail("-msse4")
-        add_c_flag_if_avail("-msse4.1")
-        add_c_flag_if_avail("-msse4.2")
-        add_c_flag_if_avail("-mavx")
-        add_c_flag_if_avail("-mavx2")
-    endif()
-
-    if(CMAKE_CXX_COMPILER_IS_INTEL)
-        add_cxx_flag_if_avail("-xHOST")
-    else()
-        add_cxx_flag_if_avail("-march=native")
-        add_cxx_flag_if_avail("-mtune=native")
-        add_cxx_flag_if_avail("-msse2")
-        add_cxx_flag_if_avail("-msse3")
-        add_cxx_flag_if_avail("-mssse3")
-        add_cxx_flag_if_avail("-msse4")
-        add_cxx_flag_if_avail("-msse4.1")
-        add_cxx_flag_if_avail("-msse4.2")
-        add_cxx_flag_if_avail("-mavx")
-        add_cxx_flag_if_avail("-mavx2")
-    endif()
-
-    if(PTL_USE_AVX512)
-        if(CMAKE_C_COMPILER_IS_INTEL)
-            add_c_flag_if_avail("-axMIC-AVX512")
-        else()
-            add_c_flag_if_avail("-mavx512f")
-            add_c_flag_if_avail("-mavx512pf")
-            add_c_flag_if_avail("-mavx512er")
-            add_c_flag_if_avail("-mavx512cd")
-            add_c_flag_if_avail("-mavx512vl")
-            add_c_flag_if_avail("-mavx512bw")
-            add_c_flag_if_avail("-mavx512dq")
-            add_c_flag_if_avail("-mavx512ifma")
-            add_c_flag_if_avail("-mavx512vbmi")
-        endif()
-
-        if(CMAKE_CXX_COMPILER_IS_INTEL)
-            add_cxx_flag_if_avail("-axMIC-AVX512")
-        else()
-            add_cxx_flag_if_avail("-mavx512f")
-            add_cxx_flag_if_avail("-mavx512pf")
-            add_cxx_flag_if_avail("-mavx512er")
-            add_cxx_flag_if_avail("-mavx512cd")
-            add_cxx_flag_if_avail("-mavx512vl")
-            add_cxx_flag_if_avail("-mavx512bw")
-            add_cxx_flag_if_avail("-mavx512dq")
-            add_cxx_flag_if_avail("-mavx512ifma")
-            add_cxx_flag_if_avail("-mavx512vbmi")
-        endif()
-    endif()
-endif()
-
 if(PTL_USE_SANITIZER)
-    add_c_flag_if_avail("-fsanitize=${PTL_SANITIZER_TYPE}")
-    add_cxx_flag_if_avail("-fsanitize=${PTL_SANITIZER_TYPE}")
+    add_target_flag_if_avail(ptl-external-libraries "-fsanitize=${PTL_SANITIZER_TYPE}")
     if(cxx_fsanitize_${PTL_SANITIZER_TYPE})
         if("${PTL_SANITIZER_TYPE}" STREQUAL "leak")
-            list(APPEND EXTERNAL_LIBRARIES lsan)
+            target_link_libraries(ptl-external-libraries INTERFACE lsan)
         elseif("${PTL_SANITIZER_TYPE}" STREQUAL "address")
-            list(APPEND EXTERNAL_LIBRARIES asan)
+            target_link_libraries(ptl-external-libraries INTERFACE asan)
         elseif("${PTL_SANITIZER_TYPE}" STREQUAL "memory")
-            list(APPEND EXTERNAL_LIBRARIES msan)
+            target_link_libraries(ptl-external-libraries INTERFACE msan)
         elseif("${PTL_SANITIZER_TYPE}" STREQUAL "thread")
-            list(APPEND EXTERNAL_LIBRARIES tsan)
+            target_link_libraries(ptl-external-libraries INTERFACE tsan)
         endif()
     endif()
 endif()
@@ -195,19 +96,14 @@ if(PTL_USE_PROFILE)
     add_c_flag_if_avail("-pg")
     add_c_flag_if_avail("-fbranch-probabilities")
     if(c_fbranch_probabilities)
-        add(PROJECT_C_FLAGS "-fprofile-arcs")
-        #add(PROJECT_C_FLAGS "-fprofile-dir=${CMAKE_BINARY_DIR}")
-        #add(PROJECT_C_FLAGS "-fprofile-generate=${CMAKE_BINARY_DIR}/profile")
+        add_target_c_flag(ptl-compile-options "-fprofile-arcs")
     endif()
     add_cxx_flag_if_avail("-p")
     add_cxx_flag_if_avail("-pg")
     add_cxx_flag_if_avail("-fbranch-probabilities")
     if(cxx_fbranch_probabilities)
-        add(PROJECT_CXX_FLAGS "-fprofile-arcs")
-        #add(PROJECT_CXX_FLAGS "-fprofile-dir=${CMAKE_BINARY_DIR}")
-        #add(PROJECT_CXX_FLAGS "-fprofile-generate=${CMAKE_BINARY_DIR}/profile")
-        add(CMAKE_EXE_LINKER_FLAGS "-fprofile-arcs")
-        add_feature(CMAKE_EXE_LINKER_FLAGS "Linker flags")
+        add_target_cxx_flag(ptl-compile-options "-fprofile-arcs")
+        target_link_options(ptl-compile-options INTERFACE "-fprofile-arcs")
     endif()
 endif()
 
@@ -218,9 +114,8 @@ if(PTL_USE_COVERAGE)
     endif()
     add_cxx_flag_if_avail("-ftest-coverage")
     if(cxx_ftest_coverage)
-        list(APPEND ${PROJECT_NAME}_CXX_FLAGS "-fprofile-arcs")
-        add(CMAKE_EXE_LINKER_FLAGS "-fprofile-arcs")
-        add_feature(CMAKE_EXE_LINKER_FLAGS "Linker flags")
+        add_target_cxx_flag(ptl-compile-options "-fprofile-arcs")
+        target_link_options(ptl-compile-options INTERFACE "-fprofile-arcs")
     endif()
 endif()
 

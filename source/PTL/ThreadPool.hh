@@ -30,6 +30,18 @@
 
 #pragma once
 
+#include "PTL/AutoLock.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/Threading.hh"
+#include "PTL/VTask.hh"
+#include "PTL/VTaskGroup.hh"
+#include "PTL/VUserTaskQueue.hh"
+
+#ifdef PTL_USE_TBB
+#    include <tbb/global_control.h>
+#    include <tbb/tbb.h>
+#endif
+
 // C
 #include <cstdint>
 #include <cstdlib>
@@ -39,21 +51,11 @@
 #include <deque>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <queue>
 #include <stack>
 #include <unordered_map>
 #include <vector>
-
-#include "PTL/AutoLock.hh"
-#include "PTL/ThreadData.hh"
-#include "PTL/Threading.hh"
-#include "PTL/VTask.hh"
-#include "PTL/VTaskGroup.hh"
-#include "PTL/VUserTaskQueue.hh"
-
-#ifdef PTL_USE_TBB
-#    include <tbb/tbb.h>
-#endif
 
 namespace PTL
 {
@@ -64,17 +66,17 @@ public:
     using uomap = std::unordered_map<_KeyType, _MappedType, std::hash<_HashType>>;
 
     // pod-types
-    typedef size_t                size_type;
-    typedef std::atomic_uintmax_t task_count_type;
-    typedef std::atomic_uintmax_t atomic_int_type;
-    typedef std::atomic_short     pool_state_type;
-    typedef std::atomic_bool      atomic_bool_type;
+    using size_type        = size_t;
+    using task_count_type  = std::shared_ptr<std::atomic_uintmax_t>;
+    using atomic_int_type  = std::shared_ptr<std::atomic_uintmax_t>;
+    using pool_state_type  = std::shared_ptr<std::atomic_short>;
+    using atomic_bool_type = std::shared_ptr<std::atomic_bool>;
     // objects
-    typedef VTask                   task_type;
-    typedef Mutex                   lock_t;
-    typedef std::condition_variable condition_t;
-    typedef task_type*              task_pointer;
-    typedef VUserTaskQueue          task_queue_t;
+    using task_type    = VTask;
+    using lock_t       = std::shared_ptr<Mutex>;
+    using condition_t  = std::shared_ptr<Condition>;
+    using task_pointer = task_type*;
+    using task_queue_t = VUserTaskQueue;
     // containers
     typedef std::deque<ThreadId>          thread_list_t;
     typedef std::vector<bool>             bool_list_t;
@@ -86,13 +88,14 @@ public:
 
 public:
     // Constructor and Destructors
-    ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-               bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               const affinity_func_t& = [](intmax_t) {
-                   static std::atomic<intmax_t> assigned;
-                   intmax_t                     _assign = assigned++;
-                   return _assign % Thread::hardware_concurrency();
-               });
+    ThreadPool(
+        const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
+        bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+        const affinity_func_t& = [](intmax_t) {
+            static std::atomic<intmax_t> assigned;
+            intmax_t                     _assign = assigned++;
+            return _assign % Thread::hardware_concurrency();
+        });
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~ThreadPool();
@@ -127,7 +130,7 @@ public:
     task_queue_t* get_queue() const { return m_task_queue; }
 
     // only relevant when compiled with PTL_USE_TBB
-    static tbb_task_scheduler_t*& tbb_task_scheduler();
+    static tbb_global_control_t*& tbb_global_control();
 
     void set_initialization(initialize_func_t f) { m_init_func = f; }
     void reset_initialization()
@@ -145,7 +148,7 @@ public:
     void resize(size_type _n);
     // affinity assigns threads to cores, assignment at constructor
     bool using_affinity() const { return m_use_affinity; }
-    bool is_alive() { return m_alive_flag.load(); }
+    bool is_alive() { return m_alive_flag->load(); }
     void notify();
     void notify_all();
     void notify(size_type);
@@ -181,17 +184,17 @@ private:
     // random
     bool             m_use_affinity;
     bool             m_tbb_tp;
-    atomic_bool_type m_alive_flag;
-    int              m_verbose;
-    size_type        m_pool_size;
-    pool_state_type  m_pool_state;
+    int              m_verbose   = 0;
+    size_type        m_pool_size = 0;
     ThreadId         m_master_tid;
-    atomic_int_type* m_thread_awake;
+    atomic_bool_type m_alive_flag   = std::make_shared<std::atomic_bool>(false);
+    pool_state_type  m_pool_state   = std::make_shared<std::atomic_short>(0);
+    atomic_int_type  m_thread_awake = std::make_shared<std::atomic_uintmax_t>();
 
     // locks
-    lock_t m_task_lock;
+    lock_t m_task_lock = std::make_shared<Mutex>();
     // conditions
-    condition_t m_task_cond;
+    condition_t m_task_cond = std::make_shared<Condition>();
 
     // containers
     bool_list_t   m_is_joined;     // join list
@@ -220,8 +223,8 @@ ThreadPool::notify()
     // wake up one thread that is waiting for a task to be available
     if(m_thread_awake && m_thread_awake->load() < m_pool_size)
     {
-        AutoLock l(m_task_lock);
-        m_task_cond.notify_one();
+        AutoLock l(*m_task_lock);
+        m_task_cond->notify_one();
     }
 }
 //--------------------------------------------------------------------------------------//
@@ -229,8 +232,8 @@ inline void
 ThreadPool::notify_all()
 {
     // wake all threads
-    AutoLock l(m_task_lock);
-    m_task_cond.notify_all();
+    AutoLock l(*m_task_lock);
+    m_task_cond->notify_all();
 }
 //--------------------------------------------------------------------------------------//
 inline void
@@ -242,22 +245,22 @@ ThreadPool::notify(size_type ntasks)
     // wake up as many threads that tasks just added
     if(m_thread_awake && m_thread_awake->load() < m_pool_size)
     {
-        AutoLock l(m_task_lock);
+        AutoLock l(*m_task_lock);
         if(ntasks < this->size())
         {
             for(size_type i = 0; i < ntasks; ++i)
-                m_task_cond.notify_one();
+                m_task_cond->notify_one();
         }
         else
-            m_task_cond.notify_all();
+            m_task_cond->notify_all();
     }
 }
 //--------------------------------------------------------------------------------------//
 // local function for getting the tbb task scheduler
-inline tbb_task_scheduler_t*&
-ThreadPool::tbb_task_scheduler()
+inline tbb_global_control_t*&
+ThreadPool::tbb_global_control()
 {
-    static thread_local tbb_task_scheduler_t* _instance = nullptr;
+    static thread_local tbb_global_control_t* _instance = nullptr;
     return _instance;
 }
 //--------------------------------------------------------------------------------------//
@@ -310,7 +313,7 @@ ThreadPool::add_task(task_pointer&& task, int bin)
         return 0;
 
     // if we haven't built thread-pool, just execute
-    if(!m_alive_flag.load())
+    if(!m_alive_flag->load())
         return static_cast<size_type>(run_on_this(std::forward<task_pointer>(task)));
 
     return static_cast<size_type>(insert(std::forward<task_pointer>(task), bin));

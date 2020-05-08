@@ -47,7 +47,15 @@ ThreadData::ThreadData(ThreadPool* tp)
 , thread_pool(tp)
 , current_queue(tp->get_queue())
 , queue_stack({ current_queue })
+{}
+
+//======================================================================================//
+
+void
+ThreadData::update()
 {
+    current_queue = thread_pool->get_queue();
+    queue_stack.push_back(current_queue);
 }
 
 //======================================================================================//

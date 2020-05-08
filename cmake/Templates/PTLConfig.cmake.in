@@ -23,21 +23,15 @@ endif()
 #
 @PACKAGE_INIT@
 
-#------------------------------------------------------------------------------#
-#   project flags
-#
-set(@PROJECT_NAME@_C_FLAGS      "@CMAKE_C_FLAGS@")
-set(@PROJECT_NAME@_CXX_FLAGS    "@CMAKE_CXX_FLAGS@ -std=c++@CMAKE_CXX_STANDARD@")
-
 
 #------------------------------------------------------------------------------#
 #   install or build tree
 #
 if("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
     set(_PTL_BUILD_TREE ON)
-else("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
+else()
     set(_PTL_INSTALL_TREE ON)
-endif("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -48,7 +42,7 @@ if(_PTL_INSTALL_TREE)
     set_and_check(@PROJECT_NAME@_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
     set_and_check(@PROJECT_NAME@_LIB_DIR "@PACKAGE_LIB_INSTALL_DIR@")
 
-    include(${PTL_CMAKE_DIR}/@PROJECT_NAME@LibraryDepends.cmake)
+    include(${PTL_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake)
     check_required_components(@PROJECT_NAME@)
 
     # get imported location

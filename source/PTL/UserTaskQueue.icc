@@ -39,7 +39,6 @@
 
 namespace PTL
 {
-
 class VTask;
 
 //======================================================================================//
@@ -90,17 +89,15 @@ inline TaskSubQueue::TaskSubQueue(std::atomic_uintmax_t* _ntasks)
 : m_ntasks(0)
 , m_available(true)
 , m_all_tasks(_ntasks)
-{
-}
+{}
 
 //======================================================================================//
 
 inline TaskSubQueue::TaskSubQueue(const TaskSubQueue& rhs)
-    : m_ntasks(0)
-    , m_available(true)
-    , m_all_tasks(rhs.m_all_tasks)
-{
-}
+: m_ntasks(0)
+, m_available(true)
+, m_all_tasks(rhs.m_all_tasks)
+{}
 
 //======================================================================================//
 
