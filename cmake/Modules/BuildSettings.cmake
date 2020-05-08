@@ -18,7 +18,7 @@ ptl_add_interface_library(ptl-external-libraries)
 # ---------------------------------------------------------------------------- #
 #
 set(SANITIZE_TYPE leak CACHE STRING "-fsantitize=<TYPE>")
-set(CMAKE_INSTALL_MESSAGE LAZY)
+# set(CMAKE_INSTALL_MESSAGE LAZY)
 if(WIN32)
     set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ STL standard")
 else(WIN32)

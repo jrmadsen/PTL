@@ -3,7 +3,7 @@
 #
 
 include(FindPackageHandleStandardArgs)
-include("${CMAKE_CURRENT_LIST_DIR}/MacroUtilities.cmake")
+include(MacroUtilities)
 
 ptl_add_interface_library(ptl-external-packages)
 ptl_add_interface_library(ptl-threads)
