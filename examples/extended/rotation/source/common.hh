@@ -73,8 +73,7 @@ init_nvtx();
 
 inline void
 init_nvtx()
-{
-}
+{}
 
 #endif
 
@@ -177,8 +176,7 @@ public:
     : index(_idx)
     , key(_key)
     , description(_desc)
-    {
-    }
+    {}
 
     static void spacer(std::ostream& os, const char c = '-')
     {
@@ -292,8 +290,7 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
         try
         {
             cpu_func(std::forward<_Args>(args)...);
-        }
-        catch(const std::exception& e)
+        } catch(const std::exception& e)
         {
             AutoLock l(TypeMutex<decltype(std::cout)>());
             std::cerr << e.what() << '\n';
@@ -388,8 +385,7 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
             case 1: cuda_func(std::forward<_Args>(args)...); break;
             default: cpu_func(std::forward<_Args>(args)...); break;
         }
-    }
-    catch(std::exception& e)
+    } catch(std::exception& e)
     {
         // typically reached here if no GPU devices available
         if(selection != options.end() && selection->index != 0)
@@ -404,8 +400,7 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
             try
             {
                 cpu_func(std::forward<_Args>(args)...);
-            }
-            catch(std::exception& _e)
+            } catch(std::exception& _e)
             {
                 std::stringstream ss;
                 ss << "\n\nError executing :: " << _e.what() << "\n\n";
@@ -458,8 +453,7 @@ execute(Executor* man, int dt, DataArray& data, Func&& func, Args&&... args)
         // if parallel execution fails, run serial
         if(!parallel_exec())
             serial_exec();
-    }
-    catch(const std::exception& e)
+    } catch(const std::exception& e)
     {
         std::stringstream ss;
         ss << "\n\nError executing :: " << e.what() << "\n\n";

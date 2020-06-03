@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -54,10 +54,11 @@ int VTaskGroup::f_verbose = GetEnv<int>("PTL_VERBOSE", 0);
 //======================================================================================//
 
 VTaskGroup::VTaskGroup(ThreadPool* tp)
-: m_tot_task_count(0)
-, m_id(vtask_group_counter()++)
+: m_id(vtask_group_counter()++)
 , m_pool(tp)
-, m_task_lock()
+, m_tot_task_count(std::make_shared<atomic_int>(0))
+, m_task_cond(std::make_shared<condition_t>())
+, m_task_lock(std::make_shared<lock_t>())
 , m_main_tid(std::this_thread::get_id())
 {
     if(!m_pool && TaskRunManager::GetMasterRunManager())
@@ -111,7 +112,7 @@ VTaskGroup::wait()
     bool within_task = (data) ? data->within_task : true;
 
     auto is_active_state = [&]() {
-        return (tpool->state().load(std::memory_order_relaxed) !=
+        return (tpool->state()->load(std::memory_order_relaxed) !=
                 thread_pool::state::STOPPED);
     };
 
@@ -165,7 +166,7 @@ VTaskGroup::wait()
     }
 
     intmax_t wake_size = 2;
-    AutoLock _lock(m_task_lock, std::defer_lock);
+    AutoLock _lock(*m_task_lock, std::defer_lock);
 
     while(is_active_state())
     {
@@ -186,11 +187,11 @@ VTaskGroup::wait()
             // when true, this wakes the thread
             if(pending() >= wake_size)
             {
-                m_task_cond.wait(_lock);
+                m_task_cond->wait(_lock);
             }
             else
             {
-                m_task_cond.wait_for(_lock, std::chrono::microseconds(100));
+                m_task_cond->wait_for(_lock, std::chrono::microseconds(100));
             }
             // unlock
             if(_lock.owns_lock())

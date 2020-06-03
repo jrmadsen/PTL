@@ -1,7 +1,7 @@
 ################################################################################
 #   cmake settings
 #
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     set(MSG "")
@@ -49,11 +49,18 @@ foreach(_TYPE MAJOR MINOR PATCH)
     set(PTL_VERSION_${_TYPE} ${PROJECT_VERSION_${_TYPE}}
         CACHE STRING "PTL ${_TYPE} version" FORCE)
     mark_as_advanced(PTL_VERSION_${_TYPE})
-endforeach(_TYPE MAJOR MINOR PATCH)
+endforeach()
+set(PTL_VERSION_STRING "${PTL_VERSION_MAJOR}.${PTL_VERSION_MINOR}.${PTL_VERSION_PATCH}"
+    CACHE STRING "PTL version string")
+set(PTL_VERSION_STRING "${PTL_VERSION_MAJOR}.${PTL_VERSION_MINOR}.${PTL_VERSION_PATCH}")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules ${CMAKE_MODULE_PATH})
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME development)
 mark_as_advanced(PTL_VERSION)
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "CMake build type" FORCE)
+endif()
 
 ################################################################################
 
@@ -79,8 +86,13 @@ add_subdirectory(source)
 include(ConfigurePackage)
 
 if(PTL_BUILD_EXAMPLES)
-    set(PTL_DIR ${CMAKE_BINARY_DIR})
-    add_subdirectory(examples)
+    if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples)
+        set(PTL_DIR ${CMAKE_BINARY_DIR})
+        add_subdirectory(examples)
+    else()
+        set(PTL_BUILD_EXAMPLES OFF CACHE BOOL
+	    "PTL examples directory doesn't exist" FORCE)
+    endif()
 endif()
 
 if(PTL_MASTER_PROJECT)

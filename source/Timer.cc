@@ -25,7 +25,9 @@
 #include "PTL/Timer.hh"
 
 #include <iomanip>
+#include <sstream>
 #include <stdexcept>
+#include <string>
 
 using namespace PTL;
 
@@ -120,8 +122,7 @@ operator<<(std::ostream& os, const PTL::Timer& t)
 
 Timer::Timer()
 : fValidTimes(false)
-{
-}
+{}
 
 //======================================================================================//
 

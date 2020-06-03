@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -76,9 +76,6 @@ public:
     int          GetVerbose() const { return m_verbose; }
     void         SetVerbose(int val) { m_verbose = val; }
 
-private:
-    // grainsize
-
 public:  // with description
     // Singleton implementing master thread behavior
     static TaskRunManager* GetInstance(bool useTBB = false);
@@ -95,9 +92,6 @@ protected:
     VUserTaskQueue* m_task_queue     = nullptr;
     ThreadPool*     m_thread_pool    = nullptr;
     TaskManager*    m_task_manager   = nullptr;
-
-public:
-    virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
 };
 
 }  // namespace PTL

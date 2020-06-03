@@ -96,6 +96,6 @@ namespace
 {
 // add a symbol to avoid warnings about compiled file had no symbols
 static int cxx_common_symbol = 0;
-}
+}  // namespace
 
 #endif

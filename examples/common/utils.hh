@@ -140,8 +140,7 @@ struct Measurement
     : cutoff(_cutoff)
     , num_task_groups(_ntg)
     , nthreads(_nthreads)
-    {
-    }
+    {}
 
     bool operator==(const Measurement& rhs) const
     {

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -41,8 +41,7 @@ VTask::VTask()
 : m_depth(0)
 , m_group(nullptr)
 , m_pool(nullptr)
-{
-}
+{}
 
 //======================================================================================//
 
@@ -50,8 +49,7 @@ VTask::VTask(VTaskGroup* task_group)
 : m_depth(0)
 , m_group(task_group)
 , m_pool((m_group) ? task_group->pool() : nullptr)
-{
-}
+{}
 
 //======================================================================================//
 
@@ -59,8 +57,7 @@ VTask::VTask(ThreadPool* tp)
 : m_depth(0)
 , m_group(nullptr)
 , m_pool(tp)
-{
-}
+{}
 
 //======================================================================================//
 
@@ -78,9 +75,8 @@ VTask::operator--()
         {
             try
             {
-                m_group->task_cond().notify_all();
-            }
-            catch(std::system_error& e)
+                m_group->task_cond()->notify_all();
+            } catch(std::system_error& e)
             {
                 auto     tid = ThreadPool::GetThisThreadID();
                 AutoLock l(TypeMutex<decltype(std::cerr)>(), std::defer_lock);

@@ -23,21 +23,15 @@ endif()
 #
 @PACKAGE_INIT@
 
-#------------------------------------------------------------------------------#
-#   project flags
-#
-set(@PROJECT_NAME@_C_FLAGS      "@CMAKE_C_FLAGS@")
-set(@PROJECT_NAME@_CXX_FLAGS    "@CMAKE_CXX_FLAGS@ -std=c++@CMAKE_CXX_STANDARD@")
-
 
 #------------------------------------------------------------------------------#
 #   install or build tree
 #
 if("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
     set(_PTL_BUILD_TREE ON)
-else("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
+else()
     set(_PTL_INSTALL_TREE ON)
-endif("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -48,7 +42,7 @@ if(_PTL_INSTALL_TREE)
     set_and_check(@PROJECT_NAME@_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
     set_and_check(@PROJECT_NAME@_LIB_DIR "@PACKAGE_LIB_INSTALL_DIR@")
 
-    include(${PTL_CMAKE_DIR}/@PROJECT_NAME@LibraryDepends.cmake)
+    include(${PTL_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake)
     check_required_components(@PROJECT_NAME@)
 
     # get imported location
@@ -69,14 +63,26 @@ if(_PTL_INSTALL_TREE)
         foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
             # get location
             if(NOT _${_COMPONENT}_LOCATION)
-                get_target_property(_${_COMPONENT}_LOCATION @LIBNAME@-${_COMPONENT} ${_LOC})
-            endif(NOT _${_COMPONENT}_LOCATION)
+                get_target_property(_${_COMPONENT}_LOCATION @PROJECT_NAME@::@LIBNAME@-${_COMPONENT} ${_LOC})
+            endif()
             # set the library
             if(NOT @PROJECT_NAME@_LIBRARY)
                 set(@PROJECT_NAME@_LIBRARY ${_${_COMPONENT}_LOCATION} CACHE INTERNAL "@PROJECT_NAME@ library")
-            endif(NOT @PROJECT_NAME@_LIBRARY)
+            endif()
         endforeach()
     endforeach()
+
+    if(@Threads_FOUND@)
+        set(CMAKE_THREAD_PREFER_PTHREAD @CMAKE_THREAD_PREFER_PTHREAD@)
+        set(THREADS_PREFER_PTHREAD_FLAG @THREADS_PREFER_PTHREAD_FLAG@)
+        find_package(Threads REQUIRED)
+    endif()
+
+    if(@TBB_FOUND@)
+        set(TBB_ROOT_DIR @TBB_ROOT_DIR@)
+        set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/PTL/Modules ${CMAKE_MODULE_PATH})
+        find_package(TBB @TBB_VERSION@ REQUIRED)
+    endif()
 
 else(_PTL_INSTALL_TREE)
 
@@ -136,18 +142,11 @@ set(@PROJECT_NAME@_LIBRARIES ${@PROJECT_NAME@_LIBRARY})
 #------------------------------------------------------------------------------#
 #   Definitions
 #
-set(PTL_USE_TIMEMORY @PTL_USE_TIMEMORY@)
-set(PTL_USE_GPERF @PTL_USE_GPERF@)
 set(PTL_USE_TBB @PTL_USE_TBB@)
 set(PTL_USE_GPU @PTL_USE_GPU@)
 set(PTL_USE_CUDA @PTL_USE_CUDA@)
-set(PTL_USE_ITTNOTIFY @PTL_USE_ITTNOTIFY@)
 
-if(_PTL_INSTALL_TREE)
-    list(APPEND CMAKE_MODULE_PATH ${PTL_CMAKE_DIR})
-    include("${PTL_CMAKE_DIR}/Packages.cmake")
-    list(APPEND @PROJECT_NAME@_LIBRARIES ${EXTERNAL_LIBRARIES})
-else()
+if(NOT _PTL_INSTALL_TREE)
     list(APPEND @PROJECT_NAME@_LIBRARIES "@EXTERNAL_LIBRARIES@")
 endif()
 

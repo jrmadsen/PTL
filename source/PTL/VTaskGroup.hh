@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -42,6 +42,7 @@
 #include <deque>
 #include <list>
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -90,21 +91,18 @@ public:
 
     //------------------------------------------------------------------------//
     // increment (prefix)
-    intmax_t operator++() { return ++m_tot_task_count; }
-    intmax_t operator++(int) { return m_tot_task_count++; }
+    intmax_t operator++() { return ++(*m_tot_task_count); }
+    intmax_t operator++(int) { return (*m_tot_task_count)++; }
     //------------------------------------------------------------------------//
     // increment (prefix)
-    intmax_t operator--() { return --m_tot_task_count; }
-    intmax_t operator--(int) { return m_tot_task_count--; }
+    intmax_t operator--() { return --(*m_tot_task_count); }
+    intmax_t operator--(int) { return (*m_tot_task_count)--; }
     //------------------------------------------------------------------------//
     // size
-    intmax_t size() const { return m_tot_task_count.load(); }
+    intmax_t size() const { return m_tot_task_count->load(); }
 
     // get the locks/conditions
-    lock_t&            task_lock() { return m_task_lock; }
-    condition_t&       task_cond() { return m_task_cond; }
-    const lock_t&      task_lock() const { return m_task_lock; }
-    const condition_t& task_cond() const { return m_task_cond; }
+    std::shared_ptr<condition_t> task_cond() { return m_task_cond; }
 
     // identifier
     const uintmax_t& id() const { return m_id; }
@@ -120,7 +118,7 @@ public:
 
     //------------------------------------------------------------------------//
     // check if any tasks are still pending
-    virtual intmax_t pending() { return m_tot_task_count.load(); }
+    virtual intmax_t pending() { return m_tot_task_count->load(); }
 
     static void set_verbose(int level) { f_verbose = level; }
 
@@ -131,19 +129,19 @@ protected:
 
     //------------------------------------------------------------------------//
     // get the task count
-    atomic_int&       task_count() { return m_tot_task_count; }
-    const atomic_int& task_count() const { return m_tot_task_count; }
+    atomic_int&       task_count() { return *m_tot_task_count; }
+    const atomic_int& task_count() const { return *m_tot_task_count; }
 
 protected:
     // Private variables
-    atomic_int      m_tot_task_count;
-    uintmax_t       m_id;
-    ThreadPool*     m_pool;
-    condition_t     m_task_cond;
-    lock_t          m_task_lock;
-    tid_type        m_main_tid;
-    vtask_list_type vtask_list;
-    static int      f_verbose;
+    uintmax_t                    m_id;
+    ThreadPool*                  m_pool;
+    std::shared_ptr<atomic_int>  m_tot_task_count = std::make_shared<atomic_int>(0);
+    std::shared_ptr<condition_t> m_task_cond      = std::make_shared<condition_t>();
+    std::shared_ptr<lock_t>      m_task_lock      = std::make_shared<lock_t>();
+    tid_type                     m_main_tid;
+    vtask_list_type              vtask_list;
+    static int                   f_verbose;
 };
 
 inline void

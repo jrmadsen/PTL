@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -311,22 +311,19 @@ public:
     // Does not lock the associated mutex.
     TemplateAutoLock(mutex_type& _mutex, std::defer_lock_t _lock) noexcept
     : unique_lock_t(_mutex, _lock)
-    {
-    }
+    {}
 
     // Tries to lock the associated mutex without blocking by calling
     // m.try_lock(). The behavior is undefined if the current thread already
     // owns the mutex except when the mutex is recursive.
     TemplateAutoLock(mutex_type& _mutex, std::try_to_lock_t _lock)
     : unique_lock_t(_mutex, _lock)
-    {
-    }
+    {}
 
     // Assumes the calling thread already owns m
     TemplateAutoLock(mutex_type& _mutex, std::adopt_lock_t _lock)
     : unique_lock_t(_mutex, _lock)
-    {
-    }
+    {}
 
 public:
     //------------------------------------------------------------------------//
@@ -341,18 +338,15 @@ public:
 
     TemplateAutoLock(mutex_type* _mutex, std::defer_lock_t _lock) noexcept
     : unique_lock_t(*_mutex, _lock)
-    {
-    }
+    {}
 
     TemplateAutoLock(mutex_type* _mutex, std::try_to_lock_t _lock)
     : unique_lock_t(*_mutex, _lock)
-    {
-    }
+    {}
 
     TemplateAutoLock(mutex_type* _mutex, std::adopt_lock_t _lock)
     : unique_lock_t(*_mutex, _lock)
-    {
-    }
+    {}
 
 private:
 // helpful macros
@@ -389,8 +383,7 @@ private:
     // used in _lock_deferred chrono variants to avoid ununsed-variable warning
     template <typename _Tp>
     void suppress_unused_variable(const _Tp&)
-    {
-    }
+    {}
 
     //========================================================================//
     // NOTE on _lock_deferred(...) variants:
@@ -417,8 +410,7 @@ private:
         try
         {
             this->unique_lock_t::lock();
-        }
-        catch(std::system_error& e)
+        } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
         }
@@ -435,8 +427,7 @@ private:
         try
         {
             this->unique_lock_t::try_lock_for(_timeout_duration);
-        }
-        catch(std::system_error& e)
+        } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
         }
@@ -453,8 +444,7 @@ private:
         try
         {
             this->unique_lock_t::try_lock_until(_timeout_time);
-        }
-        catch(std::system_error& e)
+        } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
         }

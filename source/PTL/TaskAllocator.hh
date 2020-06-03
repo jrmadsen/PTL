@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -106,8 +106,7 @@ public:  // without description
     TaskAllocatorImpl(const TaskAllocatorImpl<U>& right) throw()
     : mem(right.mem)
     , tname(right.name())
-    {
-    }
+    {}
     // Copy constructor
 
     pointer       address(reference r) const { return &r; }
@@ -212,8 +211,7 @@ template <class Type>
 TaskAllocatorImpl<Type>::TaskAllocatorImpl()
 : mem(sizeof(Type))
 , tname(typeid(Type).name())
-{
-}
+{}
 
 // ************************************************************
 // TaskAllocatorImpl destructor
@@ -221,8 +219,7 @@ TaskAllocatorImpl<Type>::TaskAllocatorImpl()
 //
 template <class Type>
 TaskAllocatorImpl<Type>::~TaskAllocatorImpl()
-{
-}
+{}
 
 // ************************************************************
 // MallocSingle

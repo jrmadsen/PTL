@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -119,6 +119,19 @@ public:
 
         task_pointer      _ptask = new task_type(std::forward<_Func>(func));
         std::future<_Ret> _f     = _ptask->get_future();
+        m_pool->add_task(_ptask);
+        return _f;
+    }
+    //------------------------------------------------------------------------//
+    template <typename _Func, typename... _Args,
+              typename _Ret = typename std::result_of<_Func(_Args&&...)>::type>
+    auto async(_Func&& func, _Args&&... args) -> std::future<_Ret>
+    {
+        typedef PackagedTask<_Ret, _Args...> task_type;
+
+        auto _ptask =
+            new task_type(std::forward<_Func>(func), std::forward<_Args>(args)...);
+        auto _f = _ptask->get_future();
         m_pool->add_task(_ptask);
         return _f;
     }

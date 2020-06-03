@@ -36,10 +36,7 @@
 #
 
 # - Include guard
-if(__${PROJECT_NAME}_macroutilities_isloaded)
-  return()
-endif()
-set(__${PROJECT_NAME}_macroutilities_isloaded YES)
+include_guard(DIRECTORY)
 
 cmake_policy(PUSH)
 if(NOT CMAKE_VERSION VERSION_LESS 3.1)
@@ -921,6 +918,47 @@ macro(BUILD_LIBRARY)
 
     list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})
 endmacro(BUILD_LIBRARY)
+
+#-----------------------------------------------------------------------
+# function add_enabled_interface(<NAME>)
+#          Mark an interface library as enabled
+#
+FUNCTION(PTL_ADD_ENABLED_INTERFACE _var)
+    set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_ENABLED_INTERFACES ${_var})
+ENDFUNCTION()
+
+
+#-----------------------------------------------------------------------
+# function add_disabled_interface(<NAME>)
+#          Mark an interface as disabled
+#
+FUNCTION(PTL_ADD_DISABLED_INTERFACE _var)
+    get_property(_DISABLED GLOBAL PROPERTY ${PROJECT_NAME}_DISABLED_INTERFACES)
+    if(NOT ${_var} IN_LIST _DISABLED)
+        set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_DISABLED_INTERFACES ${_var})
+    endif()
+ENDFUNCTION()
+
+
+#----------------------------------------------------------------------------------------#
+# macro to add an interface lib
+#
+FUNCTION(PTL_ADD_INTERFACE_LIBRARY _TARGET)
+    if(NOT TARGET ${_TARGET})
+        add_library(${_TARGET} INTERFACE ${ARGN})
+        set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_INTERFACE_LIBRARIES ${_TARGET})
+        ptl_add_enabled_interface(${_TARGET})
+    endif()
+ENDFUNCTION()
+
+
+#----------------------------------------------------------------------------------------#
+# get the list of interface libraries
+#
+FUNCTION(PTL_GET_INTERFACE_LIBRARIES _VAR)
+    get_property(_LIBS GLOBAL PROPERTY ${PROJECT_NAME}_INTERFACE_LIBRARIES)
+    set(${_VAR} ${_LIBS} PARENT_SCOPE)
+ENDFUNCTION()
 
 
 #------------------------------------------------------------------------------#

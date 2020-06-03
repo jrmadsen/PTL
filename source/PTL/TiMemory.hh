@@ -48,21 +48,18 @@ InitializeTiMemory()
 
 #    define TIMEMORY_AUTO_TIMER(str)
 #    define TIMEMORY_AUTO_TIMER_OBJ(str)                                                 \
-        {                                                                                \
-        }
+        {}
 
 #    define TIMEMORY_BASIC_AUTO_TIMER(str)
 #    define TIMEMORY_BASIC_AUTO_TIMER_OBJ(str)                                           \
-        {                                                                                \
-        }
+        {}
 
 #    define TIMEMORY_DEBUG_BASIC_AUTO_TIMER(str)
 #    define TIMEMORY_DEBUG_AUTO_TIMER(str)
 
 inline void
 InitializeTiMemory()
-{
-}
+{}
 
 #endif
 //--------------------------------------------------------------------------------------//

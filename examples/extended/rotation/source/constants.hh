@@ -39,6 +39,6 @@ constexpr float epsilonf = 2.0f * std::numeric_limits<float>::epsilon();
 // convert radians to degrees: theta_in_radians * degrees
 // convert degrees to radians: theta_in_degrees / degrees
 constexpr float degrees = 180.0f / pi;
-}
+}  // namespace constants
 
 //======================================================================================//

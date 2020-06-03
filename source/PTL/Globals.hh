@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -35,15 +35,35 @@
 // Global utility functions
 #include "PTL/Utility.hh"
 
+#include <initializer_list>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
+#if !defined(PTL_FOLD_EXPRESSION)
+#    define PTL_FOLD_EXPRESSION(...)                                                     \
+        ::PTL::details::consume_parameters(                                              \
+            ::std::initializer_list<int>{ (__VA_ARGS__, 0)... })
+#endif
+
 namespace PTL
 {
+template <typename T>
+using decay_t = typename std::decay<T>::type;
+
+template <bool B, typename T = void>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
 // for pre-C++14 tuple expansion to arguments
 namespace details
 {
+//--------------------------------------------------------------------------------------//
+
+template <typename... Args>
+void
+consume_parameters(Args&&...)
+{}
+
 //--------------------------------------------------------------------------------------//
 
 namespace impl
@@ -53,8 +73,7 @@ namespace impl
 // extract the elements in a tuple.
 template <size_t... _Indexes>
 struct _Index_tuple
-{
-};
+{};
 
 // Concatenates two _Index_tuples.
 template <typename _Itup1, typename _Itup2>
@@ -71,8 +90,7 @@ template <size_t _Num>
 struct _Build_index_tuple
 : _Itup_cat<typename _Build_index_tuple<_Num / 2>::__type,
             typename _Build_index_tuple<_Num - _Num / 2>::__type>
-{
-};
+{};
 
 template <>
 struct _Build_index_tuple<1>
@@ -122,11 +140,15 @@ using make_index_sequence = make_integer_sequence<size_t, _Num>;
 template <typename... _Types>
 using index_sequence_for = make_index_sequence<sizeof...(_Types)>;
 
+template <size_t I, typename Tup>
+using index_type_t = decay_t<decltype(std::get<I>(std::declval<Tup>()))>;
+
 template <typename _Fn, typename _Tuple, size_t... _Idx>
-static void
+static inline void
 apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 {
-    __f(std::get<_Idx>(std::forward<_Tuple>(__t))...);
+    std::forward<_Fn>(__f)(std::get<_Idx>(std::forward<_Tuple>(__t))...);
+    // __f(std::get<_Idx>(std::forward<_Tuple>(__t))...);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -134,12 +156,6 @@ apply(_Fn&& __f, _Tuple&& __t, impl::index_sequence<_Idx...>)
 }  // namespace impl
 
 //--------------------------------------------------------------------------------------//
-
-template <typename T>
-using decay_t = typename std::decay<T>::type;
-
-template <bool B, typename T = void>
-using enable_if_t = typename std::enable_if<B, T>::type;
 
 /// Alias template index_sequence
 template <size_t... _Idx>
@@ -153,14 +169,13 @@ using make_index_sequence = impl::make_integer_sequence<size_t, _Num>;
 template <typename... _Types>
 using index_sequence_for = impl::make_index_sequence<sizeof...(_Types)>;
 
-template <typename _Fn, typename _Tuple,
-          std::size_t _N    = std::tuple_size<decay_t<_Tuple>>::value,
-          typename _Indices = impl::make_index_sequence<_N>>
-static void
+template <typename _Fn, typename _Tuple>
+static inline void
 apply(_Fn&& __f, _Tuple&& __t)
 {
-    impl::apply<_Fn, _Tuple>(std::forward<_Fn>(__f), std::forward<_Tuple>(__t),
-                             _Indices{});
+    constexpr auto _N = std::tuple_size<_Tuple>::value;
+    impl::apply(std::forward<_Fn>(__f), std::forward<_Tuple>(__t),
+                impl::make_index_sequence<_N>{});
 }
 
 //--------------------------------------------------------------------------------------//

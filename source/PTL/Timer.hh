@@ -67,11 +67,14 @@
 
 #pragma once
 
+#include "PTL/Types.hh"
+#include <chrono>
+
 #if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
 #    include <sys/times.h>
 #    include <unistd.h>
 #else
-#    include <time.h>
+#    include <ctime>
 #    define _SC_CLK_TCK 1
 
 extern "C"
@@ -94,9 +97,6 @@ extern "C"
     extern clock_t times(struct tms*);
 };
 #endif /* WIN32 */
-
-#include "PTL/Types.hh"
-#include <chrono>
 
 namespace PTL
 {

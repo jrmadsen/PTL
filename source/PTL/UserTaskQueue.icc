@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -89,8 +89,7 @@ inline TaskSubQueue::TaskSubQueue(std::atomic_uintmax_t* _ntasks)
 : m_ntasks(0)
 , m_available(true)
 , m_all_tasks(_ntasks)
-{
-}
+{}
 
 //======================================================================================//
 
@@ -98,8 +97,7 @@ inline TaskSubQueue::TaskSubQueue(const TaskSubQueue& rhs)
 : m_ntasks(0)
 , m_available(true)
 , m_all_tasks(rhs.m_all_tasks)
-{
-}
+{}
 
 //======================================================================================//
 

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -26,7 +26,6 @@
 #include "PTL/TaskManager.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/TiMemory.hh"
 #include "PTL/Utility.hh"
 
 #include <cstdlib>
@@ -143,36 +142,11 @@ void
 TaskRunManager::Terminate()
 {
     m_is_initialized = false;
+    m_thread_pool->destroy_threadpool();
     delete m_task_manager;
     delete m_thread_pool;
     m_task_manager = nullptr;
     m_thread_pool  = nullptr;
-}
-
-//======================================================================================//
-
-void
-TaskRunManager::TiMemoryReport(std::string fname, bool echo_stdout) const
-{
-#ifdef PTL_USE_TIMEMORY
-    if(fname.length() > 0 || echo_stdout)
-    {
-        std::cout << "\nOutputting TiMemory results...\n" << std::endl;
-        tim::manager* timemory_manager = tim::manager::instance();
-
-        if(echo_stdout)
-            timemory_manager->write_report(std::cout, true);
-
-        if(fname.length() > 0)
-        {
-            fname += "_x" + std::to_string(m_thread_pool->size());
-            timemory_manager->write_report(fname + ".txt");
-            timemory_manager->write_serialization(fname + ".json");
-        }
-    }
-#else
-    ConsumeParameters(std::move(fname), echo_stdout);
-#endif
 }
 
 //======================================================================================//

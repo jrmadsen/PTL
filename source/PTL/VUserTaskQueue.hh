@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2019 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -132,7 +132,7 @@ public:
     }
 
     template <std::size_t _N, std::size_t _Nt, typename _Tuple,
-              details::enable_if_t<(_N == _Nt), int> = 0>
+              enable_if_t<(_N == _Nt), int> = 0>
     static void _Executor(_Tuple&& _t)
     {
         if(std::get<_N>(_t).get())
@@ -140,7 +140,7 @@ public:
     }
 
     template <std::size_t _N, std::size_t _Nt, typename _Tuple,
-              details::enable_if_t<(_N < _Nt), int> = 0>
+              enable_if_t<(_N < _Nt), int> = 0>
     static void _Executor(_Tuple&& _t)
     {
         if(std::get<_N>(_t).get())
@@ -148,8 +148,7 @@ public:
         _Executor<_N + 1, _Nt, _Tuple>(std::forward<_Tuple>(_t));
     }
 
-    template <typename _Tuple,
-              std::size_t _N = std::tuple_size<details::decay_t<_Tuple>>::value>
+    template <typename _Tuple, std::size_t _N = std::tuple_size<decay_t<_Tuple>>::value>
     static void Executor(_Tuple&& __t)
     {
         _Executor<0, _N - 1, _Tuple>(std::forward<_Tuple>(__t));

@@ -6,9 +6,9 @@
 
 find_program(CLANG_FORMATTER
     NAMES
-        clang-format-8.0
-        clang-format-7.0
+	clang-format-6
         clang-format-6.0
+	clang-format-mp-6.0 # macports
         clang-format)
 
 if(CLANG_FORMATTER)

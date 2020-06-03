@@ -26,8 +26,7 @@ add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
 ################################################################################
 
 # cmake installation folder
-set(CMAKE_INSTALL_CONFIGDIR  ${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}
-    CACHE PATH "Installation directory for CMake package config files")
+set(CMAKE_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME})
 
 # create the full path version and generic path versions
 foreach(_TYPE in DATAROOT CMAKE INCLUDE LIB BIN MAN DOC)
