@@ -90,6 +90,9 @@ else(_PTL_INSTALL_TREE)
     set(@PROJECT_NAME@_LIB_DIR "@PROJECT_BINARY_DIR@")
 
     foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
+        if("${_COMPONENT}" STREQUAL "NOTFOUND")
+            continue()
+        endif()
         # set the library
         if(NOT @PROJECT_NAME@_LIBRARY)
             set(@PROJECT_NAME@_LIBRARY @LIBNAME@-${_COMPONENT})
@@ -138,7 +141,6 @@ endif(WIN32)
 #
 set(@PROJECT_NAME@_LIBRARIES ${@PROJECT_NAME@_LIBRARY})
 
-
 #------------------------------------------------------------------------------#
 #   Definitions
 #
@@ -148,6 +150,24 @@ set(PTL_USE_CUDA @PTL_USE_CUDA@)
 
 if(NOT _PTL_INSTALL_TREE)
     list(APPEND @PROJECT_NAME@_LIBRARIES "@EXTERNAL_LIBRARIES@")
+endif()
+
+message(STATUS "@PROJECT_NAME@_LIBRARIES: ${@PROJECT_NAME@_LIBRARIES}")
+if(NOT TARGET PTL::ptl)
+    add_library(PTL::ptl INTERFACE IMPORTED)
+    target_include_directories(PTL::ptl INTERFACE ${@PROJECT_NAME@_INCLUDE_DIRS})
+    target_link_libraries(PTL::ptl INTERFACE ${@PROJECT_NAME@_LIBRARIES})
+    set_target_properties(PTL::ptl PROPERTIES
+        INTERFACE_CXX_STANDARD @CMAKE_CXX_STANDARD@
+        INTERFACE_CXX_STANDARD_REQUIRED @CMAKE_CXX_STANDARD_REQUIRED@)
+    if(WIN32)
+        target_compile_definitions(PTL::ptl INTERFACE _PTL_ARCHIVE)
+    endif()
+    foreach(_OPT PTL_USE_TBB PTL_USE_GPU PTL_USE_CUDA)
+        if(${_OPT})
+            target_compile_definitions(PTL::ptl INTERFACE ${_OPT})
+        endif()
+    endforeach()
 endif()
 
 #------------------------------------------------------------------------------#

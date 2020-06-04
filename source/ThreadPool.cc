@@ -78,6 +78,7 @@ ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
         if(_idx < 0)
             _idx = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
+        Threading::SetThreadId(_idx);
     }
     static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
     thread_data() = _unique_data.get();

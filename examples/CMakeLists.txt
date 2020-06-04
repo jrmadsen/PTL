@@ -10,6 +10,7 @@ project(PTL_Examples LANGUAGES C CXX VERSION ${PTL_VERSION})
 add_subdirectory(common)
 list(APPEND EXTERNAL_LIBRARIES common)
 
+add_subdirectory(minimal)
 add_subdirectory(basic)
 add_subdirectory(extended)
 add_subdirectory(gpu)
