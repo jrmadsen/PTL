@@ -66,7 +66,7 @@ endif()
 
 ################################################################################
 
-include(MacroUtilities)
+# include(MacroUtilities)
 include(Options)
 include(Compilers)
 include(GNUInstallDirs)
@@ -98,7 +98,7 @@ if(PTL_BUILD_EXAMPLES)
 endif()
 
 if(PTL_MASTER_PROJECT)
-    print_features()
+    ptl_print_features()
 else()
     set(${PROJECT_NAME}_C_FLAGS ${${PROJECT_NAME}_C_FLAGS} CACHE STRING
         "C compiler flags for ${PROJECT_NAME}")

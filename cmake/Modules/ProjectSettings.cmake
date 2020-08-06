@@ -16,8 +16,8 @@ else(WIN32)
     set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
 endif(WIN32)
 
-add_feature(CMAKE_C_FLAGS_${_CONFIG} "C compiler build-specific flags")
-add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
+ptl_add_feature(CMAKE_C_FLAGS_${_CONFIG} "C compiler build-specific flags")
+ptl_add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
 
 ################################################################################
 #
