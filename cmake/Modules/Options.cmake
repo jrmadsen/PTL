@@ -31,10 +31,10 @@ add_option(PTL_DEVELOPER_INSTALL "Install headers, cmake export, and shared libs
 
 add_option(PTL_USE_TBB "Enable TBB" ON ${_FEATURE})
 add_option(PTL_USE_GPU "Enable GPU preprocessor" OFF ${_FEATURE})
-add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
+# add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
 add_option(PTL_USE_CLANG_TIDY "Enable running clang-tidy on" OFF ${_FEATURE})
 add_option(PTL_USE_COVERAGE "Enable code coverage" OFF ${_FEATURE})
-add_option(PTL_USE_PROFILE "Enable profiling" OFF ${_FEATURE})
+# add_option(PTL_USE_PROFILE "Enable profiling" OFF ${_FEATURE})
 
 if(PTL_USE_ARCH)
     add_option(PTL_USE_AVX512 "Enable AVX-512 flags (if available)" OFF ${_FEATURE})

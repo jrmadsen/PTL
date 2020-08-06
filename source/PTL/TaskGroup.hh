@@ -65,6 +65,13 @@ protected:
         typedef std::function<JoinT(JoinT&, JoinArg&&)> Type;
 
     public:
+        JoinFunction()                    = default;
+        ~JoinFunction()                   = default;
+        JoinFunction(const JoinFunction&) = default;
+        JoinFunction(JoinFunction&&)      = default;
+
+        JoinFunction& operator=(const JoinFunction&) = default;
+        JoinFunction& operator=(JoinFunction&&) = default;
         template <typename Func>
         JoinFunction(Func&& func)
         : m_func(std::forward<Func>(func))
@@ -77,7 +84,7 @@ protected:
         }
 
     private:
-        Type m_func;
+        Type m_func = [](JoinT& lhs, JoinArg&&) { return lhs; };
     };
     //----------------------------------------------------------------------------------//
     template <typename JoinArg>
@@ -87,6 +94,13 @@ protected:
         typedef std::function<void()> Type;
 
     public:
+        JoinFunction()                    = default;
+        ~JoinFunction()                   = default;
+        JoinFunction(const JoinFunction&) = default;
+        JoinFunction(JoinFunction&&)      = default;
+
+        JoinFunction& operator=(const JoinFunction&) = default;
+        JoinFunction& operator=(JoinFunction&&) = default;
         template <typename Func>
         JoinFunction(Func&& func)
         : m_func(std::forward<Func>(func))
@@ -95,7 +109,7 @@ protected:
         void operator()() { m_func(); }
 
     private:
-        Type m_func;
+        Type m_func = []() {};
     };
     //----------------------------------------------------------------------------------//
 
@@ -190,9 +204,9 @@ public:
             nsplit = 1;
         for(intmax_t n = 0; n < nsplit; ++n)
         {
-            auto beg = n * chunks;
-            auto end = (n + 1) * chunks + ((n + 1 == nsplit) ? nmod : 0);
-            run(std::forward<Func>(func), std::move(beg), std::move(end),
+            auto _beg = n * chunks;
+            auto _end = (n + 1) * chunks + ((n + 1 == nsplit) ? nmod : 0);
+            run(std::forward<Func>(func), std::move(_beg), std::move(_end),
                 std::forward<Args>(args)...);
         }
     }

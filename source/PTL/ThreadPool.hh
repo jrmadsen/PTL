@@ -37,11 +37,10 @@
 #include "PTL/VTaskGroup.hh"
 #include "PTL/VUserTaskQueue.hh"
 
+#ifdef PTL_USE_TBB
 #if !defined(TBB_SUPPRESS_DEPRECATED_MESSAGES)
 #    define TBB_SUPPRESS_DEPRECATED_MESSAGES 1
 #endif
-
-#ifdef PTL_USE_TBB
 #    include <tbb/global_control.h>
 #    include <tbb/tbb.h>
 #endif
@@ -92,7 +91,8 @@ public:
 
 public:
     // Constructor and Destructors
-    ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
+    ThreadPool(
+        const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
                bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
                const affinity_func_t& = [](intmax_t) {
                    static std::atomic<intmax_t> assigned;
@@ -115,13 +115,13 @@ public:
 
 public:
     // Public functions related to TBB
-    static bool using_tbb() { return f_use_tbb; }
+    static bool using_tbb();
     // enable using TBB if available
     static void set_use_tbb(bool val);
 
 public:
     // add tasks for threads to process
-    size_type add_task(task_pointer&& task, int bin = -1);
+    size_type add_task(task_pointer task, int bin = -1);
     // size_type add_thread_task(ThreadId id, task_pointer&& task);
     // add a generic container with iterator
     template <typename _List_t>
@@ -170,13 +170,13 @@ public:
 
 public:
     // read FORCE_NUM_THREADS environment variable
-    static const thread_id_map_t& GetThreadIDs() { return f_thread_ids; }
+    static const thread_id_map_t& GetThreadIDs();
     static uintmax_t              GetThisThreadID();
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
     int  insert(const task_pointer&, int = -1);
-    int  run_on_this(task_pointer&&);
+    int  run_on_this(task_pointer);
 
 protected:
     // called in THREAD INIT
@@ -228,8 +228,8 @@ private:
 
 private:
     // Private static variables
-    static thread_id_map_t f_thread_ids;
-    static bool            f_use_tbb;
+    PTL_DLL static thread_id_map_t f_thread_ids;
+    PTL_DLL static bool            f_use_tbb;
 };
 
 //--------------------------------------------------------------------------------------//
@@ -290,7 +290,7 @@ ThreadPool::resize(size_type _n)
 }
 //--------------------------------------------------------------------------------------//
 inline int
-ThreadPool::run_on_this(task_pointer&& task)
+ThreadPool::run_on_this(task_pointer task)
 {
     auto _func = [=]() {
         (*task)();
@@ -322,17 +322,17 @@ ThreadPool::insert(const task_pointer& task, int bin)
 }
 //--------------------------------------------------------------------------------------//
 inline ThreadPool::size_type
-ThreadPool::add_task(task_pointer&& task, int bin)
+ThreadPool::add_task(task_pointer task, int bin)
 {
     // if not native (i.e. TBB) then return
-    if(!std::forward<task_pointer>(task)->is_native_task())
+    if(!task->is_native_task())
         return 0;
 
     // if we haven't built thread-pool, just execute
     if(!m_alive_flag->load())
-        return static_cast<size_type>(run_on_this(std::forward<task_pointer>(task)));
+        return static_cast<size_type>(run_on_this(task));
 
-    return static_cast<size_type>(insert(std::forward<task_pointer>(task), bin));
+    return static_cast<size_type>(insert(task, bin));
 }
 //--------------------------------------------------------------------------------------//
 template <typename _List_t>

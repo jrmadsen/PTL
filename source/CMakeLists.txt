@@ -18,7 +18,7 @@ execute_process(COMMAND
 
 if(PTL_USE_TBB)
     list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_TBB)
-endif(PTL_USE_TBB)
+endif()
 
 # libraries to install
 set(INSTALL_LIBRARIES )
@@ -47,7 +47,8 @@ if(BUILD_SHARED_LIBS)
         TARGET_NAME ptl-shared
         OUTPUT_NAME ptl
         SOURCES ${ptl_headers} ${ptl_sources}
-        EXTRA_ARGS POSITION_INDEPENDENT_CODE ON)
+        EXTRA_ARGS POSITION_INDEPENDENT_CODE ON
+                   WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
     target_link_libraries(ptl-shared PUBLIC ptl-external-packages)
     target_link_libraries(ptl-shared PRIVATE ptl-external-libraries ptl-compile-options)
@@ -58,7 +59,7 @@ if(BUILD_SHARED_LIBS)
 
     list(APPEND INSTALL_LIBRARIES ptl-shared)
     export(TARGETS ptl-shared ${PTL_INTERFACE_LIBRARIES}
-        FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}-shared.cmake)
+        FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-shared.cmake)
 endif()
 
 if(BUILD_STATIC_LIBS)
@@ -79,7 +80,7 @@ if(BUILD_STATIC_LIBS)
 
     list(APPEND INSTALL_LIBRARIES ptl-static)
     export(TARGETS ptl-static ${PTL_INTERFACE_LIBRARIES}
-        FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}-static.cmake)
+        FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-static.cmake)
 endif()
 
 
@@ -90,7 +91,7 @@ endif()
 ################################################################################
 
 # Install the targets and export libraries
-install(TARGETS ${INSTALL_LIBRARIES} ${PTL_INTERFACE_LIBRARIES}
+install(TARGETS ${INSTALL_LIBRARIES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     EXPORT ${PROJECT_NAME}Targets
     COMPONENT development)

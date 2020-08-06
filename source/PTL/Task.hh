@@ -74,8 +74,8 @@ public:
     {}
 
     template <typename _Func>
-    PackagedTask(ThreadPool* pool, _Func&& func, _Args&&... args)
-    : VTask(pool)
+    PackagedTask(ThreadPool* _pool, _Func&& func, _Args&&... args)
+    : VTask(_pool)
     , m_ptask(std::forward<_Func>(func))
     , m_args(std::forward<_Args>(args)...)
     {}

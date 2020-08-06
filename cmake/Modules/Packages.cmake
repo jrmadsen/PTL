@@ -18,7 +18,7 @@ ptl_add_interface_library(ptl-cuda)
 
 if(NOT WIN32)
     set(CMAKE_THREAD_PREFER_PTHREAD ON)
-    set(THREADS_PREFER_PTHREAD_FLAG OFF CACHE BOOL "Use -pthread vs. -lpthread" FORCE)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 
 find_package(Threads)

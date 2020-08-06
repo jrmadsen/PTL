@@ -88,6 +88,14 @@ ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
 }
 
 //======================================================================================//
+// static member function that checks enabling of tbb library
+bool
+ThreadPool::using_tbb()
+{
+  return f_use_tbb;
+}
+
+//======================================================================================//
 // static member function that initialized tbb library
 void
 ThreadPool::set_use_tbb(bool enable)
@@ -97,6 +105,14 @@ ThreadPool::set_use_tbb(bool enable)
 #else
     ConsumeParameters<bool>(enable);
 #endif
+}
+
+//======================================================================================//
+
+const ThreadPool::thread_id_map_t&
+ThreadPool::GetThreadIDs()
+{
+  return f_thread_ids;
 }
 
 //======================================================================================//

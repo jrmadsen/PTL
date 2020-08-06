@@ -29,13 +29,11 @@ file(GLOB headers ${CMAKE_CURRENT_LIST_DIR}/*.h ${CMAKE_CURRENT_LIST_DIR}/*.hh)
 #
 add_executable(tasking tasking.cc ${headers})
 target_link_libraries(tasking ${EXTERNAL_LIBRARIES})
-set_target_properties(tasking PROPERTIES COMPILE_FLAGS ${PTL_CXX_FLAGS})
 
 if(PTL_USE_TBB)
     add_executable(tbb_tasking tasking.cc ${headers})
     set_target_properties(tbb_tasking PROPERTIES
-        COMPILE_DEFINITIONS USE_TBB_TASKS
-        COMPILE_FLAGS ${PTL_CXX_FLAGS})
+        COMPILE_DEFINITIONS USE_TBB_TASKS)
     target_link_libraries(tbb_tasking ${EXTERNAL_LIBRARIES})
 endif(PTL_USE_TBB)
 
@@ -45,13 +43,11 @@ endif(PTL_USE_TBB)
 #
 add_executable(recursive_tasking recursive_tasking.cc ${headers})
 target_link_libraries(recursive_tasking ${EXTERNAL_LIBRARIES})
-set_target_properties(recursive_tasking PROPERTIES COMPILE_FLAGS ${PTL_CXX_FLAGS})
 
 if(PTL_USE_TBB)
     add_executable(recursive_tbb_tasking recursive_tasking.cc ${headers})
     set_target_properties(recursive_tbb_tasking PROPERTIES
-        COMPILE_DEFINITIONS USE_TBB_TASKS
-        COMPILE_FLAGS ${PTL_CXX_FLAGS})
+        COMPILE_DEFINITIONS USE_TBB_TASKS)
     target_link_libraries(recursive_tbb_tasking ${EXTERNAL_LIBRARIES})
 endif(PTL_USE_TBB)
 

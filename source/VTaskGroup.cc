@@ -108,8 +108,8 @@ VTaskGroup::wait()
     ThreadPool*     tpool = (m_pool) ? m_pool : data->thread_pool;
     VUserTaskQueue* taskq = (tpool) ? tpool->get_queue() : data->current_queue;
 
-    bool is_master   = (data) ? data->is_master : false;
-    bool within_task = (data) ? data->within_task : true;
+    bool _is_master   = data->is_master;
+    bool _within_task = data->within_task;
 
     auto is_active_state = [&]() {
         return (tpool->state()->load(std::memory_order_relaxed) !=
@@ -121,10 +121,11 @@ VTaskGroup::wait()
             return;
 
         // only want to process if within a task
-        if((!is_master || tpool->size() < 2) && within_task)
+        if((!_is_master || tpool->size() < 2) && _within_task)
         {
             int bin = static_cast<int>(taskq->GetThreadBin());
-            // const auto nitr = (tpool) ? tpool->size() : Thread::hardware_concurrency();
+            // const auto nitr = (tpool) ? tpool->size() :
+            // Thread::hardware_concurrency();
             while(this->pending() > 0)
             {
                 task_pointer _task = taskq->GetTask(bin);
@@ -138,7 +139,7 @@ VTaskGroup::wait()
     if(!is_native_task_group())
     {
         // for external threads
-        if(!is_master || tpool->size() < 2)
+        if(!_is_master || tpool->size() < 2)
             return;
     }
     else if(f_verbose > 0)
@@ -173,7 +174,7 @@ VTaskGroup::wait()
         execute_this_threads_tasks();
 
         // while loop protects against spurious wake-ups
-        while(is_master && pending() > 0 && is_active_state())
+        while(_is_master && pending() > 0 && is_active_state())
         {
             // auto _wake = [&]() { return (wake_size > pending() || !is_active_state());
             // };

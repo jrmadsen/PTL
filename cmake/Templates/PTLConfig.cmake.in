@@ -27,9 +27,8 @@ endif()
 #------------------------------------------------------------------------------#
 #   install or build tree
 #
-if("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
-    set(_PTL_BUILD_TREE ON)
-else()
+set(_PTL_BUILD_TREE @BUILD_TREE@)
+if(NOT _PTL_BUILD_TREE)
     set(_PTL_INSTALL_TREE ON)
 endif()
 
@@ -45,31 +44,14 @@ if(_PTL_INSTALL_TREE)
     include(${PTL_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake)
     check_required_components(@PROJECT_NAME@)
 
-    # get imported location
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" _BUILD_TYPE)
-    if("${CMAKE_BUILD_TYPE}" MATCHES "${CMAKE_CONFIGURATION_TYPES}")
-        set(IMPORTED_LOCATION_BUILD IMPORTED_LOCATION_${_BUILD_TYPE})
-    else("${CMAKE_BUILD_TYPE}" MATCHES "${CMAKE_CONFIGURATION_TYPES}")
-        set(IMPORTED_LOCATION_BUILD )
-    endif("${CMAKE_BUILD_TYPE}" MATCHES "${CMAKE_CONFIGURATION_TYPES}")
-
-    # set places to look
-    set(LOCATIONS IMPORTED_LOCATION ${IMPORTED_LOCATION_BUILD}
-        IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION_RELWITHDEBINFO
-        IMPORTED_LOCATION_DEBUG IMPORTED_LOCATION_MINSIZEREL)
 
     # get target
-    foreach(_LOC ${LOCATIONS})
-        foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
-            # get location
-            if(NOT _${_COMPONENT}_LOCATION)
-                get_target_property(_${_COMPONENT}_LOCATION @PROJECT_NAME@::@LIBNAME@-${_COMPONENT} ${_LOC})
-            endif()
-            # set the library
-            if(NOT @PROJECT_NAME@_LIBRARY)
-                set(@PROJECT_NAME@_LIBRARY ${_${_COMPONENT}_LOCATION} CACHE INTERNAL "@PROJECT_NAME@ library")
-            endif()
-        endforeach()
+    foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
+        # set the library
+        if(NOT @PROJECT_NAME@_LIBRARY)
+        set(@PROJECT_NAME@_LIBRARY ${_${_COMPONENT}_LOCATION} CACHE INTERNAL
+            "@PROJECT_NAME@ library")
+        endif()
     endforeach()
 
     if(@Threads_FOUND@)
@@ -84,27 +66,39 @@ if(_PTL_INSTALL_TREE)
         find_package(TBB @TBB_VERSION@ REQUIRED)
     endif()
 
-else(_PTL_INSTALL_TREE)
+else()
 
     set(@PROJECT_NAME@_INCLUDE_DIR "@PROJECT_SOURCE_DIR@/source")
     set(@PROJECT_NAME@_LIB_DIR "@PROJECT_BINARY_DIR@")
 
+    set(@PROJECT_NAME@_Threads_FOUND @Threads_FOUND@)
+    set(@PROJECT_NAME@_TBB_FOUND @TBB_FOUND@)
+
+    if(NOT Threads_FOUND AND @PROJECT_NAME@_Threads_FOUND)
+        set(CMAKE_THREAD_PREFER_PTHREAD @CMAKE_THREAD_PREFER_PTHREAD@)
+        set(THREADS_PREFER_PTHREAD_FLAG @THREADS_PREFER_PTHREAD_FLAG@)
+        find_package(Threads REQUIRED)
+    endif()
+
+    if(NOT TBB_FOUND AND @PROJECT_NAME@_TBB_FOUND)
+        set(TBB_ROOT_DIR @TBB_ROOT_DIR@)
+        set(CMAKE_MODULE_PATH @PROJECT_SOURCE_DIR@/cmake/Modules ${CMAKE_MODULE_PATH})
+        find_package(TBB @TBB_VERSION@ REQUIRED)
+    endif()
+
     foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
-        if("${_COMPONENT}" STREQUAL "NOTFOUND")
-            continue()
+        if(NOT TARGET @LIBNAME@-${_COMPONENT})
+            include("@PROJECT_BINARY_DIR@/@PROJECT_NAME@-${_COMPONENT}.cmake")
         endif()
         # set the library
         if(NOT @PROJECT_NAME@_LIBRARY)
             set(@PROJECT_NAME@_LIBRARY @LIBNAME@-${_COMPONENT})
-        endif(NOT @PROJECT_NAME@_LIBRARY)
-        set_property(TARGET @LIBNAME@-${_COMPONENT} PROPERTY
-            IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-${_COMPONENT}.cmake")
-        set(PROJECT_DEPENDS @LIBNAME@-${_COMPONENT})
+        endif()
     endforeach()
 
     set(PROJECT_DEPENDS ${@PROJECT_NAME@_LIBRARY})
 
-endif(_PTL_INSTALL_TREE)
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -133,7 +127,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #
 if(WIN32)
     add_definitions(-D_PTL_ARCHIVE)
-endif(WIN32)
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -152,7 +146,7 @@ if(NOT _PTL_INSTALL_TREE)
     list(APPEND @PROJECT_NAME@_LIBRARIES "@EXTERNAL_LIBRARIES@")
 endif()
 
-message(STATUS "@PROJECT_NAME@_LIBRARIES: ${@PROJECT_NAME@_LIBRARIES}")
+# message(STATUS "@PROJECT_NAME@_LIBRARIES: ${@PROJECT_NAME@_LIBRARIES}")
 if(NOT TARGET PTL::ptl)
     add_library(PTL::ptl INTERFACE IMPORTED)
     target_include_directories(PTL::ptl INTERFACE ${@PROJECT_NAME@_INCLUDE_DIRS})

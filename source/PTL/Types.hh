@@ -41,18 +41,19 @@
 //
 // Unique identifier for global module
 //
-#    if defined GLOB_ALLOC_EXPORT
-#        define GLOB_DLL DLLEXPORT
+#    if defined PTL_ALLOC_EXPORT
+#        define PTL_DLL DLLEXPORT
 #    else
-#        define GLOB_DLL DLLIMPORT
+#        define PTL_DLL DLLIMPORT
 #    endif
 #else
 #    define DLLEXPORT
 #    define DLLIMPORT
-#    define GLOB_DLL
+#    define PTL_DLL
 #endif
 
 #include <atomic>
+#include <complex>
 #include <limits>
 #include <memory>
 

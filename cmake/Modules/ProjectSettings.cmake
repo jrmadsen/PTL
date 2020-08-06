@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-if(NOT CMAKE_BUILD_TYPE)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
     set(CMAKE_BUILD_TYPE Release)
 endif()

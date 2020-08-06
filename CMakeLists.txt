@@ -1,7 +1,7 @@
 ################################################################################
 #   cmake settings
 #
-cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     set(MSG "")
@@ -10,6 +10,9 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(STATUS "and build from a separate directory")
     message(WARNING "In-source build")
 endif()
+
+# Add allocation export symbol for the PLT module
+add_definitions(-DPTL_ALLOC_EXPORT)
 
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0042 NEW)
@@ -26,8 +29,7 @@ endif()
 file(READ "${CMAKE_CURRENT_LIST_DIR}/VERSION" VERSION_STRING LIMIT_COUNT 1)
 string(REGEX REPLACE "(\n|\r)" "" VERSION_STRING "${VERSION_STRING}")
 string(REGEX REPLACE "[A-Za-z].*" "" VERSION_STRING "${VERSION_STRING}")
-set(PTL_VERSION "${VERSION_STRING}" CACHE STRING "Version of PTL project" FORCE)
-message(STATUS "PTL version ${PTL_VERSION}")
+set(PTL_VERSION "${VERSION_STRING}")
 
 
 ################################################################################

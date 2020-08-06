@@ -56,9 +56,9 @@ class VTaskGroup
 {
 public:
     template <typename _Tp>
-    using container_type = std::list<_Tp>;
+    using container_type = std::vector<_Tp>;
     template <typename _Tp>
-    using list_type = std::list<_Tp>;
+    using list_type = std::vector<_Tp>;
 
     typedef VTaskGroup                   this_type;
     typedef std::thread::id              tid_type;

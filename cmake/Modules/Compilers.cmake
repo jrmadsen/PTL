@@ -318,9 +318,7 @@ endfunction()
 foreach(LANG C CXX)
 
     macro(SET_COMPILER_VAR VAR _BOOL)
-        set(CMAKE_${LANG}_COMPILER_IS_${VAR} ${_BOOL} CACHE BOOL
-            "CMake ${LANG} compiler identification (${VAR})")
-        mark_as_advanced(CMAKE_${LANG}_COMPILER_IS_${VAR})
+        set(CMAKE_${LANG}_COMPILER_IS_${VAR} ${_BOOL})
     endmacro()
 
     if(("${LANG}" STREQUAL "C" AND CMAKE_COMPILER_IS_GNUCC)
