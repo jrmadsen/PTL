@@ -116,7 +116,9 @@ install:
       else
         ARGS="${ARGS} --num-tasks=256 --pyctest-build-type=RelWithDebInfo";
       fi
-    - python ./pyctest-runner.py ${ARGS};
+    - python ./pyctest-runner.py ${ARGS} -- -VV;
+    - cd build-PTL
+    - cmake --build . --target install
 
 script:
     - eval "${MATRIX_EVAL}"
