@@ -34,12 +34,23 @@
 
 using namespace PTL;
 
+namespace
+{
+bool&
+initial_lock()
+{
+    static bool _lock = true;
+    return _lock;
+}
+}  // namespace
+
 //======================================================================================//
 
 TaskRunManager::pointer&
 TaskRunManager::GetPrivateMasterRunManager(bool init, bool useTBB)
 {
-    static pointer _instance = (init) ? new TaskRunManager(useTBB) : nullptr;
+    static pointer _instance =
+        (init && !initial_lock()) ? new TaskRunManager(useTBB) : nullptr;
     return _instance;
 }
 
@@ -75,8 +86,10 @@ TaskRunManager::TaskRunManager(bool useTBB)
         GetPrivateMasterRunManager(false) = this;
     }
 
+    initial_lock() = false;
+
 #ifdef PTL_USE_TBB
-    auto _useTBB = GetEnv<bool>("FORCE_TBB", useTBB);
+    auto _useTBB = GetEnv<bool>("PTL_FORCE_TBB", GetEnv<bool>("FORCE_TBB", useTBB));
     if(_useTBB)
         useTBB = true;
 #endif
