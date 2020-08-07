@@ -108,7 +108,7 @@ before_install:
 
 install:
     - env
-    - conda install pyctest
+    - conda install python=3.6 pyctest
     - export ARGS="--static-analysis --pyctest-submit --pyctest-clean-first --pyctest-model=Continuous --pyctest-site=Travis"
     - if [ -z "${NOTBB}" ]; then ARGS="${ARGS} --tbb"; fi
     - if [ -n "${COVERAGE}" ]; then
