@@ -21,11 +21,9 @@ if(NOT WIN32)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 
-find_package(Threads)
-if(Threads_FOUND)
-    target_link_libraries(ptl-threads INTERFACE Threads::Threads)
-    target_link_libraries(ptl-external-packages INTERFACE ptl-threads)
-endif()
+find_package(Threads REQUIRED)
+target_link_libraries(ptl-threads INTERFACE Threads::Threads)
+target_link_libraries(ptl-external-packages INTERFACE ptl-threads)
 
 
 ################################################################################
@@ -35,15 +33,18 @@ endif()
 ################################################################################
 
 if(PTL_USE_TBB)
-    find_package(TBB)
+    find_package(TBB 2017)
 
     if(TBB_FOUND)
         target_compile_definitions(ptl-tbb INTERFACE PTL_USE_TBB)
         target_include_directories(ptl-tbb SYSTEM INTERFACE ${TBB_INCLUDE_DIRS})
         target_link_libraries(ptl-tbb INTERFACE ${TBB_LIBRARIES})
         target_link_libraries(ptl-external-packages INTERFACE ptl-tbb)
+    else()
+        ptl_add_disabled_interface(ptl-tbb)
     endif()
-
+else()
+    ptl_add_disabled_interface(ptl-tbb)
 endif()
 
 
@@ -99,7 +100,9 @@ if(PTL_USE_CUDA AND PTL_USE_GPU)
 
         add(CUDA_NVCC_FLAGS "-arch=${CUDA_ARCH}")
         target_compile_definitions(ptl-cuda INTERFACE PTL_USE_CUDA)
-
+    else()
+        ptl_add_disabled_interface(ptl-tbb)
     endif()
-
+else()
+    ptl_add_disabled_interface(ptl-tbb)
 endif()

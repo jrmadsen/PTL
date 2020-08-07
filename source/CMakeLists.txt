@@ -16,10 +16,6 @@ execute_process(COMMAND
 #                                                                              #
 ################################################################################
 
-if(PTL_USE_TBB)
-    list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_TBB)
-endif()
-
 # libraries to install
 set(INSTALL_LIBRARIES )
 
@@ -89,12 +85,6 @@ endif()
 #                              Installation                                    #
 #                                                                              #
 ################################################################################
-
-# Install the targets and export libraries
-install(TARGETS ${INSTALL_LIBRARIES}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    EXPORT ${PROJECT_NAME}Targets
-    COMPONENT development)
 
 # install export
 install(EXPORT ${PROJECT_NAME}Targets

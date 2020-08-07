@@ -883,6 +883,7 @@ macro(PTL_BUILD_LIBRARY)
     setifnot(LIB_OUTPUT_NAME ${LIB_TARGET_NAME})
 
     add_library(${LIB_TARGET_NAME} ${LIB_TYPE} ${LIB_SOURCES})
+    add_library(${PROJECT_NAME}::${LIB_TARGET_NAME} ALIAS ${LIB_TARGET_NAME})
 
     if(LIB_VERSION)
         list(APPEND LIB_EXTRA_ARGS VERSION ${${PROJECT_NAME}_VERSION}
@@ -890,8 +891,7 @@ macro(PTL_BUILD_LIBRARY)
     endif()
 
     target_link_libraries(${LIB_TARGET_NAME} PUBLIC
-        ${EXTERNAL_LIBRARIES} ${LIB_LINK_LIBRARIES}
-        PRIVATE ${PRIVATE_EXTERNAL_LIBRARIES})
+        ptl-external-packages ${LIB_LINK_LIBRARIES})
 
     set_target_properties(${LIB_TARGET_NAME}
         PROPERTIES
@@ -901,23 +901,29 @@ macro(PTL_BUILD_LIBRARY)
             POSITION_INDEPENDENT_CODE   ON
             ${LIB_EXTRA_ARGS})
 
+    if(WIN32)
+        set_target_properties(${LIB_TARGET_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
+
     target_compile_definitions(${LIB_TARGET_NAME} PUBLIC
         ${${PROJECT_NAME}_DEFINITIONS})
 
-    get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
+    target_compile_options(${LIB_TARGET_NAME} PUBLIC
+        $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>)
 
+    get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
     if("CUDA" IN_LIST languages)
         target_compile_options(${LIB_TARGET_NAME} PUBLIC
-            $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
-            $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>
             $<$<COMPILE_LANGUAGE:CUDA>:${${PROJECT_NAME}_CUDA_FLAGS} ${LIB_CUDAFLAGS}>)
-    else()
-        target_compile_options(${LIB_TARGET_NAME} PUBLIC
-            $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS} ${LIB_CFLAGS}>
-            $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS} ${LIB_CXXFLAGS}>)
     endif()
 
-    list(APPEND INSTALL_LIBRARIES ${TARGET_NAME})
+    # Install the targets and export libraries
+    install(TARGETS ${LIB_TARGET_NAME}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        EXPORT ${PROJECT_NAME}Targets
+        COMPONENT development)
+
 endmacro(BUILD_LIBRARY)
 
 #-----------------------------------------------------------------------
@@ -947,6 +953,7 @@ ENDFUNCTION()
 FUNCTION(PTL_ADD_INTERFACE_LIBRARY _TARGET)
     if(NOT TARGET ${_TARGET})
         add_library(${_TARGET} INTERFACE ${ARGN})
+        add_library(${PROJECT_NAME}::${_TARGET} ALIAS ${_TARGET})
         set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_INTERFACE_LIBRARIES ${_TARGET})
         ptl_add_enabled_interface(${_TARGET})
         install(TARGETS ${_TARGET}
