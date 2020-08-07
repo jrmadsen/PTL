@@ -924,7 +924,7 @@ macro(PTL_BUILD_LIBRARY)
         EXPORT ${PROJECT_NAME}Targets
         COMPONENT development)
 
-endmacro(BUILD_LIBRARY)
+endmacro()
 
 #-----------------------------------------------------------------------
 # function add_enabled_interface(<NAME>)
