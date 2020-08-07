@@ -745,6 +745,7 @@ macro(PTL_DETERMINE_LIBDIR_DEFAULT VAR)
         set(LIBDIR_DEFAULT "${_LIBDIR_DEFAULT}" CACHE PATH "Object code libraries (${_LIBDIR_DEFAULT})" FORCE)
     elseif(DEFINED __LAST_LIBDIR_DEFAULT
             AND "${__LAST_LIBDIR_DEFAULT}" STREQUAL "${LIBDIR_DEFAULT}")
+        set(LIBDIR_DEFAULT "${_LIBDIR_DEFAULT}" CACHE STRING "")
         set_property(CACHE LIBDIR_DEFAULT PROPERTY VALUE "${_LIBDIR_DEFAULT}")
     endif()
 endmacro()
@@ -867,7 +868,7 @@ endmacro()
 #----------------------------------------------------------------------------
 # Macro for building library
 #
-macro(BUILD_LIBRARY)
+macro(PTL_BUILD_LIBRARY)
     cmake_parse_arguments(LIB
     "VERSION" "TYPE;TARGET_NAME;OUTPUT_NAME;EXTENSION" "LINK_LIBRARIES;SOURCES;EXTRA_ARGS"
     ${ARGN})

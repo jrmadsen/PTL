@@ -42,7 +42,7 @@ get_property(PTL_INTERFACE_LIBRARIES GLOBAL PROPERTY ${PROJECT_NAME}_INTERFACE_L
 
 if(BUILD_SHARED_LIBS)
 
-    build_library(VERSION
+    ptl_build_library(VERSION
         TYPE SHARED
         TARGET_NAME ptl-shared
         OUTPUT_NAME ptl
@@ -64,7 +64,7 @@ endif()
 
 if(BUILD_STATIC_LIBS)
 
-    build_library(
+    ptl_build_library(
         TYPE STATIC
         TARGET_NAME ptl-static
         OUTPUT_NAME ptl
