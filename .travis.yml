@@ -117,7 +117,7 @@ install:
     fi
   - python ./pyctest-runner.py ${ARGS} -- -VV;
   - cd build-PTL
-  - cmake --build . --target install
+  - cmake --build . --target all
 
 script:
   - eval "${MATRIX_EVAL}"
