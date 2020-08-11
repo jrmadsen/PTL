@@ -41,8 +41,6 @@ def configure():
                         default=False, action='store_true')
     parser.add_argument("--num-tasks", help="Set the number of tasks",
                         default=65536, type=int)
-    parser.add_argument("--gperf", help="Enable CPU profiling",
-                        default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -63,11 +61,6 @@ def configure():
             CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
         helpers.RemovePath(os.path.join(
             pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
-
-    if args.gperf:
-        pyctest.copy_files(["gperf_cpu_profile.sh", "gperf_heap_profile.sh"],
-                           os.path.join(pyctest.SOURCE_DIRECTORY, ".scripts"),
-                           pyctest.BINARY_DIRECTORY)
 
     return args
 
@@ -119,12 +112,6 @@ def run_pyctest():
     if args.arch:
         pyctest.BUILD_NAME = "{} [arch]".format(pyctest.BUILD_NAME)
         build_opts["PTL_USE_ARCH"] = "ON"
-    if args.gperf:
-        pyctest.BUILD_NAME = "{} [gperf]".format(pyctest.BUILD_NAME)
-        build_opts["PTL_USE_GPERF"] = "ON"
-        warnings.warn(
-            "Forcing build type to 'RelWithDebInfo' when gperf is enabled")
-        pyctest.BUILD_TYPE = "RelWithDebInfo"
     if args.sanitizer:
         pyctest.BUILD_NAME = "{} [asan]".format(pyctest.BUILD_NAME)
         build_opts["PTL_USE_SANITIZER"] = "ON"
@@ -203,9 +190,6 @@ def run_pyctest():
     #
     def construct_command(cmd, args):
         _cmd = []
-        if args.gperf:
-            _cmd.append(os.path.join(pyctest.BINARY_DIRECTORY,
-                                     "gperf_cpu_profile.sh"))
         _cmd.extend(cmd)
         return _cmd
 
@@ -213,13 +197,6 @@ def run_pyctest():
     # standard environment settings for tests, adds profile to notes
     #
     def test_env_settings(prof_fname, clobber=False, extra=""):
-        if args.gperf:
-            pyctest.add_note(pyctest.BINARY_DIRECTORY,
-                             "{}.txt".format(prof_fname),
-                             clobber=clobber)
-            pyctest.add_note(pyctest.BINARY_DIRECTORY,
-                             "{}.cum.txt".format(prof_fname),
-                             clobber=False)
         return "PTL_NUM_THREADS={};CPUPROFILE={};{}".format(
             mp.cpu_count(), prof_fname, extra)
 
