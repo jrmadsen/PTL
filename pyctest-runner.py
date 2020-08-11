@@ -5,7 +5,12 @@
 PyCTest driver for Parallel Tasking Library (PTL)
 """
 
-import os, sys, platform, traceback, warnings, shutil
+import os
+import sys
+import platform
+import traceback
+import warnings
+import shutil
 import multiprocessing as mp
 import pyctest.pyctest as pyctest
 import pyctest.helpers as helpers
@@ -17,13 +22,14 @@ def configure():
     # Get pyctest argument parser that include PyCTest arguments
     parser = helpers.ArgumentParser(project_name="PTL",
                                     source_dir=os.getcwd(),
-                                    binary_dir=os.path.join(os.getcwd(), "build-PTL"),
+                                    binary_dir=os.path.join(
+                                        os.getcwd(), "build-PTL"),
                                     build_type="Release",
-                                    vcs_type="git")
+                                    vcs_type="git",
+                                    drop_method="http",
+                                    drop_site="cdash-latest.cdash.development.svc.spin.nersc.org")
 
     parser.add_argument("--arch", help="PTL_USE_ARCH=ON",
-                        default=False, action='store_true')
-    parser.add_argument("--gperf", help="PTL_USE_GPERF=ON",
                         default=False, action='store_true')
     parser.add_argument("--tbb", help="PTL_USE_TBB=ON",
                         default=False, action='store_true')
@@ -33,10 +39,10 @@ def configure():
                         default=False, action='store_true')
     parser.add_argument("--coverage", help="PTL_USE_COVERAGE=ON",
                         default=False, action='store_true')
-    parser.add_argument("--profile", help="PTL_USE_PROFILE=ON",
-                        default=False, action='store_true')
     parser.add_argument("--num-tasks", help="Set the number of tasks",
                         default=65536, type=int)
+    parser.add_argument("--gperf", help="Enable CPU profiling",
+                        default=False, action='store_true')
 
     args = parser.parse_args()
 
@@ -55,7 +61,8 @@ def configure():
         else:
             from pyctest.cmake import CMake
             CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
-        helpers.RemovePath(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
+        helpers.RemovePath(os.path.join(
+            pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
 
     if args.gperf:
         pyctest.copy_files(["gperf_cpu_profile.sh", "gperf_heap_profile.sh"],
@@ -100,12 +107,10 @@ def run_pyctest():
     #
     build_opts = {
         "PTL_USE_ARCH": "OFF",
-        "PTL_USE_GPERF": "OFF",
         "PTL_USE_TBB": "OFF",
         "PTL_USE_SANITIZER": "OFF",
         "PTL_USE_CLANG_TIDY": "OFF",
-        "PTL_USE_COVERAGE" : "OFF",
-        "PTL_USE_PROFILE" : "OFF"
+        "PTL_USE_COVERAGE": "OFF",
     }
 
     if args.tbb:
@@ -133,8 +138,6 @@ def run_pyctest():
             warnings.warn(
                 "Forcing build type to 'Debug' when coverage is enabled")
             pyctest.BUILD_TYPE = "Debug"
-    if args.profile:
-        build_opts["PTL_USE_PROFILE"] = "ON"
 
     # default options
     cmake_args = "-DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON".format(
@@ -165,8 +168,8 @@ def run_pyctest():
             pyctest.BUILD_COMMAND = "{} -- -j{} VERBOSE=1".format(
                 pyctest.BUILD_COMMAND, mp.cpu_count())
         else:
-            pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(pyctest.BUILD_COMMAND)
-
+            pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(
+                pyctest.BUILD_COMMAND)
 
     #--------------------------------------------------------------------------#
     # how to update the code
