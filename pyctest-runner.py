@@ -25,9 +25,7 @@ def configure():
                                     binary_dir=os.path.join(
                                         os.getcwd(), "build-PTL"),
                                     build_type="Release",
-                                    vcs_type="git",
-                                    drop_method="http",
-                                    drop_site="cdash.cdash.development.svc.spin.nersc.org")
+                                    vcs_type="git")
 
     parser.add_argument("--arch", help="PTL_USE_ARCH=ON",
                         default=False, action='store_true')
