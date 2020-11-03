@@ -44,9 +44,7 @@ class TaskManager;
 class TaskRunManager
 {
 public:
-    typedef TaskGroup<void>    RunTaskGroup;
-    typedef TBBTaskGroup<void> RunTaskGroupTBB;
-    typedef TaskRunManager*    pointer;
+    typedef TaskRunManager* pointer;
 
 public:
     // Parameters:

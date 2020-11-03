@@ -124,8 +124,7 @@ VTaskGroup::wait()
         if((!_is_master || tpool->size() < 2) && _within_task)
         {
             int bin = static_cast<int>(taskq->GetThreadBin());
-            // const auto nitr = (tpool) ? tpool->size() :
-            // Thread::hardware_concurrency();
+            // const auto nitr = (tpool) ? tpool->size() : Thread::hardware_concurrency();
             while(this->pending() > 0)
             {
                 task_pointer _task = taskq->GetTask(bin);
