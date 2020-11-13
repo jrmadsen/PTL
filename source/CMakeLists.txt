@@ -70,7 +70,7 @@ if(BUILD_STATIC_LIBS)
     target_link_libraries(ptl-static PUBLIC ptl-external-packages)
     target_link_libraries(ptl-static PRIVATE ptl-external-libraries ptl-compile-options)
 
-    target_include_directories(ptl-shared INTERFACE
+    target_include_directories(ptl-static INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
