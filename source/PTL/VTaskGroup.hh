@@ -100,7 +100,7 @@ public:
     intmax_t size() const { return m_tot_task_count->load(); }
 
     // get the locks/conditions
-    std::shared_ptr<condition_t> task_cond() { return m_task_cond; }
+    std::shared_ptr<condition_t>& task_cond() { return m_task_cond; }
 
     // identifier
     const uintmax_t& id() const { return m_id; }

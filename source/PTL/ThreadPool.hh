@@ -86,7 +86,8 @@ public:
     typedef std::vector<bool>             bool_list_t;
     typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
     typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
-    using thread_vec_t = std::vector<Thread>;
+    using thread_vec_t  = std::vector<Thread>;
+    using thread_data_t = std::vector<std::shared_ptr<ThreadData>>;
     // functions
     typedef std::function<void()>             initialize_func_t;
     typedef std::function<intmax_t(intmax_t)> affinity_func_t;
@@ -117,6 +118,9 @@ public:
     template <typename FuncT>
     void execute_on_all_threads(FuncT&& _func);
 
+    task_queue_t*  get_queue() const { return m_task_queue; }
+    task_queue_t*& get_valid_queue(task_queue_t*&);
+
 public:
     // Public functions related to TBB
     static bool using_tbb();
@@ -133,8 +137,6 @@ public:
 
     Thread* get_thread(size_type _n) const;
     Thread* get_thread(std::thread::id id) const;
-
-    task_queue_t* get_queue() const { return m_task_queue; }
 
     // only relevant when compiled with PTL_USE_TBB
     static tbb_global_control_t*& tbb_global_control();
@@ -184,7 +186,7 @@ protected:
 
 protected:
     // called in THREAD INIT
-    static void start_thread(ThreadPool*, intmax_t = -1);
+    static void start_thread(ThreadPool*, thread_data_t*, intmax_t = -1);
 
     void record_entry()
     {
@@ -222,10 +224,11 @@ private:
     thread_list_t m_main_threads;  // storage for active threads
     thread_list_t m_stop_threads;  // storage for stopped threads
     thread_vec_t  m_threads;
+    thread_data_t m_thread_data;
 
     // task queue
-    task_queue_t*     m_task_queue;
-    tbb_task_group_t* m_tbb_task_group;
+    task_queue_t*     m_task_queue     = nullptr;
+    tbb_task_group_t* m_tbb_task_group = nullptr;
 
     // functions
     initialize_func_t m_init_func;
@@ -321,7 +324,7 @@ ThreadPool::insert(const task_pointer& task, int bin)
     static thread_local ThreadData* _data = ThreadData::GetInstance();
 
     // pass the task to the queue
-    auto ibin = m_task_queue->InsertTask(task, _data, bin);
+    auto ibin = get_valid_queue(m_task_queue)->InsertTask(task, _data, bin);
     notify();
     return ibin;
 }
@@ -361,7 +364,7 @@ ThreadPool::add_tasks(ListT& c)
         else
         {
             //++(m_task_queue);
-            m_task_queue->InsertTask(itr);
+            get_valid_queue(m_task_queue)->InsertTask(itr);
         }
     }
     c.clear();

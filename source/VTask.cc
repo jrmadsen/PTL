@@ -33,6 +33,8 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTaskGroup.hh"
 
+#include <cassert>
+
 using namespace PTL;
 
 //======================================================================================//
@@ -75,7 +77,9 @@ VTask::operator--()
         {
             try
             {
-                m_group->task_cond()->notify_all();
+                auto& _task_cond = m_group->task_cond();
+                assert(_task_cond.get() != nullptr);
+                _task_cond->notify_all();
             } catch(std::system_error& e)
             {
                 auto     tid = ThreadPool::get_this_thread_id();

@@ -69,8 +69,9 @@ bool ThreadPool::f_use_tbb = false;
 // static member function that calls the member function we want the thread to
 // run
 void
-ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
+ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
 {
+    auto _thr_data = std::make_shared<ThreadData>(tp);
     {
         AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
         if(!lock.owns_lock())
@@ -79,9 +80,9 @@ ThreadPool::start_thread(ThreadPool* tp, intmax_t _idx)
             _idx = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
         Threading::SetThreadId(_idx);
+        _data->emplace_back(_thr_data);
     }
-    static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
-    thread_data() = _unique_data.get();
+    thread_data() = _thr_data.get();
     tp->record_entry();
     tp->execute_thread(thread_data()->current_queue);
     tp->record_exit();
@@ -311,7 +312,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         // add the threads
         try
         {
-            Thread thr(ThreadPool::start_thread, this, this_tid + i + 1);
+            Thread thr(ThreadPool::start_thread, this, &m_thread_data, this_tid + i + 1);
             // only reaches here if successful creation of thread
             ++m_pool_size;
             // store thread
@@ -448,6 +449,7 @@ ThreadPool::destroy_threadpool()
         //--------------------------------------------------------------------//
     }
 
+    m_thread_data.clear();
     m_threads.clear();
     m_main_threads.clear();
     m_is_joined.clear();
@@ -465,12 +467,15 @@ ThreadPool::destroy_threadpool()
 
     auto _active = m_thread_active->load();
 
-    if(_active == 0)
-        std::cout << "ThreadPool destroyed" << std::endl;
-    else
-        std::cout << "ThreadPool destroyed but " << _active
-                  << " threads might still be active (and cause a termination error)"
-                  << std::endl;
+    if(get_verbose() >= 0)
+    {
+        if(_active == 0)
+            std::cout << "ThreadPool destroyed" << std::endl;
+        else
+            std::cout << "ThreadPool destroyed but " << _active
+                      << " threads might still be active (and cause a termination error)"
+                      << std::endl;
+    }
 
     return 0;
 }
@@ -516,6 +521,15 @@ ThreadPool::stop_thread()
     return m_main_threads.size();
 }
 
+//======================================================================================//
+
+ThreadPool::task_queue_t*&
+ThreadPool::get_valid_queue(task_queue_t*& _queue)
+{
+    if(!_queue)
+        _queue = new UserTaskQueue{ static_cast<intmax_t>(m_pool_size) };
+    return _queue;
+}
 //======================================================================================//
 
 void
