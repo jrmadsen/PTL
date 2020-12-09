@@ -53,12 +53,12 @@ class ThreadPool;
 
 #if !defined(PTL_DEFAULT_OBJECT)
 #    define PTL_DEFAULT_OBJECT(NAME)                                                     \
-        NAME()                = default;                                                 \
-        ~NAME()               = default;                                                 \
-        NAME(const NAME&)     = default;                                                 \
-        NAME(NAME&&) noexcept = default;                                                 \
+        NAME()            = default;                                                     \
+        ~NAME()           = default;                                                     \
+        NAME(const NAME&) = default;                                                     \
+        NAME(NAME&&)      = default;                                                     \
         NAME& operator=(const NAME&) = default;                                          \
-        NAME& operator=(NAME&&) noexcept = default;
+        NAME& operator=(NAME&&) = default;
 #endif
 
 //--------------------------------------------------------------------------------------//
