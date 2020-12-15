@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -43,6 +43,8 @@
 #include <tuple>
 #include <utility>
 
+namespace PTL
+{
 class VTaskGroup;
 class ThreadPool;
 
@@ -52,17 +54,18 @@ class ThreadPool;
 class VTask
 {
 public:
-    typedef std::thread::id          tid_type;
-    typedef size_t                   size_type;
-    typedef VTask                    this_type;
-    typedef std::atomic_uintmax_t    count_t;
-    typedef VTask*                   iterator;
-    typedef const VTask*             const_iterator;
-    typedef TaskAllocator<this_type> allocator_type;
-    typedef std::function<void()>    void_func_t;
+    typedef std::thread::id       tid_type;
+    typedef size_t                size_type;
+    typedef VTask                 this_type;
+    typedef std::atomic_uintmax_t count_t;
+    typedef VTask*                iterator;
+    typedef const VTask*          const_iterator;
+    typedef std::function<void()> void_func_t;
 
 public:
-    VTask(VTaskGroup* _group = nullptr);
+    VTask();
+    explicit VTask(VTaskGroup* task_group);
+    explicit VTask(ThreadPool* pool);
     virtual ~VTask();
 
 public:
@@ -71,10 +74,10 @@ public:
 
 public:
     // used by thread_pool
-    void                operator++();
     void                operator--();
     virtual bool        is_native_task() const;
     virtual ThreadPool* pool() const;
+    VTaskGroup*         group() const { return m_group; }
 
 public:
     // used by task tree
@@ -94,10 +97,12 @@ protected:
     static tid_type this_tid() { return std::this_thread::get_id(); }
 
 protected:
-    VTaskGroup* m_vgroup;
-    tid_type    m_tid_bin;
     intmax_t    m_depth;
+    VTaskGroup* m_group;
+    ThreadPool* m_pool;
     void_func_t m_func = []() {};
 };
 
 //======================================================================================//
+
+}  // namespace PTL

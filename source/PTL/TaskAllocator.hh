@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -26,10 +26,8 @@
 // chunks organised as linked list. It's meant to be used by associating
 // it to the object to be allocated and defining for it new and delete
 // operators via MallocSingle() and FreeSingle() methods.
-
 //      ---------------- TaskAllocator ----------------
 //
-// Author: G.Cosmo (CERN), November 2000
 // ------------------------------------------------------------
 
 #pragma once
@@ -38,7 +36,10 @@
 #include <typeinfo>
 
 #include "PTL/TaskAllocatorPool.hh"
+#include "PTL/Threading.hh"
 
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 
 class TaskAllocatorBase
@@ -57,11 +58,11 @@ public:
 //--------------------------------------------------------------------------------------//
 
 template <class Type>
-class TaskAllocator : public TaskAllocatorBase
+class TaskAllocatorImpl : public TaskAllocatorBase
 {
 public:  // with description
-    TaskAllocator();
-    ~TaskAllocator();
+    TaskAllocatorImpl();
+    ~TaskAllocatorImpl();
     // Constructor & destructor
 
     inline Type* MallocSingle();
@@ -69,20 +70,19 @@ public:  // with description
     // Malloc and Free methods to be used when overloading
     // new and delete operators in the client <Type> object
 
-    inline void ResetStorage();
+    inline void ResetStorage() override;
     // Returns allocated storage to the free store, resets allocator.
     // Note: contents in memory are lost using this call !
 
-    inline size_t GetAllocatedSize() const;
+    inline size_t GetAllocatedSize() const override;
     // Returns the size of the total memory allocated
-    inline int GetNoPages() const;
+    inline int GetNoPages() const override;
     // Returns the total number of allocated pages
-    inline size_t GetPageSize() const;
+    inline size_t GetPageSize() const override;
     // Returns the current size of a page
-    inline void IncreasePageSize(unsigned int sz);
+    inline void IncreasePageSize(unsigned int sz) override;
     // Resets allocator and increases default page size of a given factor
-
-    inline const char* GetPoolType() const;
+    inline const char* GetPoolType() const override;
     // Returns the type_info Id of the allocated type in the pool
 
 public:  // without description
@@ -103,10 +103,10 @@ public:  // without description
     typedef const Type& const_reference;
 
     template <class U>
-    TaskAllocator(const TaskAllocator<U>& right) throw()
+    TaskAllocatorImpl(const TaskAllocatorImpl<U>& right) throw()
     : mem(right.mem)
-    {
-    }
+    , tname(right.name())
+    {}
     // Copy constructor
 
     pointer       address(reference r) const { return &r; }
@@ -150,7 +150,7 @@ public:  // without description
     template <class U>
     struct rebind
     {
-        typedef TaskAllocator<U> other;
+        typedef TaskAllocatorImpl<U> other;
     };
     // Rebind allocator to type U
 
@@ -163,23 +163,63 @@ private:
 };
 
 //--------------------------------------------------------------------------------------//
+//
+//      Inherit from this class, e.g. MyClass : public TaskAllocator<MyClass>
+//
+//--------------------------------------------------------------------------------------//
+
+template <typename Type>
+class TaskAllocator : public TaskAllocatorImpl<Type>
+{
+public:
+    typedef Type                    value_type;
+    typedef size_t                  size_type;
+    typedef ptrdiff_t               difference_type;
+    typedef Type*                   pointer;
+    typedef const Type*             const_pointer;
+    typedef Type&                   reference;
+    typedef const Type&             const_reference;
+    typedef TaskAllocatorImpl<Type> allocator_type;
+
+public:
+    // define the new operator
+    void* operator new(size_type)
+    {
+        return static_cast<void*>(get_allocator()->MallocSingle());
+    }
+    // define the delete operator
+    void operator delete(void* ptr)
+    {
+        get_allocator()->FreeSingle(static_cast<pointer>(ptr));
+    }
+
+private:
+    // currently disabled due to memory leak found via -fsanitize=leak
+    // static function to get allocator
+    static allocator_type* get_allocator()
+    {
+        typedef std::unique_ptr<allocator_type> allocator_ptr;
+        static thread_local allocator_ptr _allocator = allocator_ptr(new allocator_type);
+        return _allocator.get();
+    }
+};
+
+//--------------------------------------------------------------------------------------//
 // Inline implementation
 
 template <class Type>
-TaskAllocator<Type>::TaskAllocator()
+TaskAllocatorImpl<Type>::TaskAllocatorImpl()
 : mem(sizeof(Type))
-{
-    tname = typeid(Type).name();
-}
+, tname(typeid(Type).name())
+{}
 
 // ************************************************************
-// TaskAllocator destructor
+// TaskAllocatorImpl destructor
 // ************************************************************
 //
 template <class Type>
-TaskAllocator<Type>::~TaskAllocator()
-{
-}
+TaskAllocatorImpl<Type>::~TaskAllocatorImpl()
+{}
 
 // ************************************************************
 // MallocSingle
@@ -187,7 +227,7 @@ TaskAllocator<Type>::~TaskAllocator()
 //
 template <class Type>
 Type*
-TaskAllocator<Type>::MallocSingle()
+TaskAllocatorImpl<Type>::MallocSingle()
 {
     return static_cast<Type*>(mem.Alloc());
 }
@@ -198,7 +238,7 @@ TaskAllocator<Type>::MallocSingle()
 //
 template <class Type>
 void
-TaskAllocator<Type>::FreeSingle(Type* anElement)
+TaskAllocatorImpl<Type>::FreeSingle(Type* anElement)
 {
     mem.Free(anElement);
     return;
@@ -210,7 +250,7 @@ TaskAllocator<Type>::FreeSingle(Type* anElement)
 //
 template <class Type>
 void
-TaskAllocator<Type>::ResetStorage()
+TaskAllocatorImpl<Type>::ResetStorage()
 {
     // Clear all allocated storage and return it to the free store
     //
@@ -224,7 +264,7 @@ TaskAllocator<Type>::ResetStorage()
 //
 template <class Type>
 size_t
-TaskAllocator<Type>::GetAllocatedSize() const
+TaskAllocatorImpl<Type>::GetAllocatedSize() const
 {
     return mem.Size();
 }
@@ -235,7 +275,7 @@ TaskAllocator<Type>::GetAllocatedSize() const
 //
 template <class Type>
 int
-TaskAllocator<Type>::GetNoPages() const
+TaskAllocatorImpl<Type>::GetNoPages() const
 {
     return mem.GetNoPages();
 }
@@ -246,7 +286,7 @@ TaskAllocator<Type>::GetNoPages() const
 //
 template <class Type>
 size_t
-TaskAllocator<Type>::GetPageSize() const
+TaskAllocatorImpl<Type>::GetPageSize() const
 {
     return mem.GetPageSize();
 }
@@ -257,7 +297,7 @@ TaskAllocator<Type>::GetPageSize() const
 //
 template <class Type>
 void
-TaskAllocator<Type>::IncreasePageSize(unsigned int sz)
+TaskAllocatorImpl<Type>::IncreasePageSize(unsigned int sz)
 {
     ResetStorage();
     mem.GrowPageSize(sz);
@@ -269,7 +309,7 @@ TaskAllocator<Type>::IncreasePageSize(unsigned int sz)
 //
 template <class Type>
 const char*
-TaskAllocator<Type>::GetPoolType() const
+TaskAllocatorImpl<Type>::GetPoolType() const
 {
     return tname;
 }
@@ -280,7 +320,7 @@ TaskAllocator<Type>::GetPoolType() const
 //
 template <class T1, class T2>
 bool
-operator==(const TaskAllocator<T1>&, const TaskAllocator<T2>&) throw()
+operator==(const TaskAllocatorImpl<T1>&, const TaskAllocatorImpl<T2>&) throw()
 {
     return true;
 }
@@ -291,7 +331,9 @@ operator==(const TaskAllocator<T1>&, const TaskAllocator<T2>&) throw()
 //
 template <class T1, class T2>
 bool
-operator!=(const TaskAllocator<T1>&, const TaskAllocator<T2>&) throw()
+operator!=(const TaskAllocatorImpl<T1>&, const TaskAllocatorImpl<T2>&) throw()
 {
     return false;
 }
+
+}  // namespace PTL

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -411,8 +411,8 @@ compute_sum(farray_t& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_cuda_sum);
 
-    ThreadLocalStatic uint64_t tid         = ThreadPool::GetThisThreadID();
-    ThreadLocalStatic cudaStream_t& stream = cuda_streams::instance()->get(tid);
+    static thread_local uint64_t      tid    = ThreadPool::GetThisThreadID();
+    static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[cuda]");
 
@@ -451,9 +451,8 @@ compute_sum(farray_t& cpu_data)
     }
     else
     {
-        aligned_ptr<float> gpu_data =
-            aligned_async_malloc_and_memcpy<float, 512>(cpu_data.data(), cpu_data.size(),
-                                                        stream);
+        aligned_ptr<float> gpu_data = aligned_async_malloc_and_memcpy<float, 512>(
+            cpu_data.data(), cpu_data.size(), stream);
         float _tmp_sum = compute_sum_host(gpu_data, stream, false, buffer);
 
         _sum += _tmp_sum;
@@ -475,15 +474,14 @@ compute_sum(thrust::host_vector<float>& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_thrust_sum);
 
-    ThreadLocalStatic uint64_t tid         = ThreadPool::GetThisThreadID();
-    ThreadLocalStatic cudaStream_t& stream = cuda_streams::instance()->get(tid);
+    static thread_local uint64_t      tid    = ThreadPool::GetThisThreadID();
+    static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[thrust]");
 
-    float*             buffer = nullptr;
-    aligned_ptr<float> gpu_data =
-        aligned_async_malloc_and_memcpy<float, 512>(cpu_data.data(), cpu_data.size(),
-                                                    stream);
+    float*             buffer   = nullptr;
+    aligned_ptr<float> gpu_data = aligned_async_malloc_and_memcpy<float, 512>(
+        cpu_data.data(), cpu_data.size(), stream);
     float _sum = compute_sum_host(gpu_data, stream, true, buffer);
 
     NVTX_RANGE_POP(stream);

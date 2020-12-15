@@ -1,6 +1,8 @@
 #------------------------------------------------------------------------------#
 #
 #
+cmake_policy(SET CMP0012 NEW)
+
 get_filename_component(PTL_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 include(${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@ConfigVersion.cmake)
@@ -16,26 +18,19 @@ if(@BUILD_STATIC_LIBS@)
     list(APPEND _PTL_AVAILABLE_COMPONENTS static)
 endif()
 
-#find_dependency(Boost 1.55 REQUIRED COMPONENTS regex)
-#find_dependency(RapidJSON 1.0 REQUIRED MODULE)
-
-@PACKAGE_INIT@
-
 #------------------------------------------------------------------------------#
-#   project flags
+#   package initialization
 #
-set(@PROJECT_NAME@_C_FLAGS      "@CMAKE_C_FLAGS@")
-set(@PROJECT_NAME@_CXX_FLAGS    "@CMAKE_CXX_FLAGS@ -std=c++@CMAKE_CXX_STANDARD@")
+@PACKAGE_INIT@
 
 
 #------------------------------------------------------------------------------#
 #   install or build tree
 #
-if("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
-    set(_PTL_BUILD_TREE ON)
-else("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
+set(_PTL_BUILD_TREE @BUILD_TREE@)
+if(NOT _PTL_BUILD_TREE)
     set(_PTL_INSTALL_TREE ON)
-endif("${CMAKE_SOURCE_DIR}" STREQUAL "@CMAKE_SOURCE_DIR@")
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -46,54 +41,64 @@ if(_PTL_INSTALL_TREE)
     set_and_check(@PROJECT_NAME@_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
     set_and_check(@PROJECT_NAME@_LIB_DIR "@PACKAGE_LIB_INSTALL_DIR@")
 
-    include(${PTL_CMAKE_DIR}/@PROJECT_NAME@LibraryDepends.cmake)
+    include(${PTL_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake)
     check_required_components(@PROJECT_NAME@)
 
-    # get imported location
-    string(TOUPPER "${CMAKE_BUILD_TYPE}" _BUILD_TYPE)
-    if("${CMAKE_BUILD_TYPE}" MATCHES "${CMAKE_CONFIGURATION_TYPES}")
-        set(IMPORTED_LOCATION_BUILD IMPORTED_LOCATION_${_BUILD_TYPE})
-    else("${CMAKE_BUILD_TYPE}" MATCHES "${CMAKE_CONFIGURATION_TYPES}")
-        set(IMPORTED_LOCATION_BUILD )
-    endif("${CMAKE_BUILD_TYPE}" MATCHES "${CMAKE_CONFIGURATION_TYPES}")
-
-    # set places to look
-    set(LOCATIONS IMPORTED_LOCATION ${IMPORTED_LOCATION_BUILD}
-        IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION_RELWITHDEBINFO
-        IMPORTED_LOCATION_DEBUG IMPORTED_LOCATION_MINSIZEREL)
 
     # get target
-    foreach(_LOC ${LOCATIONS})
-        foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
-            # get location
-            if(NOT _${_COMPONENT}_LOCATION)
-                get_target_property(_${_COMPONENT}_LOCATION @LIBNAME@-${_COMPONENT} ${_LOC})
-            endif(NOT _${_COMPONENT}_LOCATION)
-            # set the library
-            if(NOT @PROJECT_NAME@_LIBRARY)
-                set(@PROJECT_NAME@_LIBRARY ${_${_COMPONENT}_LOCATION} CACHE INTERNAL "@PROJECT_NAME@ library")
-            endif(NOT @PROJECT_NAME@_LIBRARY)
-        endforeach()
+    foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
+        # set the library
+        if(NOT @PROJECT_NAME@_LIBRARY)
+        set(@PROJECT_NAME@_LIBRARY ${_${_COMPONENT}_LOCATION} CACHE INTERNAL
+            "@PROJECT_NAME@ library")
+        endif()
     endforeach()
 
-else(_PTL_INSTALL_TREE)
+    if(@Threads_FOUND@)
+        set(CMAKE_THREAD_PREFER_PTHREAD @CMAKE_THREAD_PREFER_PTHREAD@)
+        set(THREADS_PREFER_PTHREAD_FLAG @THREADS_PREFER_PTHREAD_FLAG@)
+        find_package(Threads REQUIRED)
+    endif()
+
+    if(@TBB_FOUND@)
+        set(TBB_ROOT_DIR @TBB_ROOT_DIR@)
+        set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/PTL/Modules ${CMAKE_MODULE_PATH})
+        find_package(TBB @TBB_VERSION@ REQUIRED)
+    endif()
+
+else()
 
     set(@PROJECT_NAME@_INCLUDE_DIR "@PROJECT_SOURCE_DIR@/source")
     set(@PROJECT_NAME@_LIB_DIR "@PROJECT_BINARY_DIR@")
 
+    set(@PROJECT_NAME@_Threads_FOUND @Threads_FOUND@)
+    set(@PROJECT_NAME@_TBB_FOUND @TBB_FOUND@)
+
+    if(NOT Threads_FOUND AND @PROJECT_NAME@_Threads_FOUND)
+        set(CMAKE_THREAD_PREFER_PTHREAD @CMAKE_THREAD_PREFER_PTHREAD@)
+        set(THREADS_PREFER_PTHREAD_FLAG @THREADS_PREFER_PTHREAD_FLAG@)
+        find_package(Threads REQUIRED)
+    endif()
+
+    if(NOT TBB_FOUND AND @PROJECT_NAME@_TBB_FOUND)
+        set(TBB_ROOT_DIR @TBB_ROOT_DIR@)
+        set(CMAKE_MODULE_PATH @PROJECT_SOURCE_DIR@/cmake/Modules ${CMAKE_MODULE_PATH})
+        find_package(TBB @TBB_VERSION@ REQUIRED)
+    endif()
+
     foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
+        if(NOT TARGET @LIBNAME@-${_COMPONENT})
+            include("@PROJECT_BINARY_DIR@/@PROJECT_NAME@-${_COMPONENT}.cmake")
+        endif()
         # set the library
         if(NOT @PROJECT_NAME@_LIBRARY)
-            set(@PROJECT_NAME@_LIBRARY @LIBNAME@-${_COMPONENT} CACHE INTERNAL "@PROJECT_NAME@ library")
-        endif(NOT @PROJECT_NAME@_LIBRARY)
+            set(@PROJECT_NAME@_LIBRARY @LIBNAME@-${_COMPONENT})
+        endif()
     endforeach()
-
-    set_property(TARGET ${@PROJECT_NAME@_LIBRARY} PROPERTY
-        IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/PTLBuild.cmake")
 
     set(PROJECT_DEPENDS ${@PROJECT_NAME@_LIBRARY})
 
-endif(_PTL_INSTALL_TREE)
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -122,7 +127,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #
 if(WIN32)
     add_definitions(-D_PTL_ARCHIVE)
-endif(WIN32)
+endif()
 
 
 #------------------------------------------------------------------------------#
@@ -130,23 +135,33 @@ endif(WIN32)
 #
 set(@PROJECT_NAME@_LIBRARIES ${@PROJECT_NAME@_LIBRARY})
 
-
 #------------------------------------------------------------------------------#
 #   Definitions
 #
-set(PTL_USE_TIMEMORY @PTL_USE_TIMEMORY@)
-set(PTL_USE_GPERF @PTL_USE_GPERF@)
 set(PTL_USE_TBB @PTL_USE_TBB@)
 set(PTL_USE_GPU @PTL_USE_GPU@)
 set(PTL_USE_CUDA @PTL_USE_CUDA@)
-set(PTL_USE_ITTNOTIFY @PTL_USE_ITTNOTIFY@)
 
-if(_PTL_INSTALL_TREE)
-    list(APPEND CMAKE_MODULE_PATH ${PTL_CMAKE_DIR})
-    include("${PTL_CMAKE_DIR}/Packages.cmake")
-    list(APPEND @PROJECT_NAME@_LIBRARIES ${EXTERNAL_LIBRARIES})
-else()
+if(NOT _PTL_INSTALL_TREE)
     list(APPEND @PROJECT_NAME@_LIBRARIES "@EXTERNAL_LIBRARIES@")
+endif()
+
+# message(STATUS "@PROJECT_NAME@_LIBRARIES: ${@PROJECT_NAME@_LIBRARIES}")
+if(NOT TARGET PTL::ptl)
+    add_library(PTL::ptl INTERFACE IMPORTED)
+    target_include_directories(PTL::ptl INTERFACE ${@PROJECT_NAME@_INCLUDE_DIRS})
+    target_link_libraries(PTL::ptl INTERFACE ${@PROJECT_NAME@_LIBRARIES})
+    set_target_properties(PTL::ptl PROPERTIES
+        INTERFACE_CXX_STANDARD @CMAKE_CXX_STANDARD@
+        INTERFACE_CXX_STANDARD_REQUIRED @CMAKE_CXX_STANDARD_REQUIRED@)
+    if(WIN32)
+        target_compile_definitions(PTL::ptl INTERFACE _PTL_ARCHIVE)
+    endif()
+    foreach(_OPT PTL_USE_TBB PTL_USE_GPU PTL_USE_CUDA)
+        if(${_OPT})
+            target_compile_definitions(PTL::ptl INTERFACE ${_OPT})
+        endif()
+    endforeach()
 endif()
 
 #------------------------------------------------------------------------------#

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -38,6 +38,8 @@
 #include <set>
 #include <stack>
 
+namespace PTL
+{
 class VTask;
 class VTaskGroup;
 class TaskSubQueue;  // definition in UserTaskQueue.icc
@@ -45,7 +47,7 @@ class TaskSubQueue;  // definition in UserTaskQueue.icc
 class UserTaskQueue : public VUserTaskQueue
 {
 public:
-    typedef std::shared_ptr<VTask>             VTaskPtr;
+    typedef VTask*                             task_pointer;
     typedef std::vector<TaskSubQueue*>         TaskSubQueueContainer;
     typedef std::default_random_engine         random_engine_t;
     typedef std::uniform_int_distribution<int> int_dist_t;
@@ -59,10 +61,13 @@ public:
 
 public:
     // Virtual  function for getting a task from the queue
-    virtual VTaskPtr GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
+    virtual task_pointer GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
     // Virtual function for inserting a task into the queue
-    virtual intmax_t InsertTask(VTaskPtr, ThreadData* = nullptr,
+    virtual intmax_t InsertTask(task_pointer, ThreadData* = nullptr,
                                 intmax_t subq = -1) override;
+
+    // if executing only tasks in threads bin
+    task_pointer GetThreadBinTask();
 
     // Overload this function to hold threads
     virtual void Wait() override {}
@@ -71,8 +76,8 @@ public:
     virtual bool      empty() const override;
     virtual size_type size() const override;
 
-    virtual size_type bin_size() const override;
-    virtual bool      bin_empty() const override;
+    virtual size_type bin_size(size_type bin) const override;
+    virtual bool      bin_empty(size_type bin) const override;
 
     inline bool      true_empty() const override;
     inline size_type true_size() const override;
@@ -85,37 +90,6 @@ public:
     virtual VUserTaskQueue* clone() override;
 
     virtual intmax_t GetThreadBin() const override;
-
-protected:
-    template <typename _Tp>
-    class binner
-    {
-    public:
-        binner(_Tp tot, _Tp n)
-        : m_tot(tot)
-        , m_incr((n % 2 == 0) ? -1 : 1)
-        , m_idx(m_incr * n)
-        , m_base(m_incr * tot)
-        , m_last(m_incr * ((m_base - m_idx) % (m_incr * m_tot)))
-        {
-        }
-
-        _Tp operator()()
-        {
-            auto _idx = m_base - m_idx;
-            m_idx     = (m_idx + 1) % m_tot;
-            return (m_last = m_incr * ((_idx) % (m_incr * m_tot)));
-        }
-
-        const _Tp& last() const { return m_last; }
-
-    private:
-        _Tp m_tot;
-        _Tp m_incr;
-        _Tp m_idx;
-        _Tp m_base;
-        _Tp m_last;
-    };
 
 protected:
     intmax_t GetInsertBin() const;
@@ -136,6 +110,8 @@ private:
     std::vector<int>::iterator m_rand_itr;
 };
 
+}  // namespace PTL
+
 //======================================================================================//
 
 #include "PTL/UserTaskQueue.icc"
@@ -143,39 +119,39 @@ private:
 //======================================================================================//
 
 inline bool
-UserTaskQueue::empty() const
+PTL::UserTaskQueue::empty() const
 {
     return (m_ntasks->load(std::memory_order_relaxed) == 0);
 }
 
 //======================================================================================//
 
-inline UserTaskQueue::size_type
-UserTaskQueue::size() const
+inline PTL::UserTaskQueue::size_type
+PTL::UserTaskQueue::size() const
 {
     return m_ntasks->load(std::memory_order_relaxed);
 }
 
 //======================================================================================//
 
-inline UserTaskQueue::size_type
-UserTaskQueue::bin_size() const
+inline PTL::UserTaskQueue::size_type
+PTL::UserTaskQueue::bin_size(size_type bin) const
 {
-    return (*m_subqueues)[GetThreadBin()]->size();
+    return (*m_subqueues)[bin]->size();
 }
 
 //======================================================================================//
 
 inline bool
-UserTaskQueue::bin_empty() const
+PTL::UserTaskQueue::bin_empty(size_type bin) const
 {
-    return (*m_subqueues)[GetThreadBin()]->empty();
+    return (*m_subqueues)[bin]->empty();
 }
 
 //======================================================================================//
 
 inline bool
-UserTaskQueue::true_empty() const
+PTL::UserTaskQueue::true_empty() const
 {
     for(const auto& itr : *m_subqueues)
         if(!itr->empty())
@@ -185,8 +161,8 @@ UserTaskQueue::true_empty() const
 
 //======================================================================================//
 
-inline UserTaskQueue::size_type
-UserTaskQueue::true_size() const
+inline PTL::UserTaskQueue::size_type
+PTL::UserTaskQueue::true_size() const
 {
     size_type _n = 0;
     for(const auto& itr : *m_subqueues)

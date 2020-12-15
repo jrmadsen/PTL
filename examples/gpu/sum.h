@@ -128,8 +128,7 @@ init_nvtx();
 
 void
 init_nvtx()
-{
-}
+{}
 
 #endif
 

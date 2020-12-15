@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-if(NOT CMAKE_BUILD_TYPE)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
     set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -16,8 +16,8 @@ else(WIN32)
     set(CMAKE_CXX_STANDARD 11 CACHE STRING "C++ STL standard")
 endif(WIN32)
 
-add_feature(CMAKE_C_FLAGS_${_CONFIG} "C compiler build-specific flags")
-add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
+ptl_add_feature(CMAKE_C_FLAGS_${_CONFIG} "C compiler build-specific flags")
+ptl_add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
 
 ################################################################################
 #
@@ -26,8 +26,7 @@ add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
 ################################################################################
 
 # cmake installation folder
-set(CMAKE_INSTALL_CONFIGDIR  ${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}
-    CACHE PATH "Installation directory for CMake package config files")
+set(CMAKE_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME})
 
 # create the full path version and generic path versions
 foreach(_TYPE in DATAROOT CMAKE INCLUDE LIB BIN MAN DOC)

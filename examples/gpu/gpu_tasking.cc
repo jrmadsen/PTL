@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -36,7 +36,7 @@
 ThreadPool*&
 GetGpuPool()
 {
-    ThreadLocalStatic ThreadPool* _instance = nullptr;
+    static thread_local ThreadPool* _instance = nullptr;
     return _instance;
 }
 
@@ -45,7 +45,7 @@ GetGpuPool()
 TaskManager*&
 GetGpuManager()
 {
-    ThreadLocalStatic TaskManager* _instance = nullptr;
+    static thread_local TaskManager* _instance = nullptr;
     return _instance;
 }
 
@@ -158,9 +158,8 @@ main(int argc, char** argv)
                                      "Setting the centerpoint of fib work distribution");
     uint64_t ngpu =
         GetEnv<uint64_t>("GPU_RANGE", default_gpu, "Setting the GPU range centerpoint");
-    uint64_t grainsize =
-        GetEnv<uint64_t>("GRAINSIZE", numThreads,
-                         "Dividing number of task into grain of this size");
+    uint64_t grainsize = GetEnv<uint64_t>(
+        "GRAINSIZE", numThreads, "Dividing number of task into grain of this size");
     uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
                                          "Setting the number of total tasks");
     uint64_t num_groups =

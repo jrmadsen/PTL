@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -28,6 +28,8 @@
 
 #include "PTL/TaskAllocatorPool.hh"
 
+using namespace PTL;
+
 // ************************************************************
 // TaskAllocatorPool constructor
 // ************************************************************
@@ -38,8 +40,7 @@ TaskAllocatorPool::TaskAllocatorPool(unsigned int sz)
 , chunks(nullptr)
 , head(nullptr)
 , nchunks(0)
-{
-}
+{}
 
 // ************************************************************
 // TaskAllocatorPool copy constructor
@@ -51,8 +52,7 @@ TaskAllocatorPool::TaskAllocatorPool(const TaskAllocatorPool& right)
 , chunks(right.chunks)
 , head(right.head)
 , nchunks(right.nchunks)
-{
-}
+{}
 
 // ************************************************************
 // TaskAllocatorPool operator=
@@ -73,11 +73,7 @@ TaskAllocatorPool::operator=(const TaskAllocatorPool& right)
 // TaskAllocatorPool destructor
 // ************************************************************
 //
-TaskAllocatorPool::~TaskAllocatorPool()
-{
-    // disable reset since tasks are shared_ptrs
-    Reset();
-}
+TaskAllocatorPool::~TaskAllocatorPool() { Reset(); }
 
 // ************************************************************
 // Reset

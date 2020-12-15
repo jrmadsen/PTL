@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -33,57 +33,56 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTaskGroup.hh"
 
-//======================================================================================//
+#include <cassert>
 
-VTask::VTask(VTaskGroup* _group)
-: m_vgroup(_group)
-, m_tid_bin(this_tid())
-, m_depth(0)
-{
-    // ThreadData* data = ThreadData::GetInstance();
-    // if(data && data->within_task)
-    //    m_depth = (data->task_depth += 1);
-}
+using namespace PTL;
 
 //======================================================================================//
 
-VTask::~VTask()
-{
-    // ThreadData* data = ThreadData::GetInstance();
-    // if(data && data->within_task)
-    //    data->task_depth -= 1;
-}
+VTask::VTask()
+: m_depth(0)
+, m_group(nullptr)
+, m_pool(nullptr)
+{}
 
 //======================================================================================//
 
-void
-VTask::operator++()
-{
-    if(m_vgroup)
-    {
-        m_vgroup->increase(m_tid_bin);
-    }
-}
+VTask::VTask(VTaskGroup* task_group)
+: m_depth(0)
+, m_group(task_group)
+, m_pool((m_group) ? task_group->pool() : nullptr)
+{}
+
+//======================================================================================//
+
+VTask::VTask(ThreadPool* tp)
+: m_depth(0)
+, m_group(nullptr)
+, m_pool(tp)
+{}
+
+//======================================================================================//
+
+VTask::~VTask() {}
 
 //======================================================================================//
 
 void
 VTask::operator--()
 {
-    if(m_vgroup)
+    if(m_group)
     {
-        intmax_t _count = m_vgroup->reduce(m_tid_bin);
+        intmax_t _count = --(*m_group);
         if(_count < 2)
         {
-            // AutoLock l(m_vgroup->task_lock());
-            // CONDITIONBROADCAST(&m_vgroup->task_cond());
             try
             {
-                m_vgroup->task_cond().notify_all();
-            }
-            catch(std::system_error& e)
+                auto& _task_cond = m_group->task_cond();
+                assert(_task_cond.get() != nullptr);
+                _task_cond->notify_all();
+            } catch(std::system_error& e)
             {
-                auto     tid = ThreadPool::GetThisThreadID();
+                auto     tid = ThreadPool::get_this_thread_id();
                 AutoLock l(TypeMutex<decltype(std::cerr)>(), std::defer_lock);
                 if(!l.owns_lock())
                     l.lock();
@@ -99,7 +98,7 @@ VTask::operator--()
 bool
 VTask::is_native_task() const
 {
-    return (m_vgroup) ? m_vgroup->is_native_task_group() : false;
+    return (m_group) ? m_group->is_native_task_group() : false;
 }
 
 //======================================================================================//
@@ -107,7 +106,7 @@ VTask::is_native_task() const
 ThreadPool*
 VTask::pool() const
 {
-    return (m_vgroup) ? m_vgroup->pool() : nullptr;
+    return (!m_pool && m_group) ? m_group->pool() : m_pool;
 }
 
 //======================================================================================//

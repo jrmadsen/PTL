@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -25,12 +25,14 @@
 #include "PTL/TaskAllocator.hh"
 #include "PTL/TaskAllocatorList.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 TaskAllocatorList*&
 TaskAllocatorList::fAllocatorList()
 {
-    ThreadLocalStatic TaskAllocatorList* _instance = nullptr;
+    static thread_local TaskAllocatorList* _instance = nullptr;
     return _instance;
 }
 
@@ -76,7 +78,7 @@ void
 TaskAllocatorList::Destroy(int nStat, int verboseLevel)
 {
     int    i = 0, j = 0;
-    double mem = 0, tmem = 0;
+    double tmem = 0;
     if(verboseLevel > 0)
     {
         std::cout << "================== Deleting memory pools ==================="
@@ -84,7 +86,7 @@ TaskAllocatorList::Destroy(int nStat, int verboseLevel)
     }
     for(auto& itr : fList)
     {
-        mem = itr->GetAllocatedSize();
+        double mem = itr->GetAllocatedSize();
         if(i < nStat)
         {
             i++;

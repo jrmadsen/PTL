@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -25,7 +25,11 @@
 #include "PTL/Timer.hh"
 
 #include <iomanip>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+
+using namespace PTL;
 
 #if defined(IRIX6_2)
 #    if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED == 1)
@@ -86,7 +90,7 @@ times(struct tms* t)
 
 // Print timer status n std::ostream
 std::ostream&
-operator<<(std::ostream& os, const Timer& t)
+operator<<(std::ostream& os, const PTL::Timer& t)
 {
     // so fixed doesn't propagate
     std::stringstream ss;
@@ -118,8 +122,7 @@ operator<<(std::ostream& os, const Timer& t)
 
 Timer::Timer()
 : fValidTimes(false)
-{
-}
+{}
 
 //======================================================================================//
 
@@ -127,8 +130,10 @@ double
 Timer::GetRealElapsed() const
 {
     if(!fValidTimes)
+    {
         throw std::runtime_error("Timer::GetRealElapsed() - "
                                  "Timer not stopped or times not recorded!");
+    }
     std::chrono::duration<double> diff = fEndRealTime - fStartRealTime;
     return diff.count();
 }
@@ -139,8 +144,10 @@ double
 Timer::GetSystemElapsed() const
 {
     if(!fValidTimes)
+    {
         throw std::runtime_error("Timer::GetSystemElapsed() - "
                                  "Timer not stopped or times not recorded!");
+    }
     double diff = fEndTimes.tms_stime - fStartTimes.tms_stime;
     return diff / sysconf(_SC_CLK_TCK);
 }
@@ -151,8 +158,10 @@ double
 Timer::GetUserElapsed() const
 {
     if(!fValidTimes)
+    {
         throw std::runtime_error("Timer::GetUserElapsed() - "
                                  "Timer not stopped or times not recorded!");
+    }
     double diff = fEndTimes.tms_utime - fStartTimes.tms_utime;
     return diff / sysconf(_SC_CLK_TCK);
 }

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -37,6 +37,8 @@
 #include <queue>
 #include <stack>
 
+namespace PTL
+{
 class VTask;
 
 //======================================================================================//
@@ -47,13 +49,16 @@ public:
     template <typename _Tp>
     using container = std::deque<_Tp>;
 
-    typedef std::shared_ptr<VTask>             VTaskPtr;
-    typedef container<VTaskPtr>                container_type;
-    typedef typename container_type::size_type size_type;
+    typedef VTask*                    task_pointer;
+    typedef container<task_pointer>   container_type;
+    typedef container_type::size_type size_type;
 
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);
+    TaskSubQueue(const TaskSubQueue&);
     ~TaskSubQueue();
+
+    TaskSubQueue& operator=(const TaskSubQueue&) = delete;
 
 public:
     int GetId() const;
@@ -61,15 +66,15 @@ public:
     bool AcquireClaim();
     void ReleaseClaim();
 
-    void     PushTask(VTaskPtr);
-    VTaskPtr PopTask(bool front = true);
+    void         PushTask(task_pointer);
+    task_pointer PopTask(bool front = true);
 
     size_type size() const;
     bool      empty() const;
 
 private:
     // used internally to keep number of tasks
-    size_type m_ntasks;
+    std::atomic<size_type> m_ntasks;
     // for checking if being modified
     std::atomic_bool m_available;
     // used my master queue to keep track of number of tasks
@@ -84,9 +89,15 @@ inline TaskSubQueue::TaskSubQueue(std::atomic_uintmax_t* _ntasks)
 : m_ntasks(0)
 , m_available(true)
 , m_all_tasks(_ntasks)
-{
-    m_available.store(true);
-}
+{}
+
+//======================================================================================//
+
+inline TaskSubQueue::TaskSubQueue(const TaskSubQueue& rhs)
+: m_ntasks(0)
+, m_available(true)
+, m_all_tasks(rhs.m_all_tasks)
+{}
 
 //======================================================================================//
 
@@ -119,7 +130,7 @@ TaskSubQueue::ReleaseClaim()
 inline TaskSubQueue::size_type
 TaskSubQueue::size() const
 {
-    return m_ntasks;
+    return m_ntasks.load();
 }
 
 //======================================================================================//
@@ -127,13 +138,13 @@ TaskSubQueue::size() const
 inline bool
 TaskSubQueue::empty() const
 {
-    return (m_ntasks == 0);
+    return (m_ntasks.load() == 0);
 }
 
 //======================================================================================//
 
 inline void
-TaskSubQueue::PushTask(VTaskPtr task)
+TaskSubQueue::PushTask(task_pointer task)
 {
     // no need to lock these if claim is acquired via atomic
     assert(m_available.load(std::memory_order_relaxed) == false);
@@ -144,25 +155,15 @@ TaskSubQueue::PushTask(VTaskPtr task)
 
 //======================================================================================//
 
-inline TaskSubQueue::VTaskPtr
+inline TaskSubQueue::task_pointer
 TaskSubQueue::PopTask(bool front)
 {
-    VTaskPtr _task(nullptr);
     // no need to lock -- claim is acquired via atomic
     assert(m_available.load(std::memory_order_relaxed) == false);
     if(m_task_queue.empty())
-        return _task;
-    --m_ntasks;
-    // std::stringstream ss;
-    // ss << ThreadPool::GetThisThreadID() << "> "
-    //   << ThisThread::get_id()
-    //   << " [" << __FUNCTION__ << ":" << __LINE__ << "] "
-    //   << "this = " << this << ", "
-    //   << "# tasks = " << m_all_tasks->load(std::memory_order_relaxed);
-    --(*m_all_tasks);
-    // ss << " vs. " << m_all_tasks->load(std::memory_order_relaxed);
-    // ss << std::endl;
-    // std::cout << ss.str();
+        return nullptr;
+
+    task_pointer _task;
     if(front)
     {
         _task = std::move(m_task_queue.front());
@@ -173,7 +174,11 @@ TaskSubQueue::PopTask(bool front)
         _task = std::move(m_task_queue.back());
         m_task_queue.pop_back();
     }
+    --m_ntasks;
+
     return _task;
 }
 
 //======================================================================================//
+
+}  // namespace PTL

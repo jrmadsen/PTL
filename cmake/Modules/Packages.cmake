@@ -3,7 +3,12 @@
 #
 
 include(FindPackageHandleStandardArgs)
-include("${CMAKE_CURRENT_LIST_DIR}/MacroUtilities.cmake")
+include(MacroUtilities)
+
+ptl_add_interface_library(ptl-external-packages)
+ptl_add_interface_library(ptl-threads)
+ptl_add_interface_library(ptl-tbb)
+ptl_add_interface_library(ptl-cuda)
 
 ################################################################################
 #
@@ -11,53 +16,14 @@ include("${CMAKE_CURRENT_LIST_DIR}/MacroUtilities.cmake")
 #
 ################################################################################
 
-if(CMAKE_C_COMPILER_IS_INTEL OR CMAKE_CXX_COMPILER_IS_INTEL)
-    if(NOT WIN32)
-        set(CMAKE_THREAD_PREFER_PTHREAD ON)
-        set(THREADS_PREFER_PTHREAD_FLAG OFF CACHE BOOL "Use -pthread vs. -lpthread" FORCE)
-    endif()
-
-    find_package(Threads)
-    if(Threads_FOUND)
-        list(APPEND EXTERNAL_LIBRARIES Threads::Threads)
-    endif()
+if(NOT WIN32)
+    set(CMAKE_THREAD_PREFER_PTHREAD ON)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 
-################################################################################
-#
-#                               TiMemory
-#
-################################################################################
-
-if(PTL_USE_TIMEMORY)
-    find_package(TiMemory)
-
-    if(TiMemory_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${TiMemory_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES
-            ${TiMemory_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_TIMEMORY)
-    endif(TiMemory_FOUND)
-
-endif(PTL_USE_TIMEMORY)
-
-
-################################################################################
-#
-#        Google PerfTools
-#
-################################################################################
-
-if(PTL_USE_GPERF)
-    find_package(GPerfTools COMPONENTS profiler tcmalloc)
-
-    if(GPerfTools_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${GPerfTools_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_GPERF)
-    endif(GPerfTools_FOUND)
-
-endif(PTL_USE_GPERF)
+find_package(Threads REQUIRED)
+target_link_libraries(ptl-threads INTERFACE Threads::Threads)
+target_link_libraries(ptl-external-packages INTERFACE ptl-threads)
 
 
 ################################################################################
@@ -67,15 +33,21 @@ endif(PTL_USE_GPERF)
 ################################################################################
 
 if(PTL_USE_TBB)
-    find_package(TBB)
+    find_package(TBB 2017)
 
     if(TBB_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${TBB_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${TBB_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_TBB)
-    endif(TBB_FOUND)
-
-endif(PTL_USE_TBB)
+        target_compile_definitions(ptl-tbb INTERFACE PTL_USE_TBB)
+        target_include_directories(ptl-tbb SYSTEM INTERFACE ${TBB_INCLUDE_DIRS})
+        target_link_libraries(ptl-tbb INTERFACE ${TBB_LIBRARIES})
+        target_link_libraries(ptl-external-packages INTERFACE ptl-tbb)
+    else()
+        set(PTL_USE_TBB OFF)
+        ptl_add_disabled_interface(ptl-tbb)
+    endif()
+else()
+    set(PTL_USE_TBB OFF)
+    ptl_add_disabled_interface(ptl-tbb)
+endif()
 
 
 ################################################################################
@@ -89,8 +61,8 @@ if(PTL_USE_CUDA AND PTL_USE_GPU)
 
     if(CUDA_FOUND)
         foreach(_DIR ${CUDA_INCLUDE_DIRS})
-            include_directories(SYSTEM ${_DIR})
-        endforeach(_DIR ${CUDA_INCLUDE_DIRS})
+            target_include_directories(ptl-cuda SYSTEM INTERFACE ${_DIR})
+        endforeach()
 
         find_library(CUDA_LIBRARY
             NAMES cuda
@@ -124,61 +96,19 @@ if(PTL_USE_CUDA AND PTL_USE_GPU)
 
         foreach(NAME CUDA CUDART CUDART_STATIC RT DL)
             if(${NAME}_LIBRARY)
-                list(APPEND EXTERNAL_CUDA_LIBRARIES ${${NAME}_LIBRARY})
+                target_link_libraries(ptl-cuda INTERFACE ${${NAME}_LIBRARY})
             endif()
         endforeach()
 
         add(CUDA_NVCC_FLAGS "-arch=${CUDA_ARCH}")
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_CUDA)
-
-        if(PTL_USE_NVTX)
-            find_library(NVTX_LIBRARY
-                NAMES nvToolsExt
-                PATHS /usr/local/cuda
-                HINTS /usr/local/cuda
-                PATH_SUFFIXES lib lib64)
-            if(NVTX_LIBRARY)
-                list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_NVTX)
-                list(APPEND EXTERNAL_CUDA_LIBRARIES ${NVTX_LIBRARY})
-            endif()
-        endif()
-
-    endif()
-
-endif(PTL_USE_CUDA AND PTL_USE_GPU)
-
-
-################################################################################
-#
-#        ITTNOTIFY (for VTune)
-#
-################################################################################
-if(PTL_USE_ITTNOTIFY)
-
-    find_package(ittnotify)
-
-    if(ittnotify_FOUND)
-        list(APPEND EXTERNAL_INCLUDE_DIRS ${ITTNOTIFY_INCLUDE_DIRS})
-        list(APPEND EXTERNAL_LIBRARIES ${ITTNOTIFY_LIBRARIES})
-        list(APPEND ${PROJECT_NAME}_DEFINITIONS PTL_USE_ITTNOTIFY)
+        target_compile_definitions(ptl-cuda INTERFACE PTL_USE_CUDA)
     else()
-        message(WARNING "ittnotify not found. Set \"VTUNE_AMPLIFIER_DIR\" in environment")
+        set(PTL_USE_CUDA OFF)
+        set(PTL_USE_GPU OFF)
+        ptl_add_disabled_interface(ptl-cuda)
     endif()
-
+else()
+    set(PTL_USE_CUDA OFF)
+    set(PTL_USE_GPU OFF)
+    ptl_add_disabled_interface(ptl-cuda)
 endif()
-
-
-################################################################################
-#
-#        External variables
-#
-################################################################################
-
-# including the directories
-safe_remove_duplicates(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS})
-safe_remove_duplicates(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES})
-foreach(_DIR ${EXTERNAL_INCLUDE_DIRS})
-    include_directories(SYSTEM ${_DIR})
-endforeach(_DIR ${EXTERNAL_INCLUDE_DIRS})
-
-

@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -39,13 +39,15 @@
 
 #include <atomic>
 
+using namespace PTL;
+
 //======================================================================================//
 
 namespace
 {
-ThreadLocal int ThreadID = Threading::MASTER_ID;
-std::atomic_int numActThreads(0);
-}
+thread_local int ThreadID = Threading::MASTER_ID;
+std::atomic_int  numActThreads(0);
+}  // namespace
 
 //======================================================================================//
 
@@ -96,7 +98,7 @@ Threading::SetPinAffinity(int cpu, NativeThread& aT)
     cpu_set_t* aset = new cpu_set_t;
     CPU_ZERO(aset);
     CPU_SET(cpu, aset);
-    pthread_t& _aT = (pthread_t&) (aT);
+    pthread_t& _aT = static_cast<pthread_t&>(aT);
     return (pthread_setaffinity_np(_aT, sizeof(cpu_set_t), aset) == 0);
 #else  // Not available for Mac, WIN,...
     ConsumeParameters(cpu, aT);

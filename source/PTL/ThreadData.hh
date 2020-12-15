@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -25,19 +25,23 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 
+#if defined(PTL_USE_TBB)
+#    include <tbb/global_control.h>
+#    include <tbb/task_group.h>
+#endif
+
+namespace PTL
+{
 //--------------------------------------------------------------------------------------//
 
 #if defined(PTL_USE_TBB)
 
-#    include <tbb/task_group.h>
-#    include <tbb/task_scheduler_init.h>
-
-typedef tbb::task_group          tbb_task_group_t;
-typedef tbb::task_scheduler_init tbb_task_scheduler_t;
-
+using tbb_global_control_t = ::tbb::global_control;
+using tbb_task_group_t     = ::tbb::task_group;
 #else
 
 namespace tbb
@@ -50,32 +54,37 @@ public:
     // dummy wait
     inline void wait() {}
     // run function
-    template <typename _Func>
-    inline void run(_Func f)
+    template <typename FuncT>
+    inline void run(FuncT f)
     {
         f();
     }
     // run and wait
-    template <typename _Func>
-    inline void run_and_wait(_Func f)
+    template <typename FuncT>
+    inline void run_and_wait(FuncT f)
     {
         f();
     }
 };
 
-class task_scheduler_init
+class global_control
 {
 public:
-    // dummy constructor
-    task_scheduler_init(int = 0, uint64_t = 0) {}
-    // dummy initialize
-    inline void initialize(int = 0) {}
+    enum parameter
+    {
+        max_allowed_parallelism,
+        thread_stack_size
+    };
+
+    global_control(parameter p, size_t value);
+    ~global_control();
+    static size_t active_value(parameter param);
 };
 
 }  // namespace tbb
 
-typedef tbb::task_group          tbb_task_group_t;
-typedef tbb::task_scheduler_init tbb_task_scheduler_t;
+using tbb_global_control_t = tbb::global_control;
+using tbb_task_group_t     = tbb::task_group;
 
 #endif
 
@@ -89,11 +98,13 @@ class VUserTaskQueue;
 class ThreadData
 {
 public:
-    template <typename _Tp>
-    using TaskStack = std::deque<_Tp>;
+    template <typename Tp>
+    using TaskStack = std::deque<Tp>;
 
     ThreadData(ThreadPool* tp);
     ~ThreadData();
+
+    void update();
 
 public:
     bool                       is_master;
@@ -109,3 +120,5 @@ public:
 };
 
 //--------------------------------------------------------------------------------------//
+
+}  // namespace PTL

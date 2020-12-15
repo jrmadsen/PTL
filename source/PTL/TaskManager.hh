@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -30,6 +30,7 @@
 
 #pragma once
 
+#include "PTL/Globals.hh"
 #include "PTL/TBBTaskGroup.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
@@ -42,6 +43,8 @@
 #include <cstdint>
 #include <iomanip>
 
+namespace PTL
+{
 //======================================================================================//
 
 class TaskManager
@@ -49,9 +52,6 @@ class TaskManager
 public:
     typedef TaskManager           this_type;
     typedef ThreadPool::size_type size_type;
-
-    template <bool _Bp, typename _Tp = void>
-    using enable_if_t = typename std::enable_if<_Bp, _Tp>::type;
 
 public:
     // Constructor and Destructors
@@ -87,38 +87,50 @@ public:
     //------------------------------------------------------------------------//
     // direct insertion of a task
     //------------------------------------------------------------------------//
-    template <typename... _Args>
-    void exec(Task<_Args...>* _task)
+    template <typename... Args>
+    void exec(Task<Args...>* _task)
     {
-        typedef Task<_Args...>             task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        m_pool->add_task(task_pointer(_task));
+        m_pool->add_task(_task);
     }
 
     //------------------------------------------------------------------------//
     // direct insertion of a packaged_task
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Func, typename... _Args>
-    std::future<_Ret> async(const _Func& func, _Args... args)
+    template <typename RetT, typename FuncT, typename... Args>
+    std::future<RetT> async(FuncT&& func, Args&&... args)
     {
-        typedef PackagedTask<_Ret, _Ret, _Args...> task_type;
-        typedef std::shared_ptr<task_type>         task_pointer;
+        typedef PackagedTask<RetT, Args...> task_type;
+        typedef task_type*                  task_pointer;
 
-        task_pointer      _ptask(new task_type(func, std::forward<_Args>(args)...));
-        std::future<_Ret> _f = _ptask->get_future();
+        task_pointer _ptask =
+            new task_type(std::forward<FuncT>(func), std::forward<Args>(args)...);
+        std::future<RetT> _f = _ptask->get_future();
         m_pool->add_task(_ptask);
         return _f;
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Func>
-    std::future<_Ret> async(const _Func& func)
+    template <typename RetT, typename FuncT>
+    std::future<RetT> async(FuncT&& func)
     {
-        typedef PackagedTask<_Ret, _Ret>   task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
+        typedef PackagedTask<RetT> task_type;
+        typedef task_type*         task_pointer;
 
-        task_pointer      _ptask(new task_type(func));
-        std::future<_Ret> _f = _ptask->get_future();
+        task_pointer      _ptask = new task_type(std::forward<FuncT>(func));
+        std::future<RetT> _f     = _ptask->get_future();
+        m_pool->add_task(_ptask);
+        return _f;
+    }
+    //------------------------------------------------------------------------//
+    template <typename FuncT, typename... Args>
+    auto async(FuncT&& func, Args... args)
+        -> std::future<decay_t<decltype(func(args...))>>
+    {
+        using RetT = decay_t<decltype(func(args...))>;
+        typedef PackagedTask<RetT, Args...> task_type;
+
+        auto _ptask =
+            new task_type(std::forward<FuncT>(func), std::forward<Args>(args)...);
+        auto _f = _ptask->get_future();
         m_pool->add_task(_ptask);
         return _f;
     }
@@ -128,104 +140,59 @@ public:
     //------------------------------------------------------------------------//
     // public wrap functions
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    std::shared_ptr<Task<_Ret, _Arg, _Args...>> wrap(TaskGroup<_Ret, _Arg>& tg,
-                                                     const _Func& func, _Args... args)
+    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
+    Task<RetT, ArgT, Args...>* wrap(TaskGroup<RetT, ArgT>& tg, FuncT&& func,
+                                    Args&&... args)
     {
-        typedef Task<_Ret, _Arg, _Args...> task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        return tg.store(
-            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...)));
+        return tg.wrap(std::forward<FuncT>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    std::shared_ptr<Task<_Ret, _Arg>> wrap(TaskGroup<_Ret, _Arg>& tg, const _Func& func)
+    template <typename RetT, typename ArgT, typename FuncT>
+    Task<RetT, ArgT>* wrap(TaskGroup<RetT, ArgT>& tg, FuncT&& func)
     {
-        typedef Task<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        return tg.store(task_pointer(new task_type(tg, func)));
+        return tg.wrap(std::forward<FuncT>(func));
     }
 
 public:
     //------------------------------------------------------------------------//
     // public exec functions
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    void exec(TaskGroup<_Ret, _Arg>& tg, const _Func& func, _Args... args)
+    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
+    void exec(TaskGroup<RetT, ArgT>& tg, FuncT&& func, Args&&... args)
     {
-        typedef Task<_Ret, _Arg, _Args...> task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        m_pool->add_task(tg.store(
-            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
+        tg.exec(std::forward<FuncT>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    void exec(TaskGroup<_Ret, _Arg>& tg, const _Func& func)
+    template <typename RetT, typename ArgT, typename FuncT>
+    void exec(TaskGroup<RetT, ArgT>& tg, FuncT&& func)
     {
-        typedef Task<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
+        tg.exec(std::forward<FuncT>(func));
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    void rexec(TaskGroup<_Ret, _Arg>& tg, const _Func& func, _Args... args)
+    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
+    void rexec(TaskGroup<RetT, ArgT>& tg, FuncT&& func, Args&&... args)
     {
-        typedef Task<_Ret, _Arg, _Args...> task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        if(m_pool->query_create_task())
-            m_pool->add_task(tg.store(
-                task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
-        else
-        {
-            PackagedTask<_Ret, _Arg, _Args...> _ptask(func, std::forward<_Args>(args)...);
-            auto                               _f = _ptask.get_future();
-            tg.add(std::move(_f));
-            _ptask();
-        }
+        tg.exec(std::forward<FuncT>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    void rexec(TaskGroup<_Ret, _Arg>& tg, const _Func& func)
+    template <typename RetT, typename ArgT, typename FuncT>
+    void rexec(TaskGroup<RetT, ArgT>& tg, FuncT&& func)
     {
-        typedef Task<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        if(m_pool->query_create_task())
-            m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
-        else
-            tg.add(async<_Arg>(func));
+        tg.exec(std::forward<FuncT>(func));
     }
     //------------------------------------------------------------------------//
     // public exec functions (void specializations)
     //------------------------------------------------------------------------//
-    template <typename _Func, typename... _Args>
-    void rexec(TaskGroup<void, void>& tg, const _Func& func, _Args... args)
+    template <typename FuncT, typename... Args>
+    void rexec(TaskGroup<void, void>& tg, FuncT&& func, Args&&... args)
     {
-        typedef Task<void, void, _Args...> task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        if(m_pool->query_create_task())
-            m_pool->add_task(tg.store(
-                task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
-        else
-            func(std::forward<_Args>(args)...);
+        tg.exec(std::forward<FuncT>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Func>
-    void rexec(TaskGroup<void, void>& tg, const _Func& func)
+    template <typename FuncT>
+    void rexec(TaskGroup<void, void>& tg, FuncT&& func)
     {
-        typedef Task<void, void>           task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        if(m_pool->query_create_task())
-            m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
-        else
-            func();
+        tg.exec(std::forward<FuncT>(func));
     }
     //------------------------------------------------------------------------//
 
@@ -233,57 +200,97 @@ public:
     //------------------------------------------------------------------------//
     // public wrap functions using TBB tasks
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    std::shared_ptr<Task<_Ret, _Arg, _Args...>> wrap(TBBTaskGroup<_Ret, _Arg>& tg,
-                                                     const _Func& func, _Args... args)
+    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
+    Task<RetT, ArgT, Args...>* wrap(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func,
+                                    Args&&... args)
     {
-        typedef Task<_Ret, _Arg, _Args...> task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        return tg.store(
-            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...)));
+        return tg.wrap(std::forward<FuncT>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    std::shared_ptr<Task<_Ret, _Arg>> wrap(TBBTaskGroup<_Ret, _Arg>& tg,
-                                           const _Func&              func)
+    template <typename RetT, typename ArgT, typename FuncT>
+    Task<RetT, ArgT>* wrap(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func)
     {
-        typedef Task<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        return tg.store(task_pointer(new task_type(tg, func)));
+        return tg.wrap(std::forward<FuncT>(func));
     }
 
     //------------------------------------------------------------------------//
     // public exec functions using TBB tasks
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func, typename... _Args>
-    void exec(TBBTaskGroup<_Ret, _Arg>& tg, const _Func& func, _Args... args)
+    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
+    void exec(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func, Args&&... args)
     {
-        typedef Task<_Ret, _Arg, _Args...> task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        m_pool->add_task(tg.store(
-            task_pointer(new task_type(tg, func, std::forward<_Args>(args)...))));
+        tg.exec(std::forward<FuncT>(func), std::forward<Args>(args)...);
     }
     //------------------------------------------------------------------------//
-    template <typename _Ret, typename _Arg, typename _Func>
-    void exec(TBBTaskGroup<_Ret, _Arg>& tg, const _Func& func)
+    template <typename RetT, typename ArgT, typename FuncT>
+    void exec(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func)
     {
-        typedef Task<_Ret, _Arg>           task_type;
-        typedef std::shared_ptr<task_type> task_pointer;
-
-        m_pool->add_task(tg.store(task_pointer(new task_type(tg, func))));
+        tg.exec(std::forward<FuncT>(func));
     }
     //------------------------------------------------------------------------//
 #endif
 
 protected:
     // Protected variables
-    ThreadPool* m_pool;
+    ThreadPool* m_pool = nullptr;
 
 private:
     static TaskManager*& fgInstance();
 };
+
+}  // namespace PTL
+//======================================================================================//
+
+#include "TaskRunManager.hh"
+
+//--------------------------------------------------------------------------------------//
+
+inline PTL::TaskManager*&
+PTL::TaskManager::fgInstance()
+{
+    static thread_local TaskManager* _instance = nullptr;
+    return _instance;
+}
+
+//--------------------------------------------------------------------------------------//
+
+inline PTL::TaskManager*
+PTL::TaskManager::GetInstance()
+{
+    if(!fgInstance())
+    {
+        auto nthreads = std::thread::hardware_concurrency();
+        std::cout << "Allocating mad::TaskManager with " << nthreads << " thread(s)..."
+                  << std::endl;
+        new TaskManager(TaskRunManager::GetMasterRunManager()->GetThreadPool());
+    }
+    return fgInstance();
+}
+
+//--------------------------------------------------------------------------------------//
+
+inline PTL::TaskManager*
+PTL::TaskManager::GetInstanceIfExists()
+{
+    return fgInstance();
+}
+
+//--------------------------------------------------------------------------------------//
+
+inline PTL::TaskManager::TaskManager(ThreadPool* _pool)
+: m_pool(_pool)
+{
+    if(!fgInstance())
+        fgInstance() = this;
+}
+
+//--------------------------------------------------------------------------------------//
+
+inline PTL::TaskManager::~TaskManager()
+{
+    finalize();
+    if(fgInstance() == this)
+        fgInstance() = nullptr;
+}
 
 //======================================================================================//

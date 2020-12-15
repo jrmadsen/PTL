@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -21,8 +21,7 @@
 //
 //
 
-#ifndef sum_hh_
-#define sum_hh_
+#pragma once
 
 #ifdef __cplusplus
 #    ifndef BEGIN_EXTERN_C
@@ -65,10 +64,10 @@ END_EXTERN_C
 #include <memory>
 #include <unordered_map>
 
-#include "ThreadData.hh"
-#include "ThreadPool.hh"
-#include "Threading.hh"
-#include "Utility.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/Threading.hh"
+#include "PTL/Utility.hh"
 
 #if defined(PTL_USE_CUDA)
 #    include <cuda.h>
@@ -98,7 +97,7 @@ this_thread_device()
 {
 #if defined(PTL_USE_CUDA)
     static std::atomic<int> _ntid(0);
-    ThreadLocalStatic int   _instance =
+    static thread_local int _instance =
         (cuda_device_count() > 0) ? ((_ntid++) % cuda_device_count()) : 0;
     return _instance;
 #else
@@ -183,8 +182,7 @@ struct aligned_pointer
     ,
         // size of allocation
         storage_size(size + padding)
-    {
-    }
+    {}
 
     this_type& allocate()
     {
@@ -367,14 +365,12 @@ gpu_malloc(uintmax_t size)
 template <typename _Tp>
 void
 gpu_memcpy(_Tp*, const _Tp*, uintmax_t, cudaStream_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 template <typename _Tp>
 void
 cpu_memcpy(const _Tp*, _Tp*, uintmax_t, cudaStream_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 template <typename _Tp>
 _Tp*
@@ -386,8 +382,7 @@ malloc_and_memcpy(const _Tp*, uintmax_t)
 template <typename _Tp>
 void
 memcpy_and_free(_Tp*, _Tp*, uintmax_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 template <typename _Tp>
 _Tp*
@@ -399,8 +394,7 @@ malloc_and_async_memcpy(const _Tp*, uintmax_t, cudaStream_t)
 template <typename _Tp>
 void
 async_memcpy_and_free(_Tp*, _Tp*, uintmax_t, cudaStream_t)
-{
-}
+{}
 //----------------------------------------------------------------------------//
 inline cudaStream_t*
 create_streams(const int)
@@ -410,8 +404,7 @@ create_streams(const int)
 //----------------------------------------------------------------------------//
 inline void
 destroy_streams(cudaStream_t*, const int)
-{
-}
+{}
 //============================================================================//
 
 #endif  // if defined(PTL_USE_CUDA)
@@ -424,8 +417,7 @@ public:
     cuda_streams(uint64_t nstreams = 64)
     : m_nstreams(nstreams)
     , m_streams(create_streams(nstreams))
-    {
-    }
+    {}
 
     ~cuda_streams() { destroy_streams(m_streams, m_nstreams); }
 
@@ -470,5 +462,3 @@ uint64_t
 run_gpu(uint64_t n);
 
 //============================================================================//
-
-#endif

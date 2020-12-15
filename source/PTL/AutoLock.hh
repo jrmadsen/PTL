@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -250,18 +250,20 @@ int main()
 #include <mutex>
 #include <system_error>
 
+namespace PTL
+{
 // Note: Note that TemplateAutoLock by itself is not thread-safe and
 //       cannot be shared among threads due to the locked switch
 //
-template <typename _Mutex_t>
-class TemplateAutoLock : public std::unique_lock<_Mutex_t>
+template <typename MutexT>
+class TemplateAutoLock : public std::unique_lock<MutexT>
 {
 public:
     //------------------------------------------------------------------------//
     // Some useful typedefs
     //------------------------------------------------------------------------//
-    typedef std::unique_lock<_Mutex_t>         unique_lock_t;
-    typedef TemplateAutoLock<_Mutex_t>         this_type;
+    typedef std::unique_lock<MutexT>           unique_lock_t;
+    typedef TemplateAutoLock<MutexT>           this_type;
     typedef typename unique_lock_t::mutex_type mutex_type;
 
 public:
@@ -273,7 +275,7 @@ public:
     // Locks the associated mutex by calling m.lock(). The behavior is
     // undefined if the current thread already owns the mutex except when
     // the mutex is recursive
-    TemplateAutoLock(mutex_type& _mutex)
+    explicit TemplateAutoLock(mutex_type& _mutex)
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
@@ -309,22 +311,19 @@ public:
     // Does not lock the associated mutex.
     TemplateAutoLock(mutex_type& _mutex, std::defer_lock_t _lock) noexcept
     : unique_lock_t(_mutex, _lock)
-    {
-    }
+    {}
 
     // Tries to lock the associated mutex without blocking by calling
     // m.try_lock(). The behavior is undefined if the current thread already
     // owns the mutex except when the mutex is recursive.
     TemplateAutoLock(mutex_type& _mutex, std::try_to_lock_t _lock)
     : unique_lock_t(_mutex, _lock)
-    {
-    }
+    {}
 
     // Assumes the calling thread already owns m
     TemplateAutoLock(mutex_type& _mutex, std::adopt_lock_t _lock)
     : unique_lock_t(_mutex, _lock)
-    {
-    }
+    {}
 
 public:
     //------------------------------------------------------------------------//
@@ -339,41 +338,38 @@ public:
 
     TemplateAutoLock(mutex_type* _mutex, std::defer_lock_t _lock) noexcept
     : unique_lock_t(*_mutex, _lock)
-    {
-    }
+    {}
 
     TemplateAutoLock(mutex_type* _mutex, std::try_to_lock_t _lock)
     : unique_lock_t(*_mutex, _lock)
-    {
-    }
+    {}
 
     TemplateAutoLock(mutex_type* _mutex, std::adopt_lock_t _lock)
     : unique_lock_t(*_mutex, _lock)
-    {
-    }
+    {}
 
 private:
 // helpful macros
-#define _is_stand_mutex(_Tp) (std::is_same<_Tp, Mutex>::value)
-#define _is_recur_mutex(_Tp) (std::is_same<_Tp, RecursiveMutex>::value)
-#define _is_other_mutex(_Tp) (!_is_stand_mutex(_Tp) && !_is_recur_mutex(_Tp))
+#define _is_stand_mutex(Tp) (std::is_same<Tp, Mutex>::value)
+#define _is_recur_mutex(Tp) (std::is_same<Tp, RecursiveMutex>::value)
+#define _is_other_mutex(Tp) (!_is_stand_mutex(Tp) && !_is_recur_mutex(Tp))
 
-    template <typename _Tp                                             = _Mutex_t,
-              typename std::enable_if<_is_stand_mutex(_Tp), int>::type = 0>
+    template <typename Tp                                             = MutexT,
+              typename std::enable_if<_is_stand_mutex(Tp), int>::type = 0>
     std::string GetTypeString()
     {
         return "AutoLock<Mutex>";
     }
 
-    template <typename _Tp                                             = _Mutex_t,
-              typename std::enable_if<_is_recur_mutex(_Tp), int>::type = 0>
+    template <typename Tp                                             = MutexT,
+              typename std::enable_if<_is_recur_mutex(Tp), int>::type = 0>
     std::string GetTypeString()
     {
         return "AutoLock<RecursiveMutex>";
     }
 
-    template <typename _Tp                                             = _Mutex_t,
-              typename std::enable_if<_is_other_mutex(_Tp), int>::type = 0>
+    template <typename Tp                                             = MutexT,
+              typename std::enable_if<_is_other_mutex(Tp), int>::type = 0>
     std::string GetTypeString()
     {
         return "AutoLock<UNKNOWN_MUTEX>";
@@ -385,10 +381,9 @@ private:
 #undef _is_other_mutex
 
     // used in _lock_deferred chrono variants to avoid ununsed-variable warning
-    template <typename _Tp>
-    void suppress_unused_variable(const _Tp&)
-    {
-    }
+    template <typename Tp>
+    void suppress_unused_variable(const Tp&)
+    {}
 
     //========================================================================//
     // NOTE on _lock_deferred(...) variants:
@@ -415,8 +410,7 @@ private:
         try
         {
             this->unique_lock_t::lock();
-        }
-        catch(std::system_error& e)
+        } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
         }
@@ -433,8 +427,7 @@ private:
         try
         {
             this->unique_lock_t::try_lock_for(_timeout_duration);
-        }
-        catch(std::system_error& e)
+        } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
         }
@@ -451,8 +444,7 @@ private:
         try
         {
             this->unique_lock_t::try_lock_until(_timeout_time);
-        }
-        catch(std::system_error& e)
+        } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
         }
@@ -493,5 +485,7 @@ typedef TemplateAutoLock<RecursiveMutex> RecursiveAutoLock;
 
 // provide abbriviated type if another mutex type is desired to be used
 // aside from above
-template <typename _Tp>
-using TAutoLock = TemplateAutoLock<_Tp>;
+template <typename Tp>
+using TAutoLock = TemplateAutoLock<Tp>;
+
+}  // namespace PTL

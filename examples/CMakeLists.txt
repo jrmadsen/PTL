@@ -3,11 +3,14 @@
 #----------------------------------------------------------------------------
 # Setup the project
 #
-cmake_minimum_required(VERSION 3.1.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 project(PTL_Examples LANGUAGES C CXX VERSION ${PTL_VERSION})
 
-include_directories(${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/common)
-file(GLOB common_headers ${CMAKE_CURRENT_LIST_DIR}/common/*.hh)
+# add the common "library"
+add_subdirectory(common)
+list(APPEND EXTERNAL_LIBRARIES common)
 
+add_subdirectory(minimal)
 add_subdirectory(basic)
+add_subdirectory(extended)
 add_subdirectory(gpu)

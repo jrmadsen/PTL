@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -34,6 +34,8 @@
 #include <list>
 #include <map>
 
+namespace PTL
+{
 class ThreadPool;
 class TaskManager;
 
@@ -42,60 +44,52 @@ class TaskManager;
 class TaskRunManager
 {
 public:
-    typedef TaskGroup<void>    RunTaskGroup;
-    typedef TBBTaskGroup<void> RunTaskGroupTBB;
+    typedef TaskRunManager* pointer;
 
 public:
     // Parameters:
-    //      taskQueue: provide a custom task queue
+    //      m_task_queue: provide a custom task queue
     //      useTBB: only relevant if PTL_USE_TBB defined
     //      grainsize:  0 = auto
-    TaskRunManager(bool useTBB = false);
+    explicit TaskRunManager(bool useTBB = false);
     virtual ~TaskRunManager();
 
 public:
     virtual int GetNumberOfThreads() const
     {
-        return (threadPool) ? threadPool->size() : 0;
+        return (m_thread_pool) ? m_thread_pool->size() : 0;
     }
     virtual size_t GetNumberActiveThreads() const
     {
-        return (threadPool) ? threadPool->size() : 0;
+        return (m_thread_pool) ? m_thread_pool->size() : 0;
     }
 
 public:
     // Inherited methods to re-implement for MT case
     virtual void Initialize(uint64_t n = std::thread::hardware_concurrency());
     virtual void Terminate();
-    virtual void Wait();
-    ThreadPool*  GetThreadPool() const { return threadPool; }
-    TaskManager* GetTaskManager() const { return taskManager; }
-    bool         IsInitialized() const { return isInitialized; }
-    int          GetVerbose() const { return verbose; }
-    void         SetVerbose(int val) { verbose = val; }
-
-private:
-    // grainsize
+    ThreadPool*  GetThreadPool() const { return m_thread_pool; }
+    TaskManager* GetTaskManager() const { return m_task_manager; }
+    bool         IsInitialized() const { return m_is_initialized; }
+    int          GetVerbose() const { return m_verbose; }
+    void         SetVerbose(int val) { m_verbose = val; }
 
 public:  // with description
     // Singleton implementing master thread behavior
-    static TaskRunManager*  GetInstance(bool useTBB = false);
-    static TaskRunManager*& GetMasterRunManager(bool useTBB = false);
+    static TaskRunManager* GetInstance(bool useTBB = false);
+    static TaskRunManager* GetMasterRunManager(bool useTBB = false);
 
 private:
-    static TaskRunManager*& GetPrivateMasterRunManager(bool init, bool useTBB = false);
+    static pointer& GetPrivateMasterRunManager(bool init, bool useTBB = false);
 
 protected:
     // Barriers: synch points between master and workers
-    bool             isInitialized;
-    int              verbose;
-    uint64_t         nworkers;
-    VUserTaskQueue*  taskQueue;
-    ThreadPool*      threadPool;
-    TaskManager*     taskManager;
-    RunTaskGroup*    workTaskGroup;
-    RunTaskGroupTBB* workTaskGroupTBB;
-
-public:
-    virtual void TiMemoryReport(std::string fname = "", bool echo_stdout = true) const;
+    bool            m_is_initialized = false;
+    int             m_verbose        = 0;
+    uint64_t        m_workers        = 0;
+    VUserTaskQueue* m_task_queue     = nullptr;
+    ThreadPool*     m_thread_pool    = nullptr;
+    TaskManager*    m_task_manager   = nullptr;
 };
+
+}  // namespace PTL

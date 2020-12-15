@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -29,17 +29,14 @@
 // ---------------------------------------------------------------
 
 #include "PTL/ThreadPool.hh"
+#include "PTL/Globals.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/VUserTaskQueue.hh"
 
 #include <cstdlib>
 
-#if defined(PTL_USE_GPERF)
-#    include <gperftools/heap-checker.h>
-#    include <gperftools/heap-profiler.h>
-#    include <gperftools/profiler.h>
-#endif
+using namespace PTL;
 
 //======================================================================================//
 
@@ -51,18 +48,7 @@ ncores()
 
 //======================================================================================//
 
-ThreadPool::thread_id_map_t    ThreadPool::f_thread_ids;
-ThreadPool::thread_index_map_t ThreadPool::f_thread_indexes;
-
-//======================================================================================//
-
-namespace state
-{
-static const int STARTED = 0;
-static const int PARTIAL = 1;
-static const int STOPPED = 2;
-static const int NONINIT = 3;
-}
+ThreadPool::thread_id_map_t ThreadPool::f_thread_ids;
 
 //======================================================================================//
 
@@ -73,7 +59,7 @@ thread_data()
 {
     return ThreadData::GetInstance();
 }
-}
+}  // namespace
 
 //======================================================================================//
 
@@ -83,20 +69,31 @@ bool ThreadPool::f_use_tbb = false;
 // static member function that calls the member function we want the thread to
 // run
 void
-ThreadPool::start_thread(ThreadPool* tp)
+ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
 {
+    auto _thr_data = std::make_shared<ThreadData>(tp);
     {
         AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
         if(!lock.owns_lock())
             lock.lock();
-        auto _idx                                = f_thread_ids.size();
+        if(_idx < 0)
+            _idx = f_thread_ids.size();
         f_thread_ids[std::this_thread::get_id()] = _idx;
-        f_thread_indexes[_idx]                   = std::this_thread::get_id();
-        // tp->get_queue()->ThisThreadNumber() = _idx;
+        Threading::SetThreadId(_idx);
+        _data->emplace_back(_thr_data);
     }
-    static thread_local std::unique_ptr<ThreadData> _unique_data(new ThreadData(tp));
-    thread_data() = _unique_data.get();
+    thread_data() = _thr_data.get();
+    tp->record_entry();
     tp->execute_thread(thread_data()->current_queue);
+    tp->record_exit();
+}
+
+//======================================================================================//
+// static member function that checks enabling of tbb library
+bool
+ThreadPool::using_tbb()
+{
+    return f_use_tbb;
 }
 
 //======================================================================================//
@@ -113,8 +110,16 @@ ThreadPool::set_use_tbb(bool enable)
 
 //======================================================================================//
 
+const ThreadPool::thread_id_map_t&
+ThreadPool::get_thread_ids()
+{
+    return f_thread_ids;
+}
+
+//======================================================================================//
+
 uintmax_t
-ThreadPool::GetThisThreadID()
+ThreadPool::get_this_thread_id()
 {
     auto _tid = ThisThread::get_id();
     {
@@ -123,9 +128,8 @@ ThreadPool::GetThisThreadID()
             lock.lock();
         if(f_thread_ids.find(_tid) == f_thread_ids.end())
         {
-            auto _idx              = f_thread_ids.size();
-            f_thread_ids[_tid]     = _idx;
-            f_thread_indexes[_idx] = _tid;
+            auto _idx          = f_thread_ids.size();
+            f_thread_ids[_tid] = _idx;
         }
     }
     return f_thread_ids[_tid];
@@ -137,13 +141,14 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
                        bool _use_affinity, const affinity_func_t& _affinity_func)
 : m_use_affinity(_use_affinity)
 , m_tbb_tp(false)
-, m_alive_flag(false)
 , m_verbose(0)
 , m_pool_size(0)
-, m_recursive_limit(GetEnv<size_type>("TP_RECURSIVE_LIMIT", 20))
-, m_pool_state(state::NONINIT)
 , m_master_tid(ThisThread::get_id())
-, m_thread_awake(new atomic_int_type(0))
+, m_alive_flag(std::make_shared<std::atomic_bool>(false))
+, m_pool_state(std::make_shared<std::atomic_short>(thread_pool::state::NONINIT))
+, m_thread_awake(std::make_shared<std::atomic_uintmax_t>(0))
+, m_task_lock(std::make_shared<Mutex>())
+, m_task_cond(std::make_shared<Condition>())
 , m_task_queue(task_queue)
 , m_tbb_task_group(nullptr)
 , m_init_func([]() { return; })
@@ -151,48 +156,37 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
 {
     m_verbose = GetEnv<int>("PTL_VERBOSE", m_verbose);
 
-    if(!m_task_queue)
-        m_task_queue = new UserTaskQueue(pool_size);
-
-    auto master_id = GetThisThreadID();
+    auto master_id = get_this_thread_id();
     if(master_id != 0 && m_verbose > 1)
         std::cerr << "ThreadPool created on non-master slave" << std::endl;
 
     thread_data() = new ThreadData(this);
 
-    // initialize after GetThisThreadID so master is zero
+    // initialize after get_this_thread_id so master is zero
     this->initialize_threadpool(pool_size);
+
+    if(!m_task_queue)
+        m_task_queue = new UserTaskQueue(m_pool_size);
 }
 
 //======================================================================================//
 
 ThreadPool::~ThreadPool()
 {
-    delete m_thread_awake;
-    // Release resources
-    if(m_pool_state.load() != state::STOPPED)
+    if(m_alive_flag->load())
     {
-        size_type ret = destroy_threadpool();
-        while(ret > 0)
-            ret = stop_thread();
+        std::cerr << "Warning! ThreadPool was not properly destroyed! Call "
+                     "destroy_threadpool() before deleting the ThreadPool object to "
+                     "eliminate this message."
+                  << std::endl;
+        m_pool_state->store(thread_pool::state::STOPPED);
+        m_task_lock->lock();
+        CONDITIONBROADCAST(m_task_cond.get());
+        m_task_lock->unlock();
+        for(auto& itr : m_threads)
+            itr.join();
+        m_threads.clear();
     }
-
-    // wait until thread pool is fully destroyed
-    while(is_alive())
-        ;
-
-    // delete thread-local allocator and erase thread IDS
-    auto      _tid = std::this_thread::get_id();
-    uintmax_t _idx = ThreadPool::GetThreadIDs().find(_tid)->second;
-
-    if(f_thread_ids.find(_tid) != f_thread_ids.end())
-        f_thread_ids.erase(f_thread_ids.find(_tid));
-
-    if(f_thread_indexes.find(_idx) != f_thread_indexes.end())
-        f_thread_indexes.erase(f_thread_indexes.find(_idx));
-
-    // deleted by ThreadData
-    // delete m_task_queue;
 }
 
 //======================================================================================//
@@ -200,42 +194,25 @@ ThreadPool::~ThreadPool()
 bool
 ThreadPool::is_initialized() const
 {
-    return !(m_pool_state.load() == state::NONINIT);
+    return !(m_pool_state->load() == thread_pool::state::NONINIT);
 }
 
 //======================================================================================//
 
 void
-ThreadPool::resize(size_type _n)
+ThreadPool::set_affinity(intmax_t i, Thread& _thread)
 {
-    if(_n == m_pool_size)
-        return;
-    initialize_threadpool(_n);
-    m_task_queue->resize(static_cast<intmax_t>(_n));
-}
-
-//======================================================================================//
-
-void
-ThreadPool::set_affinity(intmax_t i)
-{
-    if(!(i < static_cast<intmax_t>(m_main_threads.size())))
-        return;
-
-    Thread* _thread = m_main_threads.at(i);
-
     try
     {
-        NativeThread native_thread = _thread->native_handle();
+        NativeThread native_thread = _thread.native_handle();
         intmax_t     _pin          = m_affinity_func(i);
         if(m_verbose > 0)
         {
-            std::cout << "Setting pin affinity for thread " << _thread->get_id() << " to "
+            std::cout << "Setting pin affinity for thread " << _thread.get_id() << " to "
                       << _pin << std::endl;
         }
         Threading::SetPinAffinity(_pin, native_thread);
-    }
-    catch(std::runtime_error& e)
+    } catch(std::runtime_error& e)
     {
         std::cout << "Error setting pin affinity" << std::endl;
         std::cerr << e.what() << std::endl;  // issue assigning affinity
@@ -254,8 +231,8 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
 
     //--------------------------------------------------------------------//
     // store that has been started
-    if(!m_alive_flag.load())
-        m_pool_state.store(state::STARTED);
+    if(!m_alive_flag->load())
+        m_pool_state->store(thread_pool::state::STARTED);
 
         //--------------------------------------------------------------------//
         // handle tbb task scheduler
@@ -264,71 +241,60 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     {
         m_tbb_tp                               = true;
         m_pool_size                            = proposed_size;
-        tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
+        tbb_global_control_t*& _global_control = tbb_global_control();
         // delete if wrong size
         if(m_pool_size != proposed_size)
         {
-            delete _task_scheduler;
-            _task_scheduler = nullptr;
+            delete _global_control;
+            _global_control = nullptr;
         }
 
-        if(!_task_scheduler)
-            _task_scheduler =
-                new tbb_task_scheduler_t(tbb::task_scheduler_init::deferred);
-
-        if(!_task_scheduler->is_active())
+        if(!_global_control)
         {
-            m_pool_size = proposed_size;
-            _task_scheduler->initialize(proposed_size + 1);
+            _global_control = new tbb_global_control_t(
+                tbb::global_control::max_allowed_parallelism, proposed_size + 1);
             if(m_verbose > 0)
+            {
                 std::cout << "ThreadPool [TBB] initialized with " << m_pool_size
                           << " threads." << std::endl;
+            }
         }
+
         // create task group (used for async)
         if(!m_tbb_task_group)
             m_tbb_task_group = new tbb_task_group_t();
         return m_pool_size;
     }
-    else if(tbb_task_scheduler())
-    {
-        m_tbb_tp                               = false;
-        tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
-        if(_task_scheduler)
-        {
-            _task_scheduler->terminate();
-            delete _task_scheduler;
-            _task_scheduler = nullptr;
-        }
-        // delete task group (used for async)
-        if(m_tbb_task_group)
-        {
-            m_tbb_task_group->wait();
-            delete m_tbb_task_group;
-            m_tbb_task_group = nullptr;
-        }
-    }
 #endif
 
-    m_alive_flag.store(true);
+    m_alive_flag->store(true);
 
     //--------------------------------------------------------------------//
     // if started, stop some thread if smaller or return if equal
-    if(m_pool_state.load() == state::STARTED)
+    if(m_pool_state->load() == thread_pool::state::STARTED)
     {
         if(m_pool_size > proposed_size)
         {
             while(stop_thread() > proposed_size)
                 ;
             if(m_verbose > 0)
+            {
                 std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                           << std::endl;
+            }
+            if(!m_task_queue)
+                m_task_queue = new UserTaskQueue(m_pool_size);
             return m_pool_size;
         }
-        else if(m_pool_size == proposed_size)
+        else if(m_pool_size == proposed_size)  // NOLINT
         {
             if(m_verbose > 0)
+            {
                 std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                           << std::endl;
+            }
+            if(!m_task_queue)
+                m_task_queue = new UserTaskQueue(m_pool_size);
             return m_pool_size;
         }
     }
@@ -336,42 +302,41 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     //--------------------------------------------------------------------//
     // reserve enough space to prevent realloc later
     {
-        AutoLock _task_lock(m_task_lock);
-        m_main_threads.reserve(proposed_size);
+        AutoLock _task_lock(*m_task_lock);
         m_is_joined.reserve(proposed_size);
     }
 
+    auto this_tid = get_this_thread_id();
     for(size_type i = m_pool_size; i < proposed_size; ++i)
     {
         // add the threads
-        Thread* tid = new Thread;
         try
         {
-            *tid = Thread(ThreadPool::start_thread, this);
+            Thread thr(ThreadPool::start_thread, this, &m_thread_data, this_tid + i + 1);
             // only reaches here if successful creation of thread
             ++m_pool_size;
             // store thread
-            m_main_threads.push_back(tid);
+            m_main_threads.push_back(thr.get_id());
             // list of joined thread booleans
             m_is_joined.push_back(false);
-        }
-        catch(std::runtime_error& e)
+            // set the affinity
+            if(m_use_affinity)
+                set_affinity(i, thr);
+            // store
+            m_threads.emplace_back(std::move(thr));
+        } catch(std::runtime_error& e)
         {
             std::cerr << e.what() << std::endl;  // issue creating thread
             continue;
-        }
-        catch(std::bad_alloc& e)
+        } catch(std::bad_alloc& e)
         {
             std::cerr << e.what() << std::endl;
             continue;
         }
-
-        if(m_use_affinity)
-            set_affinity(i);
     }
     //------------------------------------------------------------------------//
 
-    AutoLock _task_lock(m_task_lock);
+    AutoLock _task_lock(*m_task_lock);
 
     // thread pool size doesn't match with join vector
     // this will screw up joining later
@@ -386,8 +351,13 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     }
 
     if(m_verbose > 0)
+    {
         std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                   << std::endl;
+    }
+
+    if(!m_task_queue)
+        m_task_queue = new UserTaskQueue(m_main_threads.size());
 
     return m_main_threads.size();
 }
@@ -402,35 +372,35 @@ ThreadPool::destroy_threadpool()
     // the modified m_pool_state may not show up to other threads until its
     // modified in a lock!
     //------------------------------------------------------------------------//
-    m_pool_state.store(state::STOPPED);
+    m_pool_state->store(thread_pool::state::STOPPED);
 
     //--------------------------------------------------------------------//
     // handle tbb task scheduler
 #ifdef PTL_USE_TBB
-    if(m_tbb_tp && tbb_task_scheduler())
-    {
-        tbb_task_scheduler_t*& _task_scheduler = tbb_task_scheduler();
-        delete _task_scheduler;
-        _task_scheduler = nullptr;
-        m_tbb_tp        = false;
-        std::cout << "ThreadPool [TBB] destroyed" << std::endl;
-    }
     if(m_tbb_task_group)
     {
         m_tbb_task_group->wait();
         delete m_tbb_task_group;
         m_tbb_task_group = nullptr;
     }
+    if(m_tbb_tp && tbb_global_control())
+    {
+        tbb_global_control_t*& _global_control = tbb_global_control();
+        delete _global_control;
+        _global_control = nullptr;
+        m_tbb_tp        = false;
+        std::cout << "ThreadPool [TBB] destroyed" << std::endl;
+    }
 #endif
 
-    if(!m_alive_flag.load())
+    if(!m_alive_flag->load())
         return 0;
 
     //------------------------------------------------------------------------//
     // notify all threads we are shutting down
-    m_task_lock.lock();
-    CONDITIONBROADCAST(&m_task_cond);
-    m_task_lock.unlock();
+    m_task_lock->lock();
+    CONDITIONBROADCAST(m_task_cond.get());
+    m_task_lock->unlock();
     //------------------------------------------------------------------------//
 
     if(m_is_joined.size() != m_main_threads.size())
@@ -446,19 +416,23 @@ ThreadPool::destroy_threadpool()
     for(size_type i = 0; i < m_is_joined.size(); i++)
     {
         //--------------------------------------------------------------------//
+        //
+        if(i < m_threads.size())
+            m_threads.at(i).join();
+
+        //--------------------------------------------------------------------//
         // if its joined already, nothing else needs to be done
         if(m_is_joined.at(i))
             continue;
 
         //--------------------------------------------------------------------//
         // join
-        if(!(std::this_thread::get_id() == m_main_threads[i]->get_id()))
-            m_main_threads[i]->join();
+        if(std::this_thread::get_id() == m_main_threads[i])
+            continue;
 
         //--------------------------------------------------------------------//
         // thread id and index
-        auto _tid = m_main_threads[i]->get_id();
-        auto _idx = f_thread_ids[_tid];
+        auto _tid = m_main_threads[i];
 
         //--------------------------------------------------------------------//
         // erase thread from thread ID list
@@ -466,29 +440,42 @@ ThreadPool::destroy_threadpool()
             f_thread_ids.erase(f_thread_ids.find(_tid));
 
         //--------------------------------------------------------------------//
-        // erase thread from thread index list
-        if(f_thread_indexes.find(_idx) != f_thread_indexes.end())
-            f_thread_indexes.erase(f_thread_indexes.find(_idx));
-
-        //--------------------------------------------------------------------//
         // it's joined
         m_is_joined.at(i) = true;
 
         //--------------------------------------------------------------------//
         // try waking up a bunch of threads that are still waiting
-        CONDITIONBROADCAST(&m_task_cond);
+        CONDITIONBROADCAST(m_task_cond.get());
         //--------------------------------------------------------------------//
     }
 
-    for(auto& itr : m_main_threads)
-        delete itr;
-
+    m_thread_data.clear();
+    m_threads.clear();
     m_main_threads.clear();
     m_is_joined.clear();
 
-    m_alive_flag.store(false);
+    m_alive_flag->store(false);
 
-    std::cout << "ThreadPool destroyed" << std::endl;
+    auto start   = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration<double>{};
+    // wait maximum of 30 seconds for threads to exit
+    while(m_thread_active->load() > 0 && elapsed.count() < 30)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        elapsed = std::chrono::steady_clock::now() - start;
+    }
+
+    auto _active = m_thread_active->load();
+
+    if(get_verbose() >= 0)
+    {
+        if(_active == 0)
+            std::cout << "ThreadPool destroyed" << std::endl;
+        else
+            std::cout << "ThreadPool destroyed but " << _active
+                      << " threads might still be active (and cause a termination error)"
+                      << std::endl;
+    }
 
     return 0;
 }
@@ -498,39 +485,36 @@ ThreadPool::destroy_threadpool()
 ThreadPool::size_type
 ThreadPool::stop_thread()
 {
-    if(!m_alive_flag.load() || m_pool_size == 0)
+    if(!m_alive_flag->load() || m_pool_size == 0)
         return 0;
 
     //------------------------------------------------------------------------//
     // notify all threads we are shutting down
-    m_task_lock.lock();
+    m_task_lock->lock();
     m_is_stopped.push_back(true);
-    CONDITIONNOTIFY(&m_task_cond);
-    m_task_lock.unlock();
+    CONDITIONNOTIFY(m_task_cond.get());
+    m_task_lock->unlock();
     //------------------------------------------------------------------------//
 
     // lock up the task queue
-    AutoLock _task_lock(m_task_lock);
+    AutoLock _task_lock(*m_task_lock);
 
     while(!m_stop_threads.empty())
     {
-        // get the thread
-        Thread* t = m_stop_threads.back();
-        // let thread finish
-        t->join();
+        auto tid = m_stop_threads.front();
         // remove from stopped
-        m_stop_threads.pop_back();
+        m_stop_threads.pop_front();
         // remove from main
         for(auto itr = m_main_threads.begin(); itr != m_main_threads.end(); ++itr)
-            if((*itr)->get_id() == t->get_id())
+        {
+            if(*itr == tid)
             {
                 m_main_threads.erase(itr);
                 break;
             }
+        }
         // remove from join list
         m_is_joined.pop_back();
-        // delete thread
-        delete t;
     }
 
     m_pool_size = m_main_threads.size();
@@ -539,83 +523,18 @@ ThreadPool::stop_thread()
 
 //======================================================================================//
 
-void
-ThreadPool::run(const task_pointer& task)
+ThreadPool::task_queue_t*&
+ThreadPool::get_valid_queue(task_queue_t*& _queue)
 {
-    // check the task_pointer (std::shared_ptr) has a valid pointer
-    if(!task.get())
-        return;
-
-    // execute task
-    (*task)();
+    if(!_queue)
+        _queue = new UserTaskQueue{ static_cast<intmax_t>(m_pool_size) };
+    return _queue;
 }
-
-//======================================================================================//
-
-int
-ThreadPool::run_on_this(const task_pointer& task)
-{
-    auto _func = [=]() { this->run(task); };
-    if(m_tbb_tp)
-    {
-        if(m_tbb_task_group)
-            m_tbb_task_group->run(_func);
-        else
-            _func();
-    }
-    else  // execute task
-        _func();
-
-    // return the number of tasks added to task-list
-    return 0;
-}
-
-//======================================================================================//
-
-int
-ThreadPool::insert(const task_pointer& task, int bin)
-{
-    ThreadLocalStatic ThreadData* _data = thread_data();
-
-    // pass the task to the queue
-    auto ibin = m_task_queue->InsertTask(task, _data, bin);
-    notify();
-    return ibin;
-}
-
-//======================================================================================//
-
-ThreadPool::size_type
-ThreadPool::add_task(const task_pointer& task, int bin)
-{
-    // if not native (i.e. TBB) then return
-    if(!task->is_native_task())
-        return 0;
-
-    // if we haven't built thread-pool, just execute
-    if(!m_alive_flag.load())
-        return static_cast<size_type>(run_on_this(task));
-
-    return static_cast<size_type>(insert(task, bin));
-}
-
-//======================================================================================//
-
-intmax_t
-ThreadPool::GetEnvNumThreads(intmax_t _default)
-{
-    return GetEnv<intmax_t>("PTL_NUM_THREADS", _default);
-}
-
 //======================================================================================//
 
 void
 ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
-#if defined(PTL_USE_GPERF)
-    ProfilerRegisterThread();
-#endif
-
     // how long the thread waits on condition variable
     // static int wait_time = GetEnv<int>("PTL_POOL_WAIT_TIME", 5);
 
@@ -624,27 +543,86 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // initialization function
     m_init_func();
 
-    ThreadId tid = ThisThread::get_id();
-
+    ThreadId    tid  = ThisThread::get_id();
     ThreadData* data = thread_data();
+    // auto        thread_bin = _task_queue->GetThreadBin();
+    // auto        workers    = _task_queue->workers();
+
+    auto start   = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration<double>{};
+    // check for updates for 60 seconds max
+    while(!_task_queue && elapsed.count() < 60)
+    {
+        elapsed = std::chrono::steady_clock::now() - start;
+        data->update();
+        _task_queue = data->current_queue;
+    }
+
+    if(!_task_queue)
+    {
+        --(*m_thread_awake);
+        throw std::runtime_error("No task queue was found after 60 seconds!");
+    }
 
     assert(data->current_queue != nullptr);
     assert(_task_queue == data->current_queue);
 
     // essentially a dummy run
+    if(_task_queue)
     {
         data->within_task = true;
-        run(_task_queue->GetTask());
+        auto _task        = _task_queue->GetTask();
+        if(_task)
+        {
+            (*_task)();
+            if(!_task->group())
+                delete _task;
+        }
         data->within_task = false;
     }
 
     // threads stay in this loop forever until thread-pool destroyed
     while(true)
     {
+        static thread_local auto p_task_lock = m_task_lock;
+
         //--------------------------------------------------------------------//
         // Try to pick a task
-        AutoLock _task_lock(m_task_lock, std::defer_lock);
+        AutoLock _task_lock(*p_task_lock, std::defer_lock);
         //--------------------------------------------------------------------//
+
+        auto leave_pool = [&]() {
+            auto _state      = [&]() { return static_cast<int>(m_pool_state->load()); };
+            auto _pool_state = _state();
+            if(_pool_state > 0)
+            {
+                // stop whole pool
+                if(_pool_state == thread_pool::state::STOPPED)
+                {
+                    if(_task_lock.owns_lock())
+                        _task_lock.unlock();
+                    return true;
+                }
+                // single thread stoppage
+                else if(_pool_state == thread_pool::state::PARTIAL)  // NOLINT
+                {
+                    if(!_task_lock.owns_lock())
+                        _task_lock.lock();
+                    if(!m_is_stopped.empty() && m_is_stopped.back())
+                    {
+                        m_stop_threads.push_back(tid);
+                        m_is_stopped.pop_back();
+                        if(_task_lock.owns_lock())
+                            _task_lock.unlock();
+                        // exit entire function
+                        return true;
+                    }
+                    if(_task_lock.owns_lock())
+                        _task_lock.unlock();
+                }
+            }
+            return false;
+        };
 
         // We need to put condition.wait() in a loop for two reasons:
         // 1. There can be spurious wake-ups (due to signal/ENITR)
@@ -654,45 +632,17 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         //    actually true!
         while(_task_queue->empty())
         {
-            auto _state = [&]() { return static_cast<int>(m_pool_state.load()); };
+            auto _state = [&]() { return static_cast<int>(m_pool_state->load()); };
             auto _size  = [&]() { return _task_queue->true_size(); };
             auto _empty = [&]() { return _task_queue->empty(); };
             auto _wake  = [&]() { return (!_empty() || _size() > 0 || _state() > 0); };
 
-            // If the thread was waked to notify process shutdown, return from
-            // here
-            auto _pool_state = _state();
-            if(_pool_state > 0)
-            {
-                // stop whole pool
-                if(_pool_state == state::STOPPED)
-                {
-                    if(_task_lock.owns_lock())
-                        _task_lock.unlock();
-                    return;
-                }
-                // single thread stoppage
-                else if(_pool_state == state::PARTIAL)
-                {
-                    if(!_task_lock.owns_lock())
-                        _task_lock.lock();
-                    if(m_is_stopped.size() > 0 && m_is_stopped.back())
-                    {
-                        m_stop_threads.push_back(get_thread(tid));
-                        m_is_stopped.pop_back();
-                        if(_task_lock.owns_lock())
-                            _task_lock.unlock();
-                        // exit entire function
-                        return;
-                    }
-                    if(_task_lock.owns_lock())
-                        _task_lock.unlock();
-                }
-            }
+            if(leave_pool())
+                return;
 
             if(_task_queue->true_size() == 0)
             {
-                if(m_thread_awake->load() > 0)
+                if(m_thread_awake && m_thread_awake->load() > 0)
                     --(*m_thread_awake);
 
                 // lock before sleeping on condition
@@ -702,14 +652,17 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
                 // Wait until there is a task in the queue
                 // Unlocks mutex while waiting, then locks it back when signaled
                 // use lambda to control waking
-                m_task_cond.wait(_task_lock, _wake);
+                m_task_cond->wait(_task_lock, _wake);
+
+                if(_state() == thread_pool::state::STOPPED)
+                    return;
 
                 // unlock if owned
                 if(_task_lock.owns_lock())
                     _task_lock.unlock();
 
                 // notify that is awake
-                if(m_thread_awake->load() < m_pool_size)
+                if(m_thread_awake && m_thread_awake->load() < m_pool_size)
                     ++(*m_thread_awake);
             }
             else
@@ -719,24 +672,32 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         // release the lock
         if(_task_lock.owns_lock())
             _task_lock.unlock();
+
         //----------------------------------------------------------------//
+
+        // leave pool if conditions dictate it
+        if(leave_pool())
+            return;
 
         // activate guard against recursive deadlock
         data->within_task = true;
         //----------------------------------------------------------------//
 
-        // get the next task and execute the task (will return if nullptr)
+        // execute the task(s)
         while(!_task_queue->empty())
-            run(_task_queue->GetTask());
+        {
+            auto _task = _task_queue->GetTask();
+            if(_task)
+            {
+                (*_task)();
+                if(!_task->group())
+                    delete _task;
+            }
+        }
         //----------------------------------------------------------------//
 
         // disable guard against recursive deadlock
         data->within_task = false;
-        //----------------------------------------------------------------//
-
-        // release the lock
-        // if(_task_lock.owns_lock())
-        //    _task_lock.unlock();
         //----------------------------------------------------------------//
     }
 }

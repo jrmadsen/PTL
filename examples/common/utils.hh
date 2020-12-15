@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -30,6 +30,8 @@
 #include "PTL/TiMemory.hh"
 #include "PTL/Timer.hh"
 #include "PTL/Utility.hh"
+
+using namespace PTL;
 
 // C headers
 #include <cstdlib>  // setenv
@@ -112,7 +114,7 @@ static int16_t rng_range = 2;
 #if defined(USE_TBB_TASKS)
 const bool                                     useTBB = true;
 typedef TBBTaskGroup<Array_t, const uint64_t&> TaskGroup_t;
-typedef TBBTaskGroup<void>                     VoidGroup_t;
+typedef tbb::task_group                        VoidGroup_t;
 typedef TBBTaskGroup<long>                     LongGroup_t;
 #else
 const bool                                  useTBB = false;
@@ -128,32 +130,51 @@ struct Measurement
     long   cutoff;
     long   num_task_groups;
     long   nthreads;
-    double ncount;
-    double real;
-    double cpu;
-    double cpu_per_thread;
-    double cpu_util;
+    double ncount         = 0.0;
+    double real           = 0.0;
+    double cpu            = 0.0;
+    double cpu_per_thread = 0.0;
+    double cpu_util       = 0.0;
 
     Measurement(long _cutoff, long _ntg, long _nthreads)
     : cutoff(_cutoff)
     , num_task_groups(_ntg)
     , nthreads(_nthreads)
-    {
-    }
+    {}
 
     bool operator==(const Measurement& rhs) const
     {
-        return cutoff == rhs.cutoff && num_task_groups == rhs.num_task_groups;
+        return num_task_groups == rhs.num_task_groups;
     }
 
     bool operator!=(const Measurement& rhs) const { return !(*this == rhs); }
 
-    bool operator<(const Measurement& rhs) const { return cutoff > rhs.cutoff; }
+    bool operator()(const Measurement& rhs) const
+    {
+        return num_task_groups < rhs.num_task_groups;
+    }
+
+    bool operator<(const Measurement& rhs) const
+    {
+        return num_task_groups < rhs.num_task_groups;
+    }
+
+    bool operator>(const Measurement& rhs) const
+    {
+        return !(*this < rhs || *this == rhs);
+    }
+
+    bool operator>=(const Measurement& rhs) const { return !(*this < rhs); }
+
+    bool operator<=(const Measurement& rhs) const
+    {
+        return (*this < rhs || *this == rhs);
+    }
 
     Measurement& operator+=(const Timer& _timer)
     {
         real += _timer.GetRealElapsed();
-        auto _cpu = _timer.GetUserElapsed() + _timer.GetSystemElapsed();
+        double _cpu = _timer.GetUserElapsed() + _timer.GetSystemElapsed();
         cpu += _cpu;
         cpu_per_thread += _cpu / nthreads;
         cpu_util += (_cpu / _timer.GetRealElapsed()) * 100.0;
@@ -165,7 +186,7 @@ struct Measurement
     {
         os << m.cutoff << ", " << m.num_task_groups << ", " << (m.real / m.ncount) << ", "
            << (m.cpu / m.ncount) << ", " << (m.cpu_per_thread / m.ncount) << ", "
-           << (m.cpu_util / m.ncount);
+           << (m.cpu_util / m.ncount) << ", " << m.ncount;
         return os;
     }
 };
@@ -188,7 +209,7 @@ get_seed()
     static const uint32_t        seed_base   = 6734525;
     static const uint32_t        seed_factor = 1000;
     static std::atomic<uint32_t> _counter;
-    ThreadLocalStatic uint32_t _tid = ++_counter;
+    static thread_local uint32_t _tid = ++_counter;
     return seed_base + (_tid * seed_factor);
 }
 
@@ -197,7 +218,7 @@ get_seed()
 inline random_engine_t&
 get_engine()
 {
-    ThreadLocalStatic random_engine_t* _engine = new random_engine_t(get_seed());
+    static thread_local random_engine_t* _engine = new random_engine_t(get_seed());
     return (*_engine);
 }
 
@@ -215,7 +236,7 @@ get_random()
 inline int16_t
 get_random_int(int16_t _range = rng_range)
 {
-    ThreadLocalStatic std::uniform_int_distribution<int16_t>* _instance =
+    static thread_local std::uniform_int_distribution<int16_t>* _instance =
         new std::uniform_int_distribution<int16_t>(-_range, _range);
     return (*_instance)(get_engine());
 }
@@ -225,7 +246,7 @@ get_random_int(int16_t _range = rng_range)
 inline uint64_t
 fibonacci(const uint64_t& n)
 {
-    return (n < 2) ? 1 : (fibonacci(n - 2) + fibonacci(n - 1));
+    return (n < 2) ? n : (fibonacci(n - 1) + fibonacci(n - 2));
 }
 
 //============================================================================//

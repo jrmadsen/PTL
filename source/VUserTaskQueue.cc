@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -28,6 +28,8 @@
 #include "PTL/VUserTaskQueue.hh"
 #include "PTL/TaskRunManager.hh"
 
+using namespace PTL;
+
 //======================================================================================//
 
 VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)
@@ -51,7 +53,7 @@ VUserTaskQueue::~VUserTaskQueue() {}
 intmax_t& VUserTaskQueue::ThisThreadNumber() const
 {
     // get a thread id number
-    ThreadLocalStatic intmax_t _tid;
+    static thread_local intmax_t _tid;
     return _tid;
 }
 */

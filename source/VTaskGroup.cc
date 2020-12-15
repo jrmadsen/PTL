@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2020 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -29,11 +29,14 @@
 // ---------------------------------------------------------------
 
 #include "PTL/VTaskGroup.hh"
+#include "PTL/Globals.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskRunManager.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/VTask.hh"
+
+using namespace PTL;
 
 //======================================================================================//
 
@@ -46,81 +49,31 @@ vtask_group_counter()
 
 //======================================================================================//
 
+int VTaskGroup::f_verbose = GetEnv<int>("PTL_VERBOSE", 0);
+
+//======================================================================================//
+
 VTaskGroup::VTaskGroup(ThreadPool* tp)
-: m_clear_count(0)
-, m_clear_freq(1)
-, m_tot_task_count(0)
-, m_id(vtask_group_counter()++)
+: m_id(vtask_group_counter()++)
 , m_pool(tp)
-, m_task_lock()
+, m_tot_task_count(std::make_shared<atomic_int>(0))
+, m_task_cond(std::make_shared<condition_t>())
+, m_task_lock(std::make_shared<lock_t>())
 , m_main_tid(std::this_thread::get_id())
 {
     if(!m_pool && TaskRunManager::GetMasterRunManager())
         m_pool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
 
-#ifdef DEBUG
-    if(!m_pool && GetEnv<int>("PTL_VERBOSE", 0) > 0)
+    if(!m_pool)
     {
         std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
                   << "nullptr to thread pool!" << std::endl;
     }
-#endif
 }
 
 //======================================================================================//
 
 VTaskGroup::~VTaskGroup() {}
-
-//======================================================================================//
-
-void
-VTaskGroup::execute_this_threads_tasks()
-{
-    // for internal threads
-    ThreadData* data = ThreadData::GetInstance();
-
-    ThreadPool* _tpool = (m_pool) ? m_pool : ((data) ? data->thread_pool : nullptr);
-
-    VUserTaskQueue* _taskq =
-        (m_pool) ? m_pool->get_queue() : ((data) ? data->current_queue : nullptr);
-
-    // for external threads
-    bool ext_is_master   = (data) ? data->is_master : false;
-    bool ext_within_task = (data) ? data->within_task : true;
-
-    // for external threads
-    if(!data)
-    {
-        _tpool = TaskRunManager::GetMasterRunManager()->GetThreadPool();
-        _taskq = _tpool->get_queue();
-    }
-
-    // something is wrong, didn't create thread-pool?
-    if(!_tpool || !_taskq)
-    {
-#ifdef DEBUG
-        if(GetEnv<int>("PTL_VERBOSE", 0) > 0)
-            std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
-                      << "nullptr to thread data!" << std::endl;
-#endif
-        return;
-    }
-
-    // only want to process if within a task
-    if((!ext_is_master || _tpool->size() < 2) && ext_within_task)
-    {
-        if(!_taskq)
-            return;
-        int        bin  = static_cast<int>(_taskq->GetThreadBin());
-        const auto nitr = (_tpool) ? _tpool->size() : Thread::hardware_concurrency();
-        while(this->pending() > 0)
-        {
-            task_pointer _task = _taskq->GetTask(bin, static_cast<int>(nitr));
-            if(_task.get())
-                (*_task)();
-        }
-    }
-}
 
 //======================================================================================//
 
@@ -137,54 +90,116 @@ VTaskGroup::wait()
         // if MTRunManager does not exist or no thread pool created
         if(!m_pool)
         {
-#ifdef DEBUG
-            if(GetEnv<int>("PTL_VERBOSE", 0) > 0)
+            if(f_verbose > 0)
             {
+                fprintf(stderr, "%s @ %i :: Warning! nullptr to thread-pool (%p)\n",
+                        __FUNCTION__, __LINE__, static_cast<void*>(m_pool));
                 std::cerr << __FUNCTION__ << "@" << __LINE__ << " :: Warning! "
                           << "nullptr to thread pool!" << std::endl;
             }
-#endif
             return;
         }
     }
 
-    // return if thread pool isn't built
-    if(!m_pool->is_alive() || !is_native_task_group())
+    ThreadData* data = ThreadData::GetInstance();
+    if(!data)
         return;
 
-    // execute_this_threads_tasks();
-    // return;
+    ThreadPool*     tpool = (m_pool) ? m_pool : data->thread_pool;
+    VUserTaskQueue* taskq = (tpool) ? tpool->get_queue() : data->current_queue;
+
+    bool _is_master   = data->is_master;
+    bool _within_task = data->within_task;
 
     auto is_active_state = [&]() {
-        return static_cast<int>(m_pool->state()) != static_cast<int>(state::STOPPED);
+        return (tpool->state()->load(std::memory_order_relaxed) !=
+                thread_pool::state::STOPPED);
     };
 
-    intmax_t _pool_size = m_pool->size();
-    intmax_t _pending   = 0;
-    AutoLock _lock(m_task_lock, std::defer_lock);
+    auto execute_this_threads_tasks = [&]() {
+        if(!taskq)
+            return;
+
+        // only want to process if within a task
+        if((!_is_master || tpool->size() < 2) && _within_task)
+        {
+            int bin = static_cast<int>(taskq->GetThreadBin());
+            // const auto nitr = (tpool) ? tpool->size() : Thread::hardware_concurrency();
+            while(this->pending() > 0)
+            {
+                task_pointer _task = taskq->GetTask(bin);
+                if(_task)
+                    (*_task)();
+            }
+        }
+    };
+
+    // checks for validity
+    if(!is_native_task_group())
+    {
+        // for external threads
+        if(!_is_master || tpool->size() < 2)
+            return;
+    }
+    else if(f_verbose > 0)
+    {
+        if(!tpool || !taskq)
+        {
+            // something is wrong, didn't create thread-pool?
+            fprintf(
+                stderr,
+                "%s @ %i :: Warning! nullptr to thread data (%p) or task-queue (%p)\n",
+                __FUNCTION__, __LINE__, static_cast<void*>(tpool),
+                static_cast<void*>(taskq));
+        }
+        // return if thread pool isn't built
+        else if(is_native_task_group() && !tpool->is_alive())
+        {
+            fprintf(stderr, "%s @ %i :: Warning! thread-pool is not alive!\n",
+                    __FUNCTION__, __LINE__);
+        }
+        else if(!is_active_state())
+        {
+            fprintf(stderr, "%s @ %i :: Warning! thread-pool is not active!\n",
+                    __FUNCTION__, __LINE__);
+        }
+    }
+
+    intmax_t wake_size = 2;
+    AutoLock _lock(*m_task_lock, std::defer_lock);
 
     while(is_active_state())
     {
         execute_this_threads_tasks();
 
         // while loop protects against spurious wake-ups
-        while((_pending = pending()) > 0 && is_active_state())
+        while(_is_master && pending() > 0 && is_active_state())
         {
+            // auto _wake = [&]() { return (wake_size > pending() || !is_active_state());
+            // };
+
             // lock before sleeping on condition
             if(!_lock.owns_lock())
                 _lock.lock();
+
             // Wait until signaled that a task has been competed
             // Unlock mutex while wait, then lock it back when signaled
-            if((_pending = pending()) > _pool_size)  // for safety
-                m_task_cond.wait(_lock);
+            // when true, this wakes the thread
+            if(pending() >= wake_size)
+            {
+                m_task_cond->wait(_lock);
+            }
             else
-                m_task_cond.wait_for(_lock, std::chrono::milliseconds(10));
+            {
+                m_task_cond->wait_for(_lock, std::chrono::microseconds(100));
+            }
+            // unlock
             if(_lock.owns_lock())
                 _lock.unlock();
         }
 
         // if pending is not greater than zero, we are joined
-        if((_pending = pending()) <= 0)
+        if(pending() <= 0)
             break;
     }
 
@@ -197,9 +212,8 @@ VTaskGroup::wait()
         std::stringstream ss;
         ss << "\nWarning! Join operation issue! " << ntask << " tasks still "
            << "are running!" << std::endl;
-        std::cout << ss.str();
+        std::cerr << ss.str();
         this->wait();
-        // throw std::runtime_error(ss.str().c_str());
     }
 }
 

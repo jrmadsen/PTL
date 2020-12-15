@@ -1,6 +1,6 @@
 //
 // MIT License
-// Copyright (c) 2018 Jonathan R. Madsen
+// Copyright (c) 2019 Jonathan R. Madsen
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -67,11 +67,14 @@
 
 #pragma once
 
+#include "PTL/Types.hh"
+#include <chrono>
+
 #if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
 #    include <sys/times.h>
 #    include <unistd.h>
 #else
-#    include <time.h>
+#    include <ctime>
 #    define _SC_CLK_TCK 1
 
 extern "C"
@@ -95,10 +98,8 @@ extern "C"
 };
 #endif /* WIN32 */
 
-#include "PTL/Types.hh"
-
-#include <chrono>
-
+namespace PTL
+{
 class Timer
 {
     typedef std::chrono::high_resolution_clock clock_type;
@@ -121,7 +122,9 @@ private:
     tms                                 fStartTimes, fEndTimes;
 };
 
+}  // namespace PTL
+
 std::ostream&
-operator<<(std::ostream& os, const Timer& t);
+operator<<(std::ostream& os, const PTL::Timer& t);
 
 #include "PTL/Timer.icc"
