@@ -125,7 +125,7 @@ inline void
 init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
 {
     // ensure this thread is assigned id, assign variable so no unused result warning
-    auto tid = GetThisThreadID();
+    auto tid = get_this_thread_id();
     // don't warn about unused variable
     ConsumeParameters(tid);
 
@@ -392,9 +392,9 @@ run_algorithm(_Func&& cpu_func, _Func&& cuda_func, _Args&&... args)
         {
             {
                 AutoLock l(TypeMutex<decltype(std::cout)>());
-                std::cerr << "[TID: " << GetThisThreadID() << "] " << e.what()
+                std::cerr << "[TID: " << get_this_thread_id() << "] " << e.what()
                           << std::endl;
-                std::cerr << "[TID: " << GetThisThreadID() << "] "
+                std::cerr << "[TID: " << get_this_thread_id() << "] "
                           << "Falling back to CPU algorithm..." << std::endl;
             }
             try

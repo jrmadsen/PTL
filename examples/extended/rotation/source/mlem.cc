@@ -43,7 +43,7 @@ int
 cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
          const float* theta, float* recon, int ngridx, int ngridy, int num_iter)
 {
-    auto tid = GetThisThreadID();
+    auto tid = get_this_thread_id();
     ConsumeParameters(tid);
     static std::atomic<int> active;
     int                     count = active++;
@@ -52,7 +52,7 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
     TIMEMORY_AUTO_TIMER("");
 
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+           get_this_thread_id(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     {
         TIMEMORY_AUTO_TIMER("");
@@ -66,12 +66,12 @@ cxx_mlem(const float* data, int dy, int dt, int dx, const float* center,
     {
         std::stringstream ss;
         PrintEnv(ss);
-        printf("[%lu] Reporting environment...\n\n%s\n", GetThisThreadID(),
+        printf("[%lu] Reporting environment...\n\n%s\n", get_this_thread_id(),
                ss.str().c_str());
     }
     else
     {
-        printf("[%lu] Threads remaining: %i...\n", GetThisThreadID(), remain);
+        printf("[%lu] Threads remaining: %i...\n", get_this_thread_id(), remain);
     }
 
     return scast<int>(true);
@@ -84,7 +84,7 @@ mlem_cpu_compute_projection(data_array_t& cpu_data, int p, int dy, int dt, int d
                             int ny, const float* theta)
 {
     ConsumeParameters(dy);
-    auto cache = cpu_data[GetThisThreadID() % cpu_data.size()];
+    auto cache = cpu_data[get_this_thread_id() % cpu_data.size()];
 
     // calculate some values
     float    theta_p = fmodf(theta[p] + constants::halfpi, constants::twopi);
@@ -149,7 +149,7 @@ mlem_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     typedef decltype(HW_CONCURRENCY) nthread_type;
 
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
-           GetThisThreadID(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
+           get_this_thread_id(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     // explicitly set OpenMP number of threads to 1 so OpenCV doesn't try to
     // create (HW_CONCURRENCY * PYTHON_NUM_THREADS * PTL_NUM_THREADS) threads

@@ -38,7 +38,7 @@ typedef std::vector<float>   farray_t;
 typedef std::vector<int64_t> iarray_t;
 
 #define PRINT_HERE(extra)                                                                \
-    printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::GetThisThreadID(), __FUNCTION__,        \
+    printf("[%lu]> %s@'%s':%i %s\n", ThreadPool::get_this_thread_id(), __FUNCTION__,        \
            __FILE__, __LINE__, extra)
 
 //============================================================================//
@@ -411,7 +411,7 @@ compute_sum(farray_t& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_cuda_sum);
 
-    static thread_local uint64_t      tid    = ThreadPool::GetThisThreadID();
+    static thread_local uint64_t      tid    = ThreadPool::get_this_thread_id();
     static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[cuda]");
@@ -474,7 +474,7 @@ compute_sum(thrust::host_vector<float>& cpu_data)
 {
     NVTX_RANGE_PUSH(&nvtx_thrust_sum);
 
-    static thread_local uint64_t      tid    = ThreadPool::GetThisThreadID();
+    static thread_local uint64_t      tid    = ThreadPool::get_this_thread_id();
     static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
     TIMEMORY_AUTO_TIMER("[thrust]");
@@ -509,7 +509,7 @@ run_gpu(uint64_t n)
         uint64_t _ret = (abs(real_sum - calc_sum) < epsilon) ? 1 : 0;
         if(_ret == 0)
             printf("[%lu] > incorrect GPU summation. real = %g, calculated = %g\n",
-                   ThreadPool::GetThisThreadID(), real_sum, calc_sum);
+                   ThreadPool::get_this_thread_id(), real_sum, calc_sum);
         return _ret;
     };
 
