@@ -580,7 +580,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         {
             (*_task)();
             if(!_task->group())
-                delete _task;
+                _task.reset();
         }
         data->within_task = false;
     }
@@ -695,7 +695,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             {
                 (*_task)();
                 if(!_task->group())
-                    delete _task;
+                    _task.reset();
             }
         }
         //----------------------------------------------------------------//

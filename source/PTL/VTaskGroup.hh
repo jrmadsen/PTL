@@ -66,7 +66,7 @@ public:
     typedef std::atomic_intmax_t         atomic_int;
     typedef std::atomic_uintmax_t        atomic_uint;
     typedef Condition                    condition_t;
-    typedef task_type*                   task_pointer;
+    typedef std::shared_ptr<task_type>   task_pointer;
     typedef container_type<task_pointer> vtask_list_type;
 
 public:
@@ -145,8 +145,6 @@ protected:
 inline void
 VTaskGroup::clear()
 {
-    for(auto& itr : vtask_list)
-        delete itr;
     vtask_list.clear();
 }
 

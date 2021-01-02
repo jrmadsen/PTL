@@ -104,7 +104,7 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename Up>
-    Up* operator+=(Up* _task)
+    std::shared_ptr<Up> operator+=(std::shared_ptr<Up> _task)
     {
         // store in list
         vtask_list.push_back(_task);
@@ -119,10 +119,10 @@ public:
 public:
     //------------------------------------------------------------------------//
     template <typename Func, typename... Args>
-    task_type<Args...>* wrap(Func&& func, Args... args)
+    std::shared_ptr<task_type<Args...>> wrap(Func&& func, Args... args)
     {
-        return operator+=(
-            new task_type<Args...>(this, std::forward<Func>(func), args...));
+        return operator+=(std::make_shared<task_type<Args...>>(
+            this, std::forward<Func>(func), args...));
     }
 
 public:

@@ -82,7 +82,7 @@ public:
     using task_type    = VTask;
     using lock_t       = std::shared_ptr<Mutex>;
     using condition_t  = std::shared_ptr<Condition>;
-    using task_pointer = task_type*;
+    using task_pointer = std::shared_ptr<task_type>;
     using task_queue_t = VUserTaskQueue;
     // containers
     typedef std::deque<ThreadId>          thread_list_t;
@@ -303,10 +303,13 @@ ThreadPool::resize(size_type _n)
 inline int
 ThreadPool::run_on_this(task_pointer task)
 {
-    auto _func = [=]() {
-        (*task)();
-        if(!task->group())
-            delete task;
+    auto _func = [task]() {
+        if(task)
+        {
+            (*task)();
+            if(!task->group())
+                const_cast<task_pointer&>(task).reset();
+        }
     };
 
     if(m_tbb_tp && m_tbb_task_group)

@@ -49,7 +49,7 @@ public:
     template <typename _Tp>
     using container = std::deque<_Tp>;
 
-    typedef VTask*                    task_pointer;
+    typedef std::shared_ptr<VTask>    task_pointer;
     typedef container<task_pointer>   container_type;
     typedef container_type::size_type size_type;
 

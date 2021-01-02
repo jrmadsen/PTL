@@ -47,11 +47,11 @@ class ThreadData;
 class VUserTaskQueue
 {
 public:
-    typedef VTask*                task_pointer;
-    typedef std::atomic<intmax_t> AtomicInt;
-    typedef uintmax_t             size_type;
-    typedef std::function<void()> function_type;
-    typedef std::set<ThreadId>    ThreadIdSet;
+    typedef std::shared_ptr<VTask> task_pointer;
+    typedef std::atomic<intmax_t>  AtomicInt;
+    typedef uintmax_t              size_type;
+    typedef std::function<void()>  function_type;
+    typedef std::set<ThreadId>     ThreadIdSet;
 
 public:
     // Constructor - accepting the number of workers

@@ -90,6 +90,18 @@ public:
     template <typename... Args>
     void exec(Task<Args...>* _task)
     {
+        m_pool->add_task(std::make_shared<Task<Args...>>(_task));
+    }
+
+    template <typename... Args>
+    void exec(std::shared_ptr<VTask> _task)
+    {
+        m_pool->add_task(_task);
+    }
+
+    template <typename... Args>
+    void exec(std::shared_ptr<Task<Args...>> _task)
+    {
         m_pool->add_task(_task);
     }
 
@@ -100,10 +112,9 @@ public:
     std::future<RetT> async(FuncT&& func, Args&&... args)
     {
         typedef PackagedTask<RetT, Args...> task_type;
-        typedef task_type*                  task_pointer;
 
-        task_pointer _ptask =
-            new task_type(std::forward<FuncT>(func), std::forward<Args>(args)...);
+        auto              _ptask = std::make_shared<task_type>(std::forward<FuncT>(func),
+                                                  std::forward<Args>(args)...);
         std::future<RetT> _f = _ptask->get_future();
         m_pool->add_task(_ptask);
         return _f;
