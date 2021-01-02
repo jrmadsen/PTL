@@ -44,13 +44,12 @@ if(_PTL_INSTALL_TREE)
     include(${PTL_CMAKE_DIR}/@PROJECT_NAME@Targets.cmake)
     check_required_components(@PROJECT_NAME@)
 
-
     # get target
     foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
         # set the library
         if(NOT @PROJECT_NAME@_LIBRARY)
-        set(@PROJECT_NAME@_LIBRARY ${_${_COMPONENT}_LOCATION} CACHE INTERNAL
-            "@PROJECT_NAME@ library")
+            set(@PROJECT_NAME@_LIBRARY PTL::ptl-${_COMPONENT} CACHE INTERNAL
+                "@PROJECT_NAME@ library")
         endif()
     endforeach()
 
@@ -62,7 +61,7 @@ if(_PTL_INSTALL_TREE)
 
     if(@TBB_FOUND@)
         set(TBB_ROOT_DIR @TBB_ROOT_DIR@)
-        set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/PTL/Modules ${CMAKE_MODULE_PATH})
+        set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/Modules ${CMAKE_MODULE_PATH})
         find_package(TBB @TBB_VERSION@ REQUIRED)
     endif()
 

@@ -25,20 +25,28 @@ ptl_add_feature(CMAKE_CXX_FLAGS_${_CONFIG} "C++ compiler build-specific flags")
 #
 ################################################################################
 
+include(GNUInstallDirs)
+
 # cmake installation folder
 set(CMAKE_INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME})
 
 # create the full path version and generic path versions
-foreach(_TYPE in DATAROOT CMAKE INCLUDE LIB BIN MAN DOC)
+foreach(_TYPE DATAROOT CONFIG INCLUDE LIB BIN MAN DOC)
     # set the absolute versions
     if(NOT IS_ABSOLUTE "${CMAKE_INSTALL_${_TYPE}DIR}")
         set(CMAKE_INSTALL_FULL_${_TYPE}DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_${_TYPE}DIR})
-    else(NOT IS_ABSOLUTE "${CMAKE_INSTALL_${_TYPE}DIR}")
+    else()
         set(CMAKE_INSTALL_FULL_${_TYPE}DIR ${CMAKE_INSTALL_${_TYPE}DIR})
-    endif(NOT IS_ABSOLUTE "${CMAKE_INSTALL_${_TYPE}DIR}")
+    endif()
 
     # generic "PROJECT_INSTALL_" variables (used by documentation)"
     set(PROJECT_INSTALL_${_TYPE}DIR ${CMAKE_INSTALL_${TYPE}DIR})
     set(PROJECT_INSTALL_FULL_${_TYPE}DIR ${CMAKE_INSTALL_FULL_${TYPE}DIR})
 
-endforeach(_TYPE in DATAROOT CMAKE INCLUDE LIB BIN MAN DOC)
+    if(NOT DEFINED PTL_INSTALL_${_TYPE}DIR)
+        set(PTL_INSTALL_${_TYPE}DIR "${CMAKE_INSTALL_${_TYPE}DIR}")
+    endif()
+    set(PTL_INSTALL_${_TYPE}DIR "${CMAKE_INSTALL_${_TYPE}DIR}" CACHE STRING
+        "${_TYPE} Installation Path")
+endforeach()
+
