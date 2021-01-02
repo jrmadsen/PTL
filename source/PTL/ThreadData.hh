@@ -30,6 +30,9 @@
 #include <deque>
 
 #if defined(PTL_USE_TBB)
+#    if !defined(TBB_PREVIEW_GLOBAL_CONTROL)
+#        define TBB_PREVIEW_GLOBAL_CONTROL 1
+#    endif
 #    include <tbb/global_control.h>
 #    include <tbb/task_group.h>
 #endif
