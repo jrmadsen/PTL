@@ -114,7 +114,7 @@ before_install:
 
 install:
   - env
-  - conda install -c defaults -c conda-forge -n pyctest python=3.6 pyctest
+  - conda create -c defaults -c conda-forge -n pyctest python=3.6 pyctest
   - source activate
   - conda activate pyctest
 
