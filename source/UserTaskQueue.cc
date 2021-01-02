@@ -79,7 +79,7 @@ UserTaskQueue::~UserTaskQueue()
     {
         for(auto& itr : *m_subqueues)
         {
-            assert(itr->size() == 0);
+            assert(itr->empty());
             delete itr;
         }
         m_subqueues->clear();

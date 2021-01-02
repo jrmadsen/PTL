@@ -78,7 +78,7 @@ VTask::operator--()
             try
             {
                 auto& _task_cond = m_group->task_cond();
-                assert(_task_cond.get() != nullptr);
+                assert(_task_cond != nullptr);
                 _task_cond->notify_all();
             } catch(std::system_error& e)
             {
