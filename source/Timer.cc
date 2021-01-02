@@ -88,38 +88,6 @@ times(struct tms* t)
 
 //======================================================================================//
 
-// Print timer status n std::ostream
-std::ostream&
-operator<<(std::ostream& os, const PTL::Timer& t)
-{
-    // so fixed doesn't propagate
-    std::stringstream ss;
-    ss << std::fixed;
-    if(t.IsValid())
-    {
-        ss << "Real=" << t.GetRealElapsed() << "s User=" << t.GetUserElapsed()
-           << "s Sys=" << t.GetSystemElapsed() << "s";
-
-        // avoid possible FPE error
-        if(t.GetRealElapsed() > 1.0e-6)
-        {
-            double cpu_util =
-                (t.GetUserElapsed() + t.GetSystemElapsed()) / t.GetRealElapsed() * 100.0;
-            ss << std::setprecision(1);
-            ss << " [Cpu=" << std::setprecision(1) << cpu_util << "%]";
-        }
-    }
-    else
-    {
-        ss << "Real=****s User=****s Sys=****s";
-    }
-    os << ss.str();
-
-    return os;
-}
-
-//======================================================================================//
-
 Timer::Timer()
 : fValidTimes(false)
 {}

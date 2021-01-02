@@ -470,11 +470,15 @@ ThreadPool::destroy_threadpool()
     if(get_verbose() >= 0)
     {
         if(_active == 0)
+        {
             std::cout << "ThreadPool destroyed" << std::endl;
+        }
         else
+        {
             std::cout << "ThreadPool destroyed but " << _active
                       << " threads might still be active (and cause a termination error)"
                       << std::endl;
+        }
     }
 
     return 0;

@@ -68,7 +68,11 @@
 #pragma once
 
 #include "PTL/Types.hh"
+
 #include <chrono>
+#include <iomanip>
+#include <ostream>
+#include <sstream>
 
 #if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
 #    include <sys/times.h>
@@ -116,6 +120,35 @@ public:
     double             GetSystemElapsed() const;
     double             GetUserElapsed() const;
 
+public:
+    friend std::ostream& operator<<(std::ostream& os, const Timer& t)
+    {
+        // so fixed doesn't propagate
+        std::stringstream ss;
+        ss << std::fixed;
+        if(t.IsValid())
+        {
+            ss << "Real=" << t.GetRealElapsed() << "s User=" << t.GetUserElapsed()
+               << "s Sys=" << t.GetSystemElapsed() << "s";
+
+            // avoid possible FPE error
+            if(t.GetRealElapsed() > 1.0e-6)
+            {
+                double cpu_util = (t.GetUserElapsed() + t.GetSystemElapsed()) /
+                                  t.GetRealElapsed() * 100.0;
+                ss << std::setprecision(1);
+                ss << " [Cpu=" << std::setprecision(1) << cpu_util << "%]";
+            }
+        }
+        else
+        {
+            ss << "Real=****s User=****s Sys=****s";
+        }
+        os << ss.str();
+
+        return os;
+    }
+
 private:
     bool                                fValidTimes;
     std::chrono::time_point<clock_type> fStartRealTime, fEndRealTime;
@@ -123,8 +156,5 @@ private:
 };
 
 }  // namespace PTL
-
-std::ostream&
-operator<<(std::ostream& os, const PTL::Timer& t);
 
 #include "PTL/Timer.icc"

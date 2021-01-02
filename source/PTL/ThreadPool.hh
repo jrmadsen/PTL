@@ -41,6 +41,9 @@
 #    if !defined(TBB_SUPPRESS_DEPRECATED_MESSAGES)
 #        define TBB_SUPPRESS_DEPRECATED_MESSAGES 1
 #    endif
+#    if !defined(TBB_PREVIEW_GLOBAL_CONTROL)
+#        define TBB_PREVIEW_GLOBAL_CONTROL 1
+#    endif
 #    include <tbb/global_control.h>
 #    include <tbb/tbb.h>
 #endif

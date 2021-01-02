@@ -920,7 +920,7 @@ macro(PTL_BUILD_LIBRARY)
 
     # Install the targets and export libraries
     install(TARGETS ${LIB_TARGET_NAME}
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        DESTINATION ${PTL_INSTALL_LIBDIR}
         EXPORT ${PROJECT_NAME}Targets
         COMPONENT development)
 
@@ -957,7 +957,7 @@ FUNCTION(PTL_ADD_INTERFACE_LIBRARY _TARGET)
         set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_INTERFACE_LIBRARIES ${_TARGET})
         ptl_add_enabled_interface(${_TARGET})
         install(TARGETS ${_TARGET}
-            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            DESTINATION ${PTL_INSTALL_LIBDIR}
             EXPORT ${PROJECT_NAME}Targets
             COMPONENT development)
     endif()

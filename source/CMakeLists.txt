@@ -9,7 +9,6 @@ execute_process(COMMAND
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     ${CMAKE_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake)
 
-
 ################################################################################
 #                                                                              #
 #                               General                                        #
@@ -32,6 +31,39 @@ get_property(PTL_INTERFACE_LIBRARIES GLOBAL PROPERTY ${PROJECT_NAME}_INTERFACE_L
 
 ################################################################################
 #                                                                              #
+#                               Version                                        #
+#                                                                              #
+################################################################################
+
+configure_file(${PROJECT_SOURCE_DIR}/cmake/Templates/Version.hh.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Version.hh @ONLY)
+
+list(APPEND ptl_headers ${CMAKE_CURRENT_BINARY_DIR}/Version.hh)
+
+if(PTL_MASTER_PROJECT)
+    install(
+        FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/Version.hh
+        DESTINATION
+            ${PTL_INSTALL_INCLUDEDIR}/PTL)
+else()
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_BINARY_DIR}/Version.hh
+            ${CMAKE_CURRENT_LIST_DIR}/Version.hh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        ERROR_VARIABLE ERR_MSG
+        RESULT_VARIABLE RET
+    )
+    install(
+        FILES
+            ${CMAKE_CURRENT_LIST_DIR}/Version.hh
+        DESTINATION
+            ${PTL_INSTALL_INCLUDEDIR}/PTL)
+endif()
+
+################################################################################
+#                                                                              #
 #                              PTL Library                                     #
 #                                                                              #
 ################################################################################
@@ -51,7 +83,12 @@ if(BUILD_SHARED_LIBS)
 
     target_include_directories(ptl-shared INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+        $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
+
+    if(PTL_MASTER_PROJECT)
+        target_include_directories(ptl-shared INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+    endif()
 
     list(APPEND INSTALL_LIBRARIES ptl-shared)
     export(TARGETS ptl-shared ${PTL_INTERFACE_LIBRARIES}
@@ -72,7 +109,12 @@ if(BUILD_STATIC_LIBS)
 
     target_include_directories(ptl-static INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+        $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
+
+    if(PTL_MASTER_PROJECT)
+        target_include_directories(ptl-static INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+    endif()
 
     list(APPEND INSTALL_LIBRARIES ptl-static)
     export(TARGETS ptl-static ${PTL_INTERFACE_LIBRARIES}
@@ -89,12 +131,12 @@ endif()
 # install export
 install(EXPORT ${PROJECT_NAME}Targets
     NAMESPACE PTL::
-    DESTINATION ${CMAKE_INSTALL_CONFIGDIR}
+    DESTINATION ${PTL_INSTALL_CONFIGDIR}
     COMPONENT development)
 
 # headers
 install(FILES ${ptl_headers}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/PTL
+    DESTINATION ${PTL_INSTALL_INCLUDEDIR}/PTL
     COMPONENT development)
 
 # generate export for build tree
