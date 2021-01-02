@@ -21,7 +21,6 @@ jobs:
             - g++-4.9
             - build-essential
             - cmake
-            - libtbb-dev
             - clang-tidy
             - lcov
       env:
@@ -40,7 +39,6 @@ jobs:
             - g++-5
             - build-essential
             - cmake
-            - libtbb-dev
             - clang-tidy
       env:
         - CC=gcc-5
@@ -58,7 +56,6 @@ jobs:
             - g++-6
             - build-essential
             - cmake
-            - libtbb-dev
             - clang-tidy
       env:
         - CC=gcc-6
@@ -74,7 +71,6 @@ jobs:
             - g++-7
             - build-essential
             - cmake
-            - libtbb-dev
             - clang-tidy
             - libopencv-dev
             - libopencv-imgproc-dev
@@ -111,11 +107,12 @@ before_install:
 
 install:
   - env
-  - conda create -c defaults -c conda-forge -n pyctest python=3.6 pyctest
+  - conda create -c defaults -c conda-forge -n pyctest python=3.6 pyctest tbb tbb-devel
   - source activate
   - conda activate pyctest
 
 script:
+  - export CMAKE_PREFIX_PATH="${CONDA_PREFIX}:${CMAKE_PREFIX_PATH}"
   - SOURCE_DIR=${PWD}
   - python ./pyctest-runner.py -SF --pyctest-model=Continuous --pyctest-site=Travis --static-analysis ${EXTRA_ARGS} -- -VV ${CTEST_ARGS} -- ${CMAKE_ARGS};
   - cd build-PTL
