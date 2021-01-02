@@ -21,6 +21,7 @@ jobs:
             - g++-4.9
             - build-essential
             - cmake
+            - libtbb-dev
             - clang-tidy
             - lcov
       env:
@@ -39,6 +40,7 @@ jobs:
             - g++-5
             - build-essential
             - cmake
+            - libtbb-dev
             - clang-tidy
       env:
         - CC=gcc-5
@@ -56,6 +58,7 @@ jobs:
             - g++-6
             - build-essential
             - cmake
+            - libtbb-dev
             - clang-tidy
       env:
         - CC=gcc-6
@@ -71,6 +74,7 @@ jobs:
             - g++-7
             - build-essential
             - cmake
+            - libtbb-dev
             - clang-tidy
             - libopencv-dev
             - libopencv-imgproc-dev
@@ -107,7 +111,7 @@ before_install:
 
 install:
   - env
-  - conda create -c defaults -c conda-forge -n pyctest python=3.6 pyctest tbb tbb-devel
+  - conda create -c defaults -c conda-forge -n pyctest python=3.6 pyctest
   - source activate
   - conda activate pyctest
 
