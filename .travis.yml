@@ -5,9 +5,6 @@ language: python
 python:
   - "3.6"
 
-env:
-  - ARGS="-SF --pyctest-model=Continuous --pyctest-site=Travis --static-analysis"
-
 # The apt packages here install our compiled code dependencies.
 jobs:
   fast_finish: true
@@ -120,7 +117,7 @@ install:
 
 script:
   - SOURCE_DIR=${PWD}
-  - python ./pyctest-runner.py ${ARGS} ${EXTRA_ARGS} -- -VV ${CTEST_ARGS} -- ${CMAKE_ARGS};
+  - python ./pyctest-runner.py -SF --pyctest-model=Continuous --pyctest-site=Travis --static-analysis ${EXTRA_ARGS} -- -VV ${CTEST_ARGS} -- ${CMAKE_ARGS};
   - cd build-PTL
   - cmake -DCMAKE_INSTALL_PREFIX=${HOME}/ptl-install ${SOURCE_DIR}
   - cmake --build . --target install
