@@ -120,8 +120,9 @@ install:
 
 script:
   - SOURCE_DIR=${PWD}
-  - python ./pyctest-runner.py ${ARGS} ${EXTRA_ARGS} -- -VV ${CTEST_ARGS} -- ${CMAKE_ARGS} -DCMAKE_INSTALL_PREFIX=${HOME}/ptl-install;
+  - python ./pyctest-runner.py ${ARGS} ${EXTRA_ARGS} -- -VV ${CTEST_ARGS} -- ${CMAKE_ARGS};
   - cd build-PTL
+  - cmake -DCMAKE_INSTALL_PREFIX=${HOME}/ptl-install ${SOURCE_DIR}
   - cmake --build . --target install
   - mkdir -p ${HOME}/ptl-examples-build
   - cd ${HOME}/ptl-examples-build
