@@ -130,7 +130,7 @@ public:
     template <typename Func, typename... Args>
     void run(Func&& func, Args... args)
     {
-        auto _func = [=]() { return func(args...); };
+        auto _func = [&func, args...]() { return std::forward<Func>(func)(args...); };
         auto _task = wrap(std::move(_func));
         auto _lamb = [=]() { (*_task)(); };
         m_tbb_task_group->run(_lamb);
@@ -139,7 +139,7 @@ public:
     template <typename Func, typename... Args>
     void exec(Func&& func, Args... args)
     {
-        auto _func = [=]() { return func(args...); };
+        auto _func = [&func, args...]() { return std::forward<Func>(func)(args...); };
         auto _task = wrap(std::move(_func));
         auto _lamb = [=]() { (*_task)(); };
         m_tbb_task_group->run(_lamb);
