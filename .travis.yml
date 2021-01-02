@@ -72,9 +72,6 @@ jobs:
             - build-essential
             - cmake
             - clang-tidy
-            - libopencv-dev
-            - libopencv-imgproc-dev
-
       env:
         - CC=gcc-7
         - CXX=g++-7
