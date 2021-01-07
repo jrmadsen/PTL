@@ -34,7 +34,7 @@ install(FILES ${PROJECT_SOURCE_DIR}/cmake/Modules/FindTBB.cmake
 
 set(BUILD_TREE ON)
 configure_package_config_file(
-    ${PROJECT_SOURCE_DIR}/cmake/Templates/${PROJECT_NAME}Config.cmake.in
+    ${PROJECT_SOURCE_DIR}/cmake/Templates/${PROJECT_NAME}Build.cmake.in
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     INSTALL_DESTINATION ${PROJECT_BINARY_DIR}
     INSTALL_PREFIX ${PROJECT_BINARY_DIR}
