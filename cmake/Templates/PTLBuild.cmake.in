@@ -10,6 +10,7 @@ get_filename_component(PTL_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 include(${CMAKE_CURRENT_LIST_DIR}/PTLConfigVersion.cmake)
 include(CMakeFindDependencyMacro)
 
+
 #------------------------------------------------------------------------------#
 #   available components
 #
@@ -50,6 +51,7 @@ endif()
 unset(_PTL_SHARED_COMPONENT)
 unset(_PTL_STATIC_COMPONENT)
 
+
 #------------------------------------------------------------------------------#
 #   package initialization
 #
@@ -59,45 +61,35 @@ unset(_PTL_STATIC_COMPONENT)
 #------------------------------------------------------------------------------#
 #   configure lib and include
 #
-set_and_check(PTL_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
-set_and_check(PTL_LIB_DIR "@PACKAGE_LIB_INSTALL_DIR@")
+set(PTL_INCLUDE_DIR "@PROJECT_SOURCE_DIR@/source")
+set(PTL_LIB_DIR "@PROJECT_BINARY_DIR@")
 
-include(${PTL_CMAKE_DIR}/PTLTargets.cmake)
-check_required_components(PTL)
+set(PTL_Threads_FOUND @Threads_FOUND@)
+set(PTL_TBB_FOUND @TBB_FOUND@)
 
-# get target
-foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
-    # set the library
-    if(NOT PTL_LIBRARY AND TARGET PTL::ptl-${_COMPONENT})
-        set(PTL_LIBRARY PTL::ptl-${_COMPONENT})
-    endif()
-    if(TARGET PTL::ptl-${_COMPONENT})
-        set(PTL_${_COMPONENT}_FOUND ON)
-        set(PTL_${_COMPONENT}_LIBRARY PTL::ptl-${_COMPONENT})
-        if(WIN32)
-            target_compile_definitions(PTL::ptl-${_COMPONENT} PUBLIC _PTL_ARCHIVE)
-        endif()
-    endif()
-endforeach()
-unset(_PTL_AVAILABLE_COMPONENTS)
-
-# save original module path
-set(_MODULE_PATH ${CMAKE_MODULE_PATH})
-
-if(@Threads_FOUND@)
+if(NOT Threads_FOUND AND PTL_Threads_FOUND)
     set(CMAKE_THREAD_PREFER_PTHREAD @CMAKE_THREAD_PREFER_PTHREAD@)
     set(THREADS_PREFER_PTHREAD_FLAG @THREADS_PREFER_PTHREAD_FLAG@)
     find_package(Threads REQUIRED)
 endif()
 
-if(@TBB_FOUND@)
+if(NOT TBB_FOUND AND PTL_TBB_FOUND)
     set(TBB_ROOT_DIR @TBB_ROOT_DIR@)
-    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/Modules ${CMAKE_MODULE_PATH})
+    set(CMAKE_MODULE_PATH @PROJECT_SOURCE_DIR@/cmake/Modules ${CMAKE_MODULE_PATH})
     find_package(TBB @TBB_VERSION@ REQUIRED)
 endif()
 
-# restore original module path
-set(CMAKE_MODULE_PATH ${_MODULE_PATH})
+foreach(_COMPONENT ${_PTL_AVAILABLE_COMPONENTS})
+    if(NOT TARGET @LIBNAME@-${_COMPONENT})
+        include("@PROJECT_BINARY_DIR@/PTL-${_COMPONENT}.cmake")
+    endif()
+    # set the library
+    if(NOT PTL_LIBRARY)
+        set(PTL_LIBRARY @LIBNAME@-${_COMPONENT})
+    endif()
+endforeach()
+
+set(PROJECT_DEPENDS ${PTL_LIBRARY})
 
 
 #------------------------------------------------------------------------------#
@@ -126,7 +118,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #
 set(PTL_LIBRARIES ${PTL_LIBRARY})
 
-
 #------------------------------------------------------------------------------#
 #   Definitions
 #
@@ -138,6 +129,7 @@ if(NOT _PTL_INSTALL_TREE)
     list(APPEND PTL_LIBRARIES "@EXTERNAL_LIBRARIES@")
 endif()
 
+# message(STATUS "PTL_LIBRARIES: ${PTL_LIBRARIES}")
 if(NOT TARGET PTL::ptl)
     add_library(PTL::ptl INTERFACE IMPORTED)
     target_include_directories(PTL::ptl INTERFACE ${PTL_INCLUDE_DIRS})
