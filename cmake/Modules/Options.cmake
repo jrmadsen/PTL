@@ -31,7 +31,7 @@ ptl_add_option(PTL_DEVELOPER_INSTALL "Install headers, cmake export, and shared 
 
 ptl_add_option(PTL_USE_TBB "Enable TBB" ON ${_FEATURE})
 ptl_add_option(PTL_USE_GPU "Enable GPU preprocessor" OFF ${_FEATURE})
-# add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
+ptl_add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_CLANG_TIDY "Enable running clang-tidy on" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_COVERAGE "Enable code coverage" OFF ${_FEATURE})
 # add_option(PTL_USE_PROFILE "Enable profiling" OFF ${_FEATURE})
@@ -42,7 +42,7 @@ endif()
 
 if(PTL_USE_SANITIZER)
     ptl_add_feature(PTL_SANITIZER_TYPE "Sanitizer type (-fsanitize=<type>)")
-    set(PTL_SANITIZER_TYPE leak CACHE STRING "Sanitizer type (-fsanitize=<type>)")
+    set(PTL_SANITIZER_TYPE address CACHE STRING "Sanitizer type (-fsanitize=<type>)")
 endif()
 
 if(PTL_USE_GPU)

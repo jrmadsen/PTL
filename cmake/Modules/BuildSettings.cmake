@@ -45,3 +45,12 @@ else()
     target_compile_definitions(ptl-compile-options INTERFACE NDEBUG)
 endif()
 
+if(PTL_USE_SANITIZER)
+    target_compile_options(ptl-external-libraries INTERFACE
+        -fsanitize=${PTL_SANITIZER_TYPE}
+        -fno-optimize-sibling-calls
+        -fno-omit-frame-pointer
+        -fno-inline-functions)
+    target_link_options(ptl-external-libraries INTERFACE
+        -fsanitize=${PTL_SANITIZER_TYPE})
+endif()
