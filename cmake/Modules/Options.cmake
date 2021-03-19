@@ -42,7 +42,7 @@ endif()
 
 if(PTL_USE_SANITIZER)
     ptl_add_feature(PTL_SANITIZER_TYPE "Sanitizer type (-fsanitize=<type>)")
-    set(PTL_SANITIZER_TYPE address CACHE STRING "Sanitizer type (-fsanitize=<type>)")
+    set(PTL_SANITIZER_TYPE thread CACHE STRING "Sanitizer type (-fsanitize=<type>)")
 endif()
 
 if(PTL_USE_GPU)

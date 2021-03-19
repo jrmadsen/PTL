@@ -138,9 +138,8 @@ private:
 //--------------------------------------------------------------------------------------//
 
 template <typename Tp, typename Arg = Tp>
-class TaskGroup
-: public VTaskGroup
-, public TaskAllocator<TaskGroup<Tp, Arg>>
+class TaskGroup : public VTaskGroup
+// , public TaskAllocator<TaskGroup<Tp, Arg>>
 {
 public:
     //------------------------------------------------------------------------//

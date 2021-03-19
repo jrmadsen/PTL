@@ -14,6 +14,7 @@ include(MacroUtilities)
 
 ptl_add_interface_library(ptl-compile-options)
 ptl_add_interface_library(ptl-external-libraries)
+ptl_add_interface_library(ptl-sanitizer-options)
 
 # ---------------------------------------------------------------------------- #
 #
@@ -45,12 +46,12 @@ else()
     target_compile_definitions(ptl-compile-options INTERFACE NDEBUG)
 endif()
 
-if(PTL_USE_SANITIZER)
-    target_compile_options(ptl-external-libraries INTERFACE
+if(PTL_USE_SANITIZER AND PTL_SANITIZER_TYPE)
+    target_compile_options(ptl-sanitizer-options INTERFACE
         -fsanitize=${PTL_SANITIZER_TYPE}
         -fno-optimize-sibling-calls
         -fno-omit-frame-pointer
         -fno-inline-functions)
-    target_link_options(ptl-external-libraries INTERFACE
+    target_link_options(ptl-sanitizer-options INTERFACE
         -fsanitize=${PTL_SANITIZER_TYPE})
 endif()

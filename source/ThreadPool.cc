@@ -283,7 +283,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
                           << std::endl;
             }
             if(!m_task_queue)
-                m_task_queue = new UserTaskQueue(m_pool_size);
+            {
+                m_delete_task_queue = true;
+                m_task_queue        = new UserTaskQueue(m_pool_size);
+            }
             return m_pool_size;
         }
         else if(m_pool_size == proposed_size)  // NOLINT
@@ -294,7 +297,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
                           << std::endl;
             }
             if(!m_task_queue)
-                m_task_queue = new UserTaskQueue(m_pool_size);
+            {
+                m_delete_task_queue = true;
+                m_task_queue        = new UserTaskQueue(m_pool_size);
+            }
             return m_pool_size;
         }
     }
@@ -479,6 +485,12 @@ ThreadPool::destroy_threadpool()
                       << " threads might still be active (and cause a termination error)"
                       << std::endl;
         }
+    }
+
+    if(m_delete_task_queue)
+    {
+        delete m_task_queue;
+        m_task_queue = nullptr;
     }
 
     return 0;

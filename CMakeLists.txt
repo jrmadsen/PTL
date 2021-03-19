@@ -12,7 +12,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif()
 
 # Add allocation export symbol for the PLT module
-add_definitions(-DPTL_ALLOC_EXPORT)
+add_compile_definitions(PTL_ALLOC_EXPORT)
 
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0042 NEW)

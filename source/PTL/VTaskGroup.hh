@@ -132,8 +132,8 @@ protected:
 
 protected:
     // Private variables
-    uintmax_t                    m_id;
-    ThreadPool*                  m_pool;
+    uintmax_t                    m_id             = 0;
+    ThreadPool*                  m_pool           = nullptr;
     std::shared_ptr<atomic_int>  m_tot_task_count = std::make_shared<atomic_int>(0);
     std::shared_ptr<condition_t> m_task_cond      = std::make_shared<condition_t>();
     std::shared_ptr<lock_t>      m_task_lock      = std::make_shared<lock_t>();

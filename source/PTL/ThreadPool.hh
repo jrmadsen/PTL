@@ -206,10 +206,11 @@ protected:
 private:
     // Private variables
     // random
-    bool             m_use_affinity;
-    bool             m_tbb_tp;
-    int              m_verbose   = 0;
-    size_type        m_pool_size = 0;
+    bool             m_use_affinity      = false;
+    bool             m_tbb_tp            = false;
+    bool             m_delete_task_queue = false;
+    int              m_verbose           = 0;
+    size_type        m_pool_size         = 0;
     ThreadId         m_master_tid;
     atomic_bool_type m_alive_flag    = std::make_shared<std::atomic_bool>(false);
     pool_state_type  m_pool_state    = std::make_shared<std::atomic_short>(0);
@@ -234,7 +235,7 @@ private:
     tbb_task_group_t* m_tbb_task_group = nullptr;
 
     // functions
-    initialize_func_t m_init_func;
+    initialize_func_t m_init_func = []() {};
     affinity_func_t   m_affinity_func;
 
 private:
