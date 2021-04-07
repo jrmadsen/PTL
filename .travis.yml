@@ -90,7 +90,7 @@ jobs:
       env:
         - CC=gcc-7
         - CXX=g++-7
-        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=leak"
+        - EXTRA_ARGS="--num-tasks=128 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=leak"
     # GCC 7
     - os: linux
       dist: bionic
@@ -106,7 +106,7 @@ jobs:
         - CC=gcc-7
         - CXX=g++-7
         - ASAN_OPTIONS="check_initialization_order=1,detect_leaks=0"
-        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=address"
+        - EXTRA_ARGS="--num-tasks=128 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=address"
     # GCC 7
     - os: linux
       dist: bionic
@@ -121,7 +121,7 @@ jobs:
       env:
         - CC=gcc-7
         - CXX=g++-7
-        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=thread"
+        - EXTRA_ARGS="--num-tasks=128 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=thread"
     # Clang 5.0
     - os: linux
       dist: xenial
@@ -140,6 +140,40 @@ jobs:
         - CC=clang-5.0
         - CXX=clang++-5.0
         - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo"
+    # Clang 7
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-bionic-7
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-7
+            - build-essential
+            - cmake
+            - clang-tidy
+      env:
+        - CC=clang-7
+        - CXX=clang++-7
+        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=Release"
+    # Clang 8.0
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-bionic-8
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-8
+            - build-essential
+            - cmake
+            - clang-tidy
+      env:
+        - CC=clang-8
+        - CXX=clang++-8
+        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=Release"
 
 before_install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;

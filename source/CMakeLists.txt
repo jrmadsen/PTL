@@ -90,7 +90,6 @@ if(BUILD_STATIC_LIBS)
         EXTRA_ARGS POSITION_INDEPENDENT_CODE ON)
 
     target_link_libraries(ptl-static PUBLIC
-        ptl-sanitizer-options
         ptl-external-packages)
 
     target_link_libraries(ptl-static PRIVATE
