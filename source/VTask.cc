@@ -78,8 +78,11 @@ VTask::operator--()
             try
             {
                 auto& _task_cond = m_group->task_cond();
+                auto& _task_lock = m_group->task_lock();
                 assert(_task_cond != nullptr);
+                _task_lock->lock();
                 _task_cond->notify_all();
+                _task_lock->unlock();
             } catch(std::system_error& e)
             {
                 auto     tid = ThreadPool::get_this_thread_id();
