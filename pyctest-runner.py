@@ -61,6 +61,14 @@ def configure():
     parser.add_argument(
         "--num-tasks", help="Set the number of tasks", default=65536, type=int
     )
+    parser.add_argument(
+        "--build-libs",
+        help="Set the number of tasks",
+        default=["shared", "static"],
+        type=str,
+        nargs="*",
+        choices=("shared", "static"),
+    )
 
     args = parser.parse_args()
 
@@ -150,6 +158,8 @@ def run_pyctest():
             build_opts["PTL_USE_COVERAGE"] = "ON"
             warnings.warn("Forcing build type to 'Debug' when coverage is enabled")
             pyctest.BUILD_TYPE = "Debug"
+    build_opts["BUILD_SHARED_LIBS"] = "ON" if "shared" in args.build_libs else "OFF"
+    build_opts["BUILD_STATIC_LIBS"] = "ON" if "static" in args.build_libs else "OFF"
 
     # default options
     cmake_args = "-DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON".format(
@@ -256,6 +266,12 @@ def run_pyctest():
     test.SetProperty("ENVIRONMENT", test_env_settings("cpu-prof-recursive-tasking"))
     test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./recursive_tasking"], args))
+
+    test = pyctest.test()
+    test.SetName("minimal")
+    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+    test.SetProperty("RUN_SERIAL", "ON")
+    test.SetCommand(construct_command(["./ptl-minimal"], args))
 
     if args.tbb:
         test = pyctest.test()
