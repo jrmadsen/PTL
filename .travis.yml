@@ -76,6 +76,52 @@ jobs:
         - CC=gcc-7
         - CXX=g++-7
         - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --tbb"
+    # GCC 7
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - gcc-7
+            - g++-7
+            - build-essential
+            - cmake
+            - clang-tidy
+      env:
+        - CC=gcc-7
+        - CXX=g++-7
+        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=leak"
+    # GCC 7
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - gcc-7
+            - g++-7
+            - build-essential
+            - cmake
+            - clang-tidy
+      env:
+        - CC=gcc-7
+        - CXX=g++-7
+        - ASAN_OPTIONS="check_initialization_order=1,detect_leaks=0"
+        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=address"
+    # GCC 7
+    - os: linux
+      dist: bionic
+      addons:
+        apt:
+          packages:
+            - gcc-7
+            - g++-7
+            - build-essential
+            - cmake
+            - clang-tidy
+      env:
+        - CC=gcc-7
+        - CXX=g++-7
+        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --sanitizer --sanitizer-type=thread"
     # Clang 5.0
     - os: linux
       dist: xenial

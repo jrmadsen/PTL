@@ -40,6 +40,13 @@ def configure():
         action="store_true",
     )
     parser.add_argument(
+        "--sanitizer-type",
+        help="PTL_SANITIZER_TYPE=<type>",
+        default="leak",
+        type=str,
+        choices=("leak", "thread", "memory", "address"),
+    )
+    parser.add_argument(
         "--static-analysis",
         help="PTL_USE_CLANG_TIDY=ON",
         default=False,
@@ -57,9 +64,7 @@ def configure():
 
     args = parser.parse_args()
 
-    if os.path.exists(
-        os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")
-    ):
+    if os.path.exists(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")):
         from pyctest import cmake_executable as cm
         from pyctest import version_info as _pyctest_version
 
@@ -79,9 +84,7 @@ def configure():
             from pyctest.cmake import CMake
 
             CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
-        helpers.RemovePath(
-            os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")
-        )
+        helpers.RemovePath(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
 
     return args
 
@@ -135,8 +138,9 @@ def run_pyctest():
         pyctest.BUILD_NAME = "{} [arch]".format(pyctest.BUILD_NAME)
         build_opts["PTL_USE_ARCH"] = "ON"
     if args.sanitizer:
-        pyctest.BUILD_NAME = "{} [asan]".format(pyctest.BUILD_NAME)
+        pyctest.BUILD_NAME = "{} [{}]".format(pyctest.BUILD_NAME, args.sanitizer_type)
         build_opts["PTL_USE_SANITIZER"] = "ON"
+        build_opts["PTL_SANITIZER_TYPE"] = args.sanitizer_type
     if args.static_analysis:
         build_opts["PTL_USE_CLANG_TIDY"] = "ON"
     if args.coverage:
@@ -144,9 +148,7 @@ def run_pyctest():
         if gcov_exe is not None:
             pyctest.COVERAGE_COMMAND = "{}".format(gcov_exe)
             build_opts["PTL_USE_COVERAGE"] = "ON"
-            warnings.warn(
-                "Forcing build type to 'Debug' when coverage is enabled"
-            )
+            warnings.warn("Forcing build type to 'Debug' when coverage is enabled")
             pyctest.BUILD_TYPE = "Debug"
 
     # default options
@@ -182,9 +184,7 @@ def run_pyctest():
                 pyctest.BUILD_COMMAND, mp.cpu_count()
             )
         else:
-            pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(
-                pyctest.BUILD_COMMAND
-            )
+            pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(pyctest.BUILD_COMMAND)
 
     # ----------------------------------------------------------------------- #
     # how to update the code
@@ -199,9 +199,7 @@ def run_pyctest():
     #
     clang_tidy_exe = helpers.FindExePath("clang-tidy")
     if clang_tidy_exe:
-        pyctest.set(
-            "CMAKE_CXX_CLANG_TIDY", "{};-checks=*".format(clang_tidy_exe)
-        )
+        pyctest.set("CMAKE_CXX_CLANG_TIDY", "{};-checks=*".format(clang_tidy_exe))
 
     # ----------------------------------------------------------------------- #
     # find the CTEST_TOKEN_FILE
@@ -209,9 +207,7 @@ def run_pyctest():
     if args.pyctest_token_file is None and args.pyctest_token is None:
         home = helpers.GetHomePath()
         if home is not None:
-            token_path = os.path.join(
-                home, os.path.join(".tokens", "nersc-cdash")
-            )
+            token_path = os.path.join(home, os.path.join(".tokens", "nersc-cdash"))
             if os.path.exists(token_path):
                 pyctest.set("CTEST_TOKEN_FILE", token_path)
 
@@ -257,9 +253,7 @@ def run_pyctest():
     test = pyctest.test()
     test.SetName("recursive_tasking")
     test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-    test.SetProperty(
-        "ENVIRONMENT", test_env_settings("cpu-prof-recursive-tasking")
-    )
+    test.SetProperty("ENVIRONMENT", test_env_settings("cpu-prof-recursive-tasking"))
     test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./recursive_tasking"], args))
 
