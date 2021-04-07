@@ -47,11 +47,16 @@ else()
 endif()
 
 if(PTL_USE_SANITIZER AND PTL_SANITIZER_TYPE)
-    target_compile_options(ptl-sanitizer-options INTERFACE
-        -fsanitize=${PTL_SANITIZER_TYPE}
-        -fno-optimize-sibling-calls
-        -fno-omit-frame-pointer
-        -fno-inline-functions)
+    if("${PTL_SANITIZER_TYPE}" STREQUAL "thread")
+        target_compile_options(ptl-sanitizer-options INTERFACE
+            -fsanitize=${PTL_SANITIZER_TYPE})
+    else()
+        target_compile_options(ptl-sanitizer-options INTERFACE
+            -fsanitize=${PTL_SANITIZER_TYPE}
+            -fno-optimize-sibling-calls
+            -fno-omit-frame-pointer
+            -fno-inline-functions)
+    endif()
     target_link_options(ptl-sanitizer-options INTERFACE
         -fsanitize=${PTL_SANITIZER_TYPE})
 endif()
