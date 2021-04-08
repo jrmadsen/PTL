@@ -101,6 +101,21 @@ main(int argc, char** argv)
     // the TaskManager is a utility that wraps the function calls into tasks for the
     // ThreadPool
     TaskManager* task_manager = run_manager.GetTaskManager();
+    auto tp = task_manager->thread_pool();
+    std::set<std::thread::id> tids{};
+    tp->execute_on_all_threads([&tids]() {
+        std::stringstream ss;
+        ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed\n";
+        AutoLock lk{ TypeMutex<decltype(std::cout)>() };
+        std::cout << ss.str();
+        tids.insert(std::this_thread::get_id());
+    });
+    tp->get_queue()->ExecuteOnSpecificThreads(tids, tp, [&tids]() {
+        std::stringstream ss;
+        ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed [specific]\n";
+        AutoLock lk{ TypeMutex<decltype(std::cout)>() };
+        std::cout << ss.str();
+    });
 
     //------------------------------------------------------------------------//
     //                                                                        //
@@ -108,7 +123,7 @@ main(int argc, char** argv)
     //                                                                        //
     //------------------------------------------------------------------------//
     {
-        long nfib      = 40;
+        long nfib      = 35;
         auto fib_async = task_manager->async<uint64_t>(fibonacci, nfib);
         auto fib_n     = fib_async.get();
         std::cout << "[async test] fibonacci(" << nfib << ") = " << fib_n << std::endl;
@@ -121,7 +136,7 @@ main(int argc, char** argv)
     //                                                                        //
     //------------------------------------------------------------------------//
     {
-        long     nfib  = 35;
+        long     nfib  = 30;
         uint64_t nloop = 100;
 
         auto join = [](long& lhs, long rhs) {
