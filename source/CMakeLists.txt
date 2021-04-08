@@ -75,6 +75,10 @@ if(BUILD_SHARED_LIBS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
 
+    if(PTL_USE_LOCKS)
+        target_compile_definitions(ptl-shared PUBLIC PTL_USE_LOCKS)
+    endif()
+
     list(APPEND INSTALL_LIBRARIES ptl-shared)
     export(TARGETS ptl-shared ${PTL_INTERFACE_LIBRARIES}
         FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}-shared.cmake)
@@ -100,6 +104,10 @@ if(BUILD_STATIC_LIBS)
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
+
+    if(PTL_USE_LOCKS)
+        target_compile_definitions(ptl-static PUBLIC PTL_USE_LOCKS)
+    endif()
 
     list(APPEND INSTALL_LIBRARIES ptl-static)
     export(TARGETS ptl-static ${PTL_INTERFACE_LIBRARIES}

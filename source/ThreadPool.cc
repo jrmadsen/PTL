@@ -144,11 +144,7 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
 , m_verbose(0)
 , m_pool_size(0)
 , m_master_tid(ThisThread::get_id())
-, m_alive_flag(std::make_shared<std::atomic_bool>(false))
 , m_pool_state(std::make_shared<std::atomic_short>(thread_pool::state::NONINIT))
-, m_thread_awake(std::make_shared<std::atomic_uintmax_t>(0))
-, m_task_lock(std::make_shared<Mutex>())
-, m_task_cond(std::make_shared<Condition>())
 , m_task_queue(task_queue)
 , m_tbb_task_group(nullptr)
 , m_init_func([]() { return; })
@@ -234,9 +230,9 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     if(!m_alive_flag->load())
         m_pool_state->store(thread_pool::state::STARTED);
 
-        //--------------------------------------------------------------------//
-        // handle tbb task scheduler
 #ifdef PTL_USE_TBB
+    //--------------------------------------------------------------------//
+    // handle tbb task scheduler
     if(f_use_tbb)
     {
         m_tbb_tp                               = true;
@@ -312,13 +308,18 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         m_is_joined.reserve(proposed_size);
     }
 
+    if(!m_task_queue)
+        m_task_queue = new UserTaskQueue(proposed_size);
+
     auto this_tid = get_this_thread_id();
     for(size_type i = m_pool_size; i < proposed_size; ++i)
     {
         // add the threads
         try
         {
-            Thread thr(ThreadPool::start_thread, this, &m_thread_data, this_tid + i + 1);
+            // create thread
+            Thread thr{ ThreadPool::start_thread, this, &m_thread_data,
+                        this_tid + i + 1 };
             // only reaches here if successful creation of thread
             ++m_pool_size;
             // store thread
@@ -361,9 +362,6 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         std::cout << "ThreadPool initialized with " << m_pool_size << " threads."
                   << std::endl;
     }
-
-    if(!m_task_queue)
-        m_task_queue = new UserTaskQueue(m_main_threads.size());
 
     return m_main_threads.size();
 }
@@ -705,8 +703,9 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             auto _task = _task_queue->GetTask();
             if(_task)
             {
+                bool _has_group = (_task->group() != nullptr);
                 (*_task)();
-                if(!_task->group())
+                if(!_has_group)
                     delete _task;
             }
         }

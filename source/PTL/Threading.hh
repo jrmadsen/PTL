@@ -33,6 +33,7 @@
 #include <future>
 #include <mutex>
 #include <thread>
+#include <array>
 #include <vector>
 
 namespace PTL
@@ -113,20 +114,12 @@ typedef int (*thread_unlock)(Mutex*);
 //		a template class "Cache<T>" that required a static
 //		mutex for specific to type T:
 //			AutoLock l(TypeMutex<Cache<T>>());
-template <typename Tp>
+template <typename Tp, size_t N = 4>
 Mutex&
 TypeMutex(const unsigned int& _n = 0)
 {
-    static Mutex* _mutex = new Mutex();
-    if(_n == 0)
-        return *_mutex;
-
-    static std::vector<Mutex*> _mutexes;
-    if(_n > _mutexes.size())
-        _mutexes.resize(_n, nullptr);
-    if(!_mutexes[_n])
-        _mutexes[_n] = new Mutex();
-    return *(_mutexes[_n - 1]);
+    static std::array<Mutex, N> _mutex_array{};
+    return _mutex_array[_n % N];
 }
 
 // Helper function for getting a unique static recursive_mutex for a

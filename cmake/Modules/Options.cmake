@@ -34,6 +34,7 @@ ptl_add_option(PTL_USE_GPU "Enable GPU preprocessor" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_CLANG_TIDY "Enable running clang-tidy on" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_COVERAGE "Enable code coverage" OFF ${_FEATURE})
+ptl_add_option(PTL_USE_LOCKS "Enable mutex locking in task subqueues for extra safety" OFF ${_FEATURE})
 # add_option(PTL_USE_PROFILE "Enable profiling" OFF ${_FEATURE})
 
 if(PTL_USE_ARCH)

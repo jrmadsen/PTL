@@ -46,6 +46,10 @@ else()
     target_compile_definitions(ptl-compile-options INTERFACE NDEBUG)
 endif()
 
+if(PTL_USE_LOCKS)
+    target_compile_definitions(ptl-compile-options INTERFACE PTL_USE_LOCKS)
+endif()
+
 if(PTL_USE_SANITIZER AND PTL_SANITIZER_TYPE)
     if("${PTL_SANITIZER_TYPE}" STREQUAL "thread")
         target_compile_options(ptl-sanitizer-options INTERFACE

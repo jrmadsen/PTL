@@ -101,6 +101,7 @@ protected:
     VTaskGroup* m_group;
     ThreadPool* m_pool;
     void_func_t m_func = []() {};
+    void_func_t m_decr = []() {};
 };
 
 //======================================================================================//

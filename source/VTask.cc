@@ -51,7 +51,35 @@ VTask::VTask(VTaskGroup* task_group)
 : m_depth(0)
 , m_group(task_group)
 , m_pool((m_group) ? task_group->pool() : nullptr)
-{}
+{
+    if(m_group)
+    {
+        auto _task_cond = m_group->task_cond();
+        auto _task_lock = m_group->task_lock();
+        m_decr          = [=]() {
+            intmax_t _count = --(*m_group);
+            if(_count < 2)
+            {
+                try
+                {
+                    if(_task_cond && _task_lock)
+                    {
+                        AutoLock lk{ *_task_lock };
+                        _task_cond->notify_all();
+                    }
+                } catch(std::system_error& e)
+                {
+                    auto     tid = ThreadPool::get_this_thread_id();
+                    AutoLock l(TypeMutex<decltype(std::cerr)>(), std::defer_lock);
+                    if(!l.owns_lock())
+                        l.lock();
+                    std::cerr << "[" << tid << "] Caught system error: " << e.what()
+                              << std::endl;
+                }
+            }
+        };
+    }
+}
 
 //======================================================================================//
 
@@ -70,30 +98,7 @@ VTask::~VTask() {}
 void
 VTask::operator--()
 {
-    if(m_group)
-    {
-        intmax_t _count = --(*m_group);
-        if(_count < 2)
-        {
-            try
-            {
-                auto& _task_cond = m_group->task_cond();
-                auto& _task_lock = m_group->task_lock();
-                assert(_task_cond != nullptr);
-                _task_lock->lock();
-                _task_cond->notify_all();
-                _task_lock->unlock();
-            } catch(std::system_error& e)
-            {
-                auto     tid = ThreadPool::get_this_thread_id();
-                AutoLock l(TypeMutex<decltype(std::cerr)>(), std::defer_lock);
-                if(!l.owns_lock())
-                    l.lock();
-                std::cerr << "[" << tid << "] Caught system error: " << e.what()
-                          << std::endl;
-            }
-        }
-    }
+    m_decr();
 }
 
 //======================================================================================//

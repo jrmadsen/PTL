@@ -62,6 +62,12 @@ def configure():
         "--num-tasks", help="Set the number of tasks", default=65536, type=int
     )
     parser.add_argument(
+        "--use-locks",
+        help="Enable mutex locking in task subqueues for extra safety",
+        default=None,
+        action="store_true",
+    )
+    parser.add_argument(
         "--build-libs",
         help="Set the number of tasks",
         default=["shared", "static"],
@@ -137,6 +143,7 @@ def run_pyctest():
         "PTL_USE_SANITIZER": "OFF",
         "PTL_USE_CLANG_TIDY": "OFF",
         "PTL_USE_COVERAGE": "OFF",
+        "PTL_USE_LOCKS": "ON" if args.use_locks else "OFF",
     }
 
     if args.tbb:

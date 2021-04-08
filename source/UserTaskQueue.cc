@@ -47,7 +47,7 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
     if(!parent)
     {
         for(intmax_t i = 0; i < nworkers + 1; ++i)
-            m_subqueues->push_back(new TaskSubQueue(m_ntasks));
+            m_subqueues->emplace_back(new TaskSubQueue(m_ntasks));
     }
 
 #if defined(DEBUG)
@@ -99,7 +99,7 @@ UserTaskQueue::resize(intmax_t n)
     {
         while(m_workers < n)
         {
-            m_subqueues->push_back(new TaskSubQueue(m_ntasks));
+            m_subqueues->emplace_back(new TaskSubQueue(m_ntasks));
             ++m_workers;
         }
     }
