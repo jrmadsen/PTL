@@ -50,6 +50,20 @@ if(PTL_USE_LOCKS)
     target_compile_definitions(ptl-compile-options INTERFACE PTL_USE_LOCKS)
 endif()
 
+if(PTL_USE_COVERAGE)
+    target_compile_options(ptl-compile-options INTERFACE
+        -fprofile-arcs -ftest-coverage)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        target_compile_options(ptl-compile-options INTERFACE
+            -fprofile-abs-path --coverage)
+        set_target_properties(ptl-compile-options PROPERTIES
+            INTERFACE_LINK_OPTIONS --coverage)
+    else()
+        set_target_properties(ptl-compile-options PROPERTIES
+            INTERFACE_LINK_OPTIONS -fprofile-arcs)
+    endif()
+endif()
+
 if(PTL_USE_SANITIZER AND PTL_SANITIZER_TYPE)
     if("${PTL_SANITIZER_TYPE}" STREQUAL "thread")
         target_compile_options(ptl-sanitizer-options INTERFACE

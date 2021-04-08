@@ -41,6 +41,10 @@ if(PTL_USE_ARCH)
     ptl_add_option(PTL_USE_AVX512 "Enable AVX-512 flags (if available)" OFF ${_FEATURE})
 endif()
 
+if(PTL_USE_COVERAGE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 if(PTL_USE_SANITIZER)
     ptl_add_feature(PTL_SANITIZER_TYPE "Sanitizer type (-fsanitize=<type>)")
     set(PTL_SANITIZER_TYPE thread CACHE STRING "Sanitizer type (-fsanitize=<type>)")
