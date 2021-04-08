@@ -17,15 +17,15 @@ jobs:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - gcc-4.9
-            - g++-4.9
+            - gcc
+            - g++
             - build-essential
             - cmake
             - clang-tidy
             - lcov
       env:
-        - CC=gcc-4.9
-        - CXX=g++-4.9
+        - CC=gcc
+        - CXX=g++
         - EXTRA_ARGS="--coverage --num-tasks=64"
     # GCC 5
     - os: linux
