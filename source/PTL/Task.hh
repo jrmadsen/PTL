@@ -31,7 +31,6 @@
 #pragma once
 
 #include "Globals.hh"
-#include "TaskAllocator.hh"
 #include "VTask.hh"
 
 #include <cstdint>

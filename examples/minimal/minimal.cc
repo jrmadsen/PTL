@@ -192,7 +192,7 @@ main(int argc, char** argv)
     total_timer.Stop();
     std::cout << "Total time: \t" << total_timer << std::endl;
 
-    tp->initialize_threadpool(1);
+    // tp->initialize_threadpool(hwthreads / 2 + 1);
     tp->destroy_threadpool();
-    return tp->size();
+    task_manager->finalize();
 }
