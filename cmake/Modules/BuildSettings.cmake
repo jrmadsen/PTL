@@ -51,15 +51,15 @@ if(PTL_USE_LOCKS)
 endif()
 
 if(PTL_USE_COVERAGE)
-    target_compile_options(ptl-compile-options INTERFACE
+    target_compile_options(ptl-external-packages INTERFACE
         -fprofile-arcs -ftest-coverage)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        target_compile_options(ptl-compile-options INTERFACE
+        target_compile_options(ptl-external-packages INTERFACE
             -fprofile-abs-path --coverage)
-        set_target_properties(ptl-compile-options PROPERTIES
+        set_target_properties(ptl-external-packages PROPERTIES
             INTERFACE_LINK_OPTIONS --coverage)
     else()
-        set_target_properties(ptl-compile-options PROPERTIES
+        set_target_properties(ptl-external-packages PROPERTIES
             INTERFACE_LINK_OPTIONS -fprofile-arcs)
     endif()
 endif()

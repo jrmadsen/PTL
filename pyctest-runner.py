@@ -100,6 +100,17 @@ def configure():
             CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
         helpers.RemovePath(os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt"))
 
+    pyctest.set(
+        "CTEST_CUSTOM_COVERAGE_EXCLUDE",
+        ";".join(
+            [
+                "/usr/.*",
+                ".*external/.*",
+                ".*examples/.*",
+            ]
+        ),
+    )
+
     return args
 
 
