@@ -191,4 +191,8 @@ main(int argc, char** argv)
     // print the time for the calculation
     total_timer.Stop();
     std::cout << "Total time: \t" << total_timer << std::endl;
+
+    tp->initialize_threadpool(1);
+    tp->destroy_threadpool();
+    return tp->size();
 }
