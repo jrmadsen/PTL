@@ -63,6 +63,7 @@ if(BUILD_SHARED_LIBS)
                    WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
     target_link_libraries(ptl-shared PUBLIC
+        ptl-public-options
         ptl-sanitizer-options
         ptl-external-packages)
 
@@ -74,10 +75,6 @@ if(BUILD_SHARED_LIBS)
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
-
-    if(PTL_USE_LOCKS)
-        target_compile_definitions(ptl-shared PUBLIC PTL_USE_LOCKS)
-    endif()
 
     list(APPEND INSTALL_LIBRARIES ptl-shared)
     export(TARGETS ptl-shared ${PTL_INTERFACE_LIBRARIES}
@@ -94,6 +91,7 @@ if(BUILD_STATIC_LIBS)
         EXTRA_ARGS POSITION_INDEPENDENT_CODE ON)
 
     target_link_libraries(ptl-static PUBLIC
+        ptl-public-options
         ptl-external-packages)
 
     target_link_libraries(ptl-static PRIVATE
@@ -104,10 +102,6 @@ if(BUILD_STATIC_LIBS)
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
-
-    if(PTL_USE_LOCKS)
-        target_compile_definitions(ptl-static PUBLIC PTL_USE_LOCKS)
-    endif()
 
     list(APPEND INSTALL_LIBRARIES ptl-static)
     export(TARGETS ptl-static ${PTL_INTERFACE_LIBRARIES}

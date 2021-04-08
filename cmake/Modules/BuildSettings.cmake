@@ -13,6 +13,7 @@ include(Compilers)
 include(MacroUtilities)
 
 ptl_add_interface_library(ptl-compile-options)
+ptl_add_interface_library(ptl-public-options)
 ptl_add_interface_library(ptl-external-libraries)
 ptl_add_interface_library(ptl-sanitizer-options)
 
@@ -47,20 +48,24 @@ else()
 endif()
 
 if(PTL_USE_LOCKS)
-    target_compile_definitions(ptl-compile-options INTERFACE PTL_USE_LOCKS)
+    target_compile_definitions(ptl-public-options INTERFACE PTL_USE_LOCKS)
 endif()
 
 if(PTL_USE_COVERAGE)
-    target_compile_options(ptl-external-packages INTERFACE
-        -fprofile-arcs -ftest-coverage)
+    target_compile_options(ptl-public-options INTERFACE
+        $<BUILD_INTERFACE:-fprofile-arcs>
+        $<BUILD_INTERFACE:-ftest-coverage>)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-        target_compile_options(ptl-external-packages INTERFACE
-            -fprofile-abs-path --coverage)
-        set_target_properties(ptl-external-packages PROPERTIES
-            INTERFACE_LINK_OPTIONS --coverage)
+        target_compile_options(ptl-public-options INTERFACE
+            $<BUILD_INTERFACE:-fprofile-abs-path>
+            $<BUILD_INTERFACE:--coverage>)
+        set_target_properties(ptl-public-options PROPERTIES
+            INTERFACE_LINK_OPTIONS
+                $<BUILD_INTERFACE:--coverage>)
     else()
-        set_target_properties(ptl-external-packages PROPERTIES
-            INTERFACE_LINK_OPTIONS -fprofile-arcs)
+        set_target_properties(ptl-public-options PROPERTIES
+            INTERFACE_LINK_OPTIONS
+                $<BUILD_INTERFACE:-fprofile-arcs>)
     endif()
 endif()
 
