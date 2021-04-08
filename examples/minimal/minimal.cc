@@ -75,6 +75,7 @@ Tp
 random_entry(const std::vector<Tp>& v)
 {
     std::uniform_int_distribution<std::mt19937::result_type> dist(0, v.size() - 1);
+    AutoLock lk{ TypeMutex<decltype(rng)>() };
     return v.at(dist(rng));
 }
 
@@ -127,19 +128,26 @@ main(int argc, char** argv)
             std::stringstream ss;
             ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " adding "
                << rhs << " to " << lhs << std::endl;
-            std::cout << ss.str();
+            {
+                AutoLock lk{ TypeMutex<decltype(std::cout)>() };
+                std::cout << ss.str();
+            }
             return lhs += rhs;
         };
 
         auto     entry = [](uint64_t n) {
             std::vector<double> v(n * 100, 0);
             for(auto& itr : v)
+            {
+                AutoLock lk{ TypeMutex<decltype(rng)>() };
                 itr = std::generate_canonical<double, 12>(rng);
+            }
             auto e = random_entry(v);
             std::stringstream ss;
             ss << "random entry from thread " << std::setw(4)
                << PTL::Threading::GetThreadId() << " was : " << std::setw(8)
                << std::setprecision(6) << std::fixed << e << std::endl;
+            AutoLock lk{ TypeMutex<decltype(std::cout)>() };
             std::cout << ss.str();
         };
 

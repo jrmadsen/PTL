@@ -64,7 +64,7 @@ public:
     virtual task_pointer GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
     // Virtual function for inserting a task into the queue
     virtual intmax_t InsertTask(task_pointer, ThreadData* = nullptr,
-                                intmax_t subq = -1) override;
+                                intmax_t subq = -1) override PTL_NO_SANITIZE_THREAD;
 
     // if executing only tasks in threads bin
     task_pointer GetThreadBinTask();

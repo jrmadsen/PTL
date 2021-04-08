@@ -54,9 +54,11 @@ VTask::VTask(VTaskGroup* task_group)
 {
     if(m_group)
     {
-        auto _task_cond = m_group->task_cond();
-        auto _task_lock = m_group->task_lock();
-        m_decr          = [=]() {
+        auto _ptask_cond = m_group->task_cond();
+        auto _ptask_lock = m_group->task_lock();
+        auto _task_cond  = _ptask_cond.get();
+        auto _task_lock  = _ptask_lock.get();
+        m_decr           = [=]() PTL_NO_SANITIZE_THREAD {
             intmax_t _count = --(*m_group);
             if(_count < 2)
             {

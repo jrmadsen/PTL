@@ -30,6 +30,7 @@
 #pragma once
 
 #include "PTL/AutoLock.hh"
+#include "PTL/Globals.hh"
 #include "PTL/TaskAllocator.hh"
 #include "PTL/Threading.hh"
 
@@ -66,7 +67,7 @@ public:
     VTask();
     explicit VTask(VTaskGroup* task_group);
     explicit VTask(ThreadPool* pool);
-    virtual ~VTask();
+    virtual ~VTask() PTL_NO_SANITIZE_THREAD;
 
 public:
     // execution operator
@@ -74,7 +75,7 @@ public:
 
 public:
     // used by thread_pool
-    void                operator--();
+    void                operator--() PTL_NO_SANITIZE_THREAD;
     virtual bool        is_native_task() const;
     virtual ThreadPool* pool() const;
     VTaskGroup*         group() const { return m_group; }

@@ -28,12 +28,12 @@
 #include "PTL/Globals.hh"
 #include "PTL/Types.hh"
 
+#include <array>
 #include <chrono>
 #include <condition_variable>
 #include <future>
 #include <mutex>
 #include <thread>
-#include <array>
 #include <vector>
 
 namespace PTL

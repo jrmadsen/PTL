@@ -121,7 +121,7 @@ jobs:
       env:
         - CC=gcc-7
         - CXX=g++-7
-        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --build-libs shared --sanitizer --sanitizer-type=thread"
+        - EXTRA_ARGS="--num-tasks=256 --pyctest-build-type=RelWithDebInfo --build-libs shared --use-locks --sanitizer --sanitizer-type=thread"
     # Clang 5.0
     - os: linux
       dist: xenial

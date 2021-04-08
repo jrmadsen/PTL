@@ -37,12 +37,6 @@
 #include <queue>
 #include <stack>
 
-#if defined(__GNUG__) || defined(__clang__)
-#    define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
-#else
-#    define NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
-#endif
-
 namespace PTL
 {
 class VTask;
@@ -72,8 +66,8 @@ public:
     bool AcquireClaim();
     void ReleaseClaim();
 
-    void         PushTask(task_pointer) NO_SANITIZE_THREAD;
-    task_pointer PopTask(bool front = true) NO_SANITIZE_THREAD;
+    void         PushTask(task_pointer) PTL_NO_SANITIZE_THREAD;
+    task_pointer PopTask(bool front = true) PTL_NO_SANITIZE_THREAD;
 
     size_type size() const;
     bool      empty() const;
@@ -160,7 +154,9 @@ TaskSubQueue::PushTask(task_pointer task)
     assert(m_available.load(std::memory_order_relaxed) == false);
     //++(*m_all_tasks); already incremented
     ++m_ntasks;
+#if defined(PTL_USE_LOCKS)
     AutoLock lk{ m_mutex };
+#endif
     m_task_queue.emplace_front(std::move(task));
 }
 

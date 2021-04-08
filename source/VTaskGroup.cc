@@ -127,9 +127,12 @@ VTaskGroup::wait()
             // const auto nitr = (tpool) ? tpool->size() : Thread::hardware_concurrency();
             while(this->pending() > 0)
             {
-                task_pointer _task = taskq->GetTask(bin);
-                if(_task)
-                    (*_task)();
+                if(!taskq->empty())
+                {
+                    task_pointer _task = taskq->GetTask(bin);
+                    if(_task)
+                        (*_task)();
+                }
             }
         }
     };

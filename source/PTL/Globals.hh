@@ -46,6 +46,14 @@
             ::std::initializer_list<int>{ (__VA_ARGS__, 0)... })
 #endif
 
+#if !defined(PTL_NO_SANITIZE_THREAD)
+#    if defined(__GNUG__) || defined(__clang__)
+#        define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#    else
+#        define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#    endif
+#endif
+
 namespace PTL
 {
 template <typename T>

@@ -76,7 +76,7 @@ public:
     // return:
     //      int - subqueue inserted into
     virtual intmax_t InsertTask(task_pointer, ThreadData* = nullptr,
-                                intmax_t subq = -1) = 0;
+                                intmax_t subq = -1) PTL_NO_SANITIZE_THREAD = 0;
 
     // Overload this function to hold threads
     virtual void     Wait()               = 0;

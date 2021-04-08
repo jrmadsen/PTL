@@ -111,7 +111,7 @@ public:
     ThreadPool*& pool() { return m_pool; }
     ThreadPool*  pool() const { return m_pool; }
 
-    void         clear();
+    void         clear() PTL_NO_SANITIZE_THREAD;
     virtual bool is_native_task_group() const { return true; }
     virtual bool is_master() const { return this_tid() == m_main_tid; }
 
