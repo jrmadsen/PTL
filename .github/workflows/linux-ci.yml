@@ -55,7 +55,7 @@ jobs:
         export PATH="/opt/conda/bin:${PATH}" &&
         conda config --set always_yes yes --set changeps1 yes &&
         conda update -c defaults -n base conda &&
-        conda create -n pyctest -c defaults -c conda-forge python=3.7 pyctest tbb tbb-devel &&
+        conda create -n pyctest -c defaults -c conda-forge python=3.7 pyctest &&
         source activate &&
         conda activate pyctest
 
@@ -86,7 +86,7 @@ jobs:
         echo "C compiler is ${CC}" &&
         echo "C++ compiler is ${CXX}" &&
         sudo apt-get update &&
-        sudo apt-get install -y lcov ${{ matrix.extra_packages }} &&
+        sudo apt-get install -y lcov libtbb-dev ${{ matrix.extra_packages }} &&
         sudo apt-get install -y build-essential ${CC} ${CXX}
 
     - name: Build and Test
@@ -94,7 +94,7 @@ jobs:
         export PATH="/opt/conda/bin:${PATH}" &&
         source activate &&
         conda activate pyctest &&
-        export CMAKE_PREFIX_PATH="${CONDA_PREFIX}:${CMAKE_PREFIX_PATH}" &&
+        export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}" &&
         export CC=$(which ${{ matrix.compiler }}) &&
         export CXX=$(which $(echo "${{ matrix.compiler }}" | sed 's/gcc/g++/1' | sed 's/clang/clang++/1')) &&
         echo "C compiler is ${CC}" &&
@@ -113,7 +113,7 @@ jobs:
         export PATH="/opt/conda/bin:${PATH}" &&
         source activate &&
         conda activate pyctest &&
-        export CMAKE_PREFIX_PATH="${HOME}/ptl-install:${CONDA_PREFIX}:${CMAKE_PREFIX_PATH}" &&
+        export CMAKE_PREFIX_PATH="${HOME}/ptl-install:${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}" &&
         cmake --build build-PTL --target install &&
         cmake -B ${HOME}/ptl-examples-build ${PWD}/examples/basic &&
         cmake --build ${HOME}/ptl-examples-build --target all

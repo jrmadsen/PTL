@@ -90,7 +90,14 @@ unset(_RPATH_LINK)
 
 # clang-tidy
 if(PTL_USE_CLANG_TIDY)
-    find_program(CLANG_TIDY_COMMAND NAMES clang-tidy)
+    find_program(CLANG_TIDY_COMMAND NAMES
+        clang-tidy
+        clang-tidy-12
+        clang-tidy-11
+        clang-tidy-10
+        clang-tidy-9
+        clang-tidy-8
+        clang-tidy-7)
     ptl_add_feature(CLANG_TIDY_COMMAND "Path to clang-tidy command")
     if(NOT CLANG_TIDY_COMMAND)
         message(WARNING "PTL_USE_CLANG_TIDY is ON but clang-tidy is not found!")
