@@ -18,27 +18,31 @@ jobs:
           - build_type: 'Debug'
             build_libs: 'shared'
             compiler: 'gcc'
-            extra_args: '--coverage --tbb --num-tasks=64'
+            extra_args: '--coverage --tbb --num-tasks=64 --static-analysis'
+            extra_packages: 'clang-tidy'
             standard: '11'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
-            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=leak'
+            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=leak --static-analysis'
+            extra_packages: 'clang-tidy-12'
             standard: '11'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
-            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=address'
+            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=address --static-analysis'
+            extra_packages: 'clang-tidy-12'
             standard: '14'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
-            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=thread'
+            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=thread --static-analysis'
+            extra_packages: 'clang-tidy-12'
             standard: '17'
         build_type: ['Release']
         build_libs: ['shared static']
         compiler: ['gcc-6', 'gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'clang-7', 'clang-8', 'clang-9', 'clang-10', 'clang-11']
-        extra_args: ['--num-tasks=256 --pyctest-build-type=RelWithDebInfo --tbb --static-analysis']
+        extra_args: ['--num-tasks=256 --tbb']
         standard: ['11']
 
     steps:
@@ -82,7 +86,7 @@ jobs:
         echo "C compiler is ${CC}" &&
         echo "C++ compiler is ${CXX}" &&
         sudo apt-get update &&
-        sudo apt-get install -y lcov $(echo "${{ matrix.compiler }}" | sed 's/clang/clang-tidy/1' | sed 's/gcc/clang-tidy/1' | sed 's/6/8/g' | sed 's/7/8/g') &&
+        sudo apt-get install -y lcov ${{ matrix.extra_packages }} &&
         sudo apt-get install -y build-essential ${CC} ${CXX}
 
     - name: Build and Test
