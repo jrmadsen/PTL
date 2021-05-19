@@ -196,40 +196,6 @@ public:
     }
     //------------------------------------------------------------------------//
 
-#if defined(PTL_USE_TBB)
-    //------------------------------------------------------------------------//
-    // public wrap functions using TBB tasks
-    //------------------------------------------------------------------------//
-    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
-    Task<RetT, ArgT, Args...>* wrap(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func,
-                                    Args&&... args)
-    {
-        return tg.wrap(std::forward<FuncT>(func), std::forward<Args>(args)...);
-    }
-    //------------------------------------------------------------------------//
-    template <typename RetT, typename ArgT, typename FuncT>
-    Task<RetT, ArgT>* wrap(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func)
-    {
-        return tg.wrap(std::forward<FuncT>(func));
-    }
-
-    //------------------------------------------------------------------------//
-    // public exec functions using TBB tasks
-    //------------------------------------------------------------------------//
-    template <typename RetT, typename ArgT, typename FuncT, typename... Args>
-    void exec(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func, Args&&... args)
-    {
-        tg.exec(std::forward<FuncT>(func), std::forward<Args>(args)...);
-    }
-    //------------------------------------------------------------------------//
-    template <typename RetT, typename ArgT, typename FuncT>
-    void exec(TBBTaskGroup<RetT, ArgT>& tg, FuncT&& func)
-    {
-        tg.exec(std::forward<FuncT>(func));
-    }
-    //------------------------------------------------------------------------//
-#endif
-
 protected:
     // Protected variables
     ThreadPool* m_pool = nullptr;

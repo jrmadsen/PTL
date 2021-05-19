@@ -41,7 +41,6 @@
 namespace PTL
 {
 class VTask;
-class VTaskGroup;
 class TaskSubQueue;  // definition in UserTaskQueue.icc
 
 class UserTaskQueue : public VUserTaskQueue

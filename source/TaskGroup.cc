@@ -16,25 +16,44 @@
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+// ---------------------------------------------------------------
+//  Tasking class implementation
+//
+// Class Description:
+//
+// This file creates an abstract base class for the grouping the thread-pool
+// tasking system into independently joinable units
+//
+// ---------------------------------------------------------------
+// Author: Jonathan Madsen (Feb 13th 2018)
+// ---------------------------------------------------------------
 
-#pragma once
-
-#include "PTL/AutoLock.hh"
-#include "PTL/Globals.hh"
-#include "PTL/TBBTaskGroup.hh"
-#include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
-#include "PTL/TaskManager.hh"
+#include "PTL/Globals.hh"
+#include "PTL/Task.hh"
 #include "PTL/TaskRunManager.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-#include "PTL/TiMemory.hh"
-#include "PTL/Timer.hh"
-//#include "PTL/Tuple.hh"
-#include "PTL/Backtrace.hh"
-#include "PTL/Types.hh"
-#include "PTL/UserTaskQueue.hh"
-#include "PTL/Utility.hh"
 #include "PTL/VTask.hh"
-#include "PTL/VUserTaskQueue.hh"
+
+//======================================================================================//
+
+namespace PTL
+{
+std::atomic_uintmax_t&
+task_group_counter()
+{
+    static std::atomic_uintmax_t _instance(0);
+    return _instance;
+}
+
+ThreadPool*
+get_default_threadpool()
+{
+    if(TaskRunManager::GetMasterRunManager())
+        return TaskRunManager::GetMasterRunManager()->GetThreadPool();
+    return nullptr;
+}
+}  // namespace PTL
+
+//======================================================================================//

@@ -21,9 +21,6 @@
 //
 // Threading.cc
 //
-// ---------------------------------------------------------------
-// Author: Andrea Dotti (15 Feb 2013): First Implementation
-// ---------------------------------------------------------------
 
 #include "PTL/Threading.hh"
 #include "PTL/AutoLock.hh"

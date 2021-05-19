@@ -87,35 +87,87 @@ main(int argc, char** argv)
     ConsumeParameters(argc, argv);
     rng.seed(std::random_device()());
     Threading::SetThreadId(0);
+    Backtrace::Enable();
 
     auto hwthreads = std::thread::hardware_concurrency();
+    auto nthreads = hwthreads;
+    if(argc > 1)
+        nthreads = std::stoul(argv[1]) % (hwthreads + 1);
 
+    if(nthreads == 0)
+        nthreads = 1;
+
+    std::cout << "[" << argv[0] << "]> "
+              << "Number of threads: " << nthreads << std::endl;
     Timer total_timer;
     total_timer.Start();
 
     // Construct the default run manager
-    bool use_tbb     = false;
+    bool use_tbb     = GetEnv("PTL_USE_TBB", false);
     auto run_manager = TaskRunManager(use_tbb);
-    run_manager.Initialize(hwthreads);
+    run_manager.Initialize(nthreads);
 
     // the TaskManager is a utility that wraps the function calls into tasks for the
     // ThreadPool
     TaskManager* task_manager = run_manager.GetTaskManager();
     auto tp = task_manager->thread_pool();
     std::set<std::thread::id> tids{};
-    tp->execute_on_all_threads([&tids]() {
+
+    //------------------------------------------------------------------------//
+    //                                                                        //
+    //                  Execute function on all threads                       //
+    //                                                                        //
+    //------------------------------------------------------------------------//
+
+    std::atomic<int> _all_exec{ 0 };
+    tp->execute_on_all_threads([&tids, &_all_exec]() {
+        ++_all_exec;
         std::stringstream ss;
         ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed\n";
         AutoLock lk{ TypeMutex<decltype(std::cout)>() };
         std::cout << ss.str();
         tids.insert(std::this_thread::get_id());
     });
-    tp->get_queue()->ExecuteOnSpecificThreads(tids, tp, [&tids]() {
+
+    auto _size = tp->size();
+    if(_all_exec != _size)
+        throw std::runtime_error(
+            std::string{ "Error! Did not execute on every thread: " } +
+            std::to_string(_all_exec.load()) + " vs. " + std::to_string(_size));
+    else
+    {
+        printf("Successful execution on every thread: %i\n", (int) _all_exec);
+    }
+
+    //------------------------------------------------------------------------//
+    //                                                                        //
+    //                  Execute function on specific threads                  //
+    //                                                                        //
+    //------------------------------------------------------------------------//
+
+    auto _target_sz = tids.size() / 2 + ((tids.size() % 2 == 0) ? 0 : 1);
+    if(_target_sz == 0)
+        _target_sz = 1;
+    std::atomic<int> _specific_exec{ 0 };
+    while(tids.size() > _target_sz)
+        tids.erase(tids.begin());
+
+    tp->execute_on_specific_threads(tids, [&tids, &_specific_exec]() {
+        ++_specific_exec;
         std::stringstream ss;
         ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed [specific]\n";
         AutoLock lk{ TypeMutex<decltype(std::cout)>() };
         std::cout << ss.str();
     });
+
+    if(_specific_exec != _target_sz)
+        throw std::runtime_error(
+            std::string{ "Error! Did not execute on specific thread: " } +
+            std::to_string(_specific_exec.load()) + " vs. " + std::to_string(_target_sz));
+    else
+    {
+        printf("Successful execution on subset of threads: %i\n", (int) _specific_exec);
+    }
 
     //------------------------------------------------------------------------//
     //                                                                        //
@@ -159,7 +211,7 @@ main(int argc, char** argv)
             }
             auto e = random_entry(v);
             std::stringstream ss;
-            ss << "random entry from thread " << std::setw(4)
+            ss << "[" << n << "]> random entry from thread " << std::setw(4)
                << PTL::Threading::GetThreadId() << " was : " << std::setw(8)
                << std::setprecision(6) << std::fixed << e << std::endl;
             AutoLock lk{ TypeMutex<decltype(std::cout)>() };
@@ -192,7 +244,6 @@ main(int argc, char** argv)
     total_timer.Stop();
     std::cout << "Total time: \t" << total_timer << std::endl;
 
-    // tp->initialize_threadpool(hwthreads / 2 + 1);
     tp->destroy_threadpool();
     task_manager->finalize();
 }

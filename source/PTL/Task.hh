@@ -39,7 +39,6 @@
 
 namespace PTL
 {
-class VTaskGroup;
 class ThreadPool;
 
 //======================================================================================//
@@ -65,8 +64,8 @@ public:
     , m_args(args...)
     {}
 
-    template <typename FuncT>
-    PackagedTask(VTaskGroup* tg, FuncT&& func, Args... args)
+    template <typename TaskGroupT, typename FuncT>
+    PackagedTask(TaskGroupT* tg, FuncT&& func, Args... args)
     : VTask(tg)
     , m_ptask(std::forward<FuncT>(func))
     , m_args(args...)
@@ -117,8 +116,8 @@ public:
     , m_args(args...)
     {}
 
-    template <typename FuncT>
-    Task(VTaskGroup* tg, FuncT&& func, Args... args)
+    template <typename TaskGroupT, typename FuncT>
+    Task(TaskGroupT* tg, FuncT&& func, Args... args)
     : VTask(tg)
     , m_ptask(std::forward<FuncT>(func))
     , m_args(args...)
@@ -135,23 +134,14 @@ public:
 
 public:
     // execution operator
-    virtual void operator()() final
-    {
-        mpl::apply(std::move(m_ptask), std::move(m_args));
-        // decrements the task-group counter on active tasks
-        // when the counter is < 2, if the thread owning the task group is
-        // sleeping at the TaskGroup::wait(), it signals the thread to wake
-        // up and check if all tasks are finished, proceeding if this
-        // check returns as true
-        this_type::operator--();
-    }
+    virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
 
     virtual bool is_native_task() const override { return true; }
     future_type  get_future() { return m_ptask.get_future(); }
 
 private:
-    packaged_task_type m_ptask;
-    tuple_type         m_args;
+    packaged_task_type m_ptask{};
+    tuple_type         m_args{};
 };
 
 //======================================================================================//
@@ -174,8 +164,8 @@ public:
     , m_ptask(std::forward<FuncT>(func))
     {}
 
-    template <typename FuncT>
-    Task(VTaskGroup* tg, FuncT&& func)
+    template <typename TaskGroupT, typename FuncT>
+    Task(TaskGroupT* tg, FuncT&& func)
     : VTask(tg)
     , m_ptask(std::forward<FuncT>(func))
     {}
@@ -190,22 +180,13 @@ public:
 
 public:
     // execution operator
-    virtual void operator()() final
-    {
-        m_ptask();
-        // decrements the task-group counter on active tasks
-        // when the counter is < 2, if the thread owning the task group is
-        // sleeping at the TaskGroup::wait(), it signals the thread to wake
-        // up and check if all tasks are finished, proceeding if this
-        // check returns as true
-        this_type::operator--();
-    }
+    virtual void operator()() final { m_ptask(); }
 
     virtual bool is_native_task() const override { return true; }
     future_type  get_future() { return m_ptask.get_future(); }
 
 private:
-    packaged_task_type m_ptask;
+    packaged_task_type m_ptask{};
 };
 
 //======================================================================================//
@@ -229,8 +210,8 @@ public:
     , m_ptask(std::forward<FuncT>(func))
     {}
 
-    template <typename FuncT>
-    Task(VTaskGroup* tg, FuncT&& func)
+    template <typename TaskGroupT, typename FuncT>
+    Task(TaskGroupT* tg, FuncT&& func)
     : VTask(tg)
     , m_ptask(std::forward<FuncT>(func))
     {}
@@ -245,22 +226,13 @@ public:
 
 public:
     // execution operator
-    virtual void operator()() final
-    {
-        m_ptask();
-        // decrements the task-group counter on active tasks
-        // when the counter is < 2, if the thread owning the task group is
-        // sleeping at the TaskGroup::wait(), it signals the thread to wake
-        // up and check if all tasks are finished, proceeding if this
-        // check returns as true
-        this_type::operator--();
-    }
+    virtual void operator()() final { m_ptask(); }
 
     virtual bool is_native_task() const override { return true; }
     future_type  get_future() { return m_ptask.get_future(); }
 
 private:
-    packaged_task_type m_ptask;
+    packaged_task_type m_ptask{};
 };
 
 //======================================================================================//

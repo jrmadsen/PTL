@@ -38,21 +38,22 @@ task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
     if(n < 2)
         return n;
 
-    uint64_t    x, y;
-    TaskGroup_t g;
-    ++task_group_counter();
+    uint64_t x, y;
+    auto     g = new TaskGroup_t{};
+    ++task_group_cnt();
     if(n >= cutoff)
     {
-        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
+        g->run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+        g->run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
     }
     else
     {
-        g.run([&]() { x = fibonacci(n - 1); });
-        g.run([&]() { y = fibonacci(n - 2); });
+        g->run([&]() { x = fibonacci(n - 1); });
+        g->run([&]() { y = fibonacci(n - 2); });
     }
     // wait for both tasks to complete
-    g.wait();
+    g->wait();
+    delete g;
     return x + y;
 }
 
@@ -205,7 +206,7 @@ main(int argc, char** argv)
         for(auto cutoff : cutoffs)
         {
             int64_t fib_recur = 0;
-            task_group_counter().store(0);
+            task_group_cnt().store(0);
 
             singleTimer.Start();
 
@@ -225,7 +226,7 @@ main(int argc, char** argv)
 
             singleTimer.Stop();
 
-            auto num_task_groups = task_group_counter().load();
+            auto num_task_groups = task_group_cnt().load();
 
             Measurement* measurement = nullptr;
             if(measurements.find(num_task_groups) != measurements.end())

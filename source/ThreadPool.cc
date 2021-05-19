@@ -141,17 +141,11 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
                        bool _use_affinity, const affinity_func_t& _affinity_func)
 : m_use_affinity(_use_affinity)
 , m_tbb_tp(false)
-, m_verbose(0)
-, m_pool_size(0)
-, m_master_tid(ThisThread::get_id())
+, m_main_tid(ThisThread::get_id())
 , m_pool_state(std::make_shared<std::atomic_short>(thread_pool::state::NONINIT))
 , m_task_queue(task_queue)
-, m_tbb_task_group(nullptr)
-, m_init_func([]() { return; })
 , m_affinity_func(_affinity_func)
 {
-    m_verbose = GetEnv<int>("PTL_VERBOSE", m_verbose);
-
     auto master_id = get_this_thread_id();
     if(master_id != 0 && m_verbose > 1)
         std::cerr << "ThreadPool created on non-master slave" << std::endl;
@@ -177,7 +171,7 @@ ThreadPool::~ThreadPool()
                   << std::endl;
         m_pool_state->store(thread_pool::state::STOPPED);
         m_task_lock->lock();
-        CONDITIONBROADCAST(m_task_cond.get());
+        m_task_cond->notify_all();
         m_task_lock->unlock();
         for(auto& itr : m_threads)
             itr.join();
@@ -230,10 +224,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     if(!m_alive_flag->load())
         m_pool_state->store(thread_pool::state::STARTED);
 
-#ifdef PTL_USE_TBB
+#if defined(PTL_USE_TBB)
     //--------------------------------------------------------------------//
     // handle tbb task scheduler
-    if(f_use_tbb)
+    if(f_use_tbb || m_tbb_tp)
     {
         m_tbb_tp                               = true;
         m_pool_size                            = proposed_size;
@@ -380,12 +374,21 @@ ThreadPool::destroy_threadpool()
 
     //--------------------------------------------------------------------//
     // handle tbb task scheduler
-#ifdef PTL_USE_TBB
+#if defined(PTL_USE_TBB)
     if(m_tbb_task_group)
     {
-        m_tbb_task_group->wait();
+        auto _func = [&]() { m_tbb_task_group->wait(); };
+        if(m_tbb_task_arena)
+            m_tbb_task_arena->execute(_func);
+        else
+            _func();
         delete m_tbb_task_group;
         m_tbb_task_group = nullptr;
+    }
+    if(m_tbb_task_arena)
+    {
+        delete m_tbb_task_arena;
+        m_tbb_task_arena = nullptr;
     }
     if(m_tbb_tp && tbb_global_control())
     {
@@ -403,7 +406,7 @@ ThreadPool::destroy_threadpool()
     //------------------------------------------------------------------------//
     // notify all threads we are shutting down
     m_task_lock->lock();
-    CONDITIONBROADCAST(m_task_cond.get());
+    m_task_cond->notify_all();
     m_task_lock->unlock();
     //------------------------------------------------------------------------//
 
@@ -446,11 +449,6 @@ ThreadPool::destroy_threadpool()
         //--------------------------------------------------------------------//
         // it's joined
         m_is_joined.at(i) = true;
-
-        //--------------------------------------------------------------------//
-        // try waking up a bunch of threads that are still waiting
-        CONDITIONBROADCAST(m_task_cond.get());
-        //--------------------------------------------------------------------//
     }
 
     m_thread_data.clear();
@@ -506,7 +504,7 @@ ThreadPool::stop_thread()
     // notify all threads we are shutting down
     m_task_lock->lock();
     m_is_stopped.push_back(true);
-    CONDITIONNOTIFY(m_task_cond.get());
+    m_task_cond->notify_one();
     m_task_lock->unlock();
     //------------------------------------------------------------------------//
 
@@ -588,9 +586,13 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         auto _task        = _task_queue->GetTask();
         if(_task)
         {
+            bool _is_grouped = _task->is_grouped();
             (*_task)();
-            if(!_task->group())
+            if(!_is_grouped)
+            {
                 delete _task;
+                _task = nullptr;
+            }
         }
         data->within_task = false;
     }
@@ -703,10 +705,13 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             auto _task = _task_queue->GetTask();
             if(_task)
             {
-                bool _has_group = (_task->group() != nullptr);
+                bool _is_grouped = _task->is_grouped();
                 (*_task)();
-                if(!_has_group)
+                if(!_is_grouped)
+                {
                     delete _task;
+                    _task = nullptr;
+                }
             }
         }
         //----------------------------------------------------------------//

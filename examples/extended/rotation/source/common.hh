@@ -147,7 +147,7 @@ init_run_manager(TaskRunManager*& run_man, uintmax_t nthreads)
         thread_data = new ThreadData(tp);
     // tell thread that initialized thread-pool to process tasks
     // (typically master thread will only wait for other threads)
-    thread_data->is_master = true;
+    thread_data->is_main = true;
     // tell thread that it is not currently within task
     thread_data->within_task = false;
 }

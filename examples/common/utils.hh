@@ -119,7 +119,7 @@ typedef TBBTaskGroup<long>                     LongGroup_t;
 #else
 const bool                                  useTBB = false;
 typedef TaskGroup<Array_t, const uint64_t&> TaskGroup_t;
-typedef TaskGroup<void>                     VoidGroup_t;
+typedef TaskGroup<void, void, 10>           VoidGroup_t;
 typedef TaskGroup<long>                     LongGroup_t;
 #endif
 
@@ -252,7 +252,7 @@ fibonacci(const uint64_t& n)
 //============================================================================//
 
 inline std::atomic_uintmax_t&
-task_group_counter()
+task_group_cnt()
 {
     static std::atomic_uintmax_t _instance(0);
     return _instance;

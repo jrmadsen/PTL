@@ -40,7 +40,6 @@
 namespace PTL
 {
 class VTask;
-class VTaskGroup;
 class ThreadPool;
 class ThreadData;
 

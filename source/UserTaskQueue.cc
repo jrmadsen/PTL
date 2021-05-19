@@ -334,7 +334,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 
         //--------------------------------------------------------------------//
         auto thread_specific_func = [&]() {
-            static Mutex _mtx;
+            ScopeDestructor _dtor = tg->get_scope_destructor();
+            static Mutex    _mtx;
             _mtx.lock();
             bool& _executed = (*thread_execute_map)[GetThreadBin()];
             _mtx.unlock();
@@ -402,7 +403,8 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
     // wrap the function so that it will only be executed if the thread
     // has an ID in the set
     auto thread_specific_func = [=]() {
-        static Mutex _mtx;
+        ScopeDestructor _dtor = tg->get_scope_destructor();
+        static Mutex    _mtx;
         _mtx.lock();
         bool& _executed = (*thread_execute_map)[GetThreadBin()];
         _mtx.unlock();

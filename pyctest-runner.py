@@ -293,6 +293,13 @@ def run_pyctest():
 
     if args.tbb:
         test = pyctest.test()
+        test.SetName("tbb_minimal")
+        test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+        test.SetProperty("RUN_SERIAL", "ON")
+        test.SetProperty("ENVIRONMENT", "PTL_USE_TBB=ON")
+        test.SetCommand(construct_command(["./ptl-minimal"], args))
+
+        test = pyctest.test()
         test.SetName("tbb_tasking{}".format(tasking_suffix))
         test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
         test.SetProperty(

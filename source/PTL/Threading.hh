@@ -180,12 +180,6 @@ THREADCREATE(WorkerT*& worker, FuncT func, Args... args)
 // See MTRunManager for example on how to use these
 //
 typedef std::condition_variable Condition;
-#define CONDITION_INITIALIZER                                                            \
-    {}
-#define CONDITIONWAIT(cond, lock) (cond)->wait(*lock);
-#define CONDITIONWAITLAMBDA(cond, lock, lambda) (cond)->wait(*lock, lambda);
-#define CONDITIONNOTIFY(cond) (cond)->notify_one();
-#define CONDITIONBROADCAST(cond) (cond)->notify_all();
 //
 
 //======================================================================================//

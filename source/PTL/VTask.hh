@@ -45,7 +45,6 @@
 
 namespace PTL
 {
-class VTaskGroup;
 class ThreadPool;
 
 //======================================================================================//
@@ -64,9 +63,11 @@ public:
 
 public:
     VTask();
-    explicit VTask(VTaskGroup* task_group);
     explicit VTask(ThreadPool* pool);
-    virtual ~VTask() PTL_NO_SANITIZE_THREAD;
+    template <typename TaskGroupT>
+    explicit VTask(TaskGroupT* task_group,
+                   enable_if_t<!std::is_same<TaskGroupT, ThreadPool>::value, int> = 0);
+    virtual ~VTask();
 
 public:
     // execution operator
@@ -74,10 +75,9 @@ public:
 
 public:
     // used by thread_pool
-    void                operator--() PTL_NO_SANITIZE_THREAD;
     virtual bool        is_native_task() const;
     virtual ThreadPool* pool() const;
-    VTaskGroup*         group() const { return m_group; }
+    bool                is_grouped() const { return m_is_grouped; }
 
 public:
     // used by task tree
@@ -97,12 +97,22 @@ protected:
     static tid_type this_tid() { return std::this_thread::get_id(); }
 
 protected:
-    intmax_t    m_depth;
-    VTaskGroup* m_group;
-    ThreadPool* m_pool;
-    void_func_t m_func = []() {};
-    void_func_t m_decr = []() {};
+    bool        m_is_native  = false;
+    bool        m_is_grouped = false;
+    intmax_t    m_depth      = 0;
+    ThreadPool* m_pool       = nullptr;
+    void_func_t m_func       = []() {};
 };
+
+//======================================================================================//
+
+template <typename TaskGroupT>
+VTask::VTask(TaskGroupT* task_group,
+             enable_if_t<!std::is_same<TaskGroupT, ThreadPool>::value, int>)
+: m_is_native((task_group) ? task_group->is_native_task_group() : false)
+, m_is_grouped((task_group) ? true : false)
+, m_pool((task_group) ? task_group->pool() : nullptr)
+{}
 
 //======================================================================================//
 

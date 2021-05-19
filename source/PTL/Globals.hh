@@ -47,10 +47,16 @@
 #endif
 
 #if !defined(PTL_NO_SANITIZE_THREAD)
-#    if defined(__GNUG__) || defined(__clang__)
-#        define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+// expect that sanitizer is from compiler which supports __has_attribute
+#    if defined(__has_attribute)
+#        if __has_attribute(no_sanitize)
+#            define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+#        else
+#            define PTL_NO_SANITIZE_THREAD
+#        endif
 #    else
-#        define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
+// otherwise, make blank
+#        define PTL_NO_SANITIZE_THREAD
 #    endif
 #endif
 
@@ -152,10 +158,10 @@ using index_type_t = decay_t<decltype(std::get<Idx>(std::declval<Tup>()))>;
 
 template <typename FnT, typename TupleT, size_t... Idx>
 static inline auto
-apply(FnT&& __f, TupleT&& __t, impl::index_sequence<Idx...>)
-    -> decltype(std::forward<FnT>(__f)(std::get<Idx>(__t)...))
+apply(FnT _func, TupleT _args, impl::index_sequence<Idx...>)
+    -> decltype(std::move(_func)(std::get<Idx>(std::move(_args))...))
 {
-    return std::forward<FnT>(__f)(std::get<Idx>(__t)...);
+    return std::move(_func)(std::get<Idx>(std::move(_args))...);
 }
 
 //--------------------------------------------------------------------------------------//

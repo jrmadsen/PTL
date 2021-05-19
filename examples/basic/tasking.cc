@@ -23,34 +23,6 @@
 
 //============================================================================//
 
-template <typename TaskGroup_t>
-uint64_t
-task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
-{
-    if(n < 2)
-        return n;
-
-    uint64_t    x, y;
-    TaskGroup_t g;
-    ++task_group_counter();
-    if(n >= cutoff)
-    {
-        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
-    }
-    else
-    {
-        // cout << "Number of recursive task-groups: " << nrecur << endl;
-        g.run([&]() { x = fibonacci(n - 1); });
-        g.run([&]() { y = fibonacci(n - 2); });
-    }
-    // wait for both tasks to complete
-    g.wait();
-    return x + y;
-}
-
-//============================================================================//
-
 void
 execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
                        uint64_t& remaining, bool verbose = true)

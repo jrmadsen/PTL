@@ -75,7 +75,7 @@ TaskRunManager::TaskRunManager(bool useTBB)
         GetPrivateMasterRunManager(false) = this;
     }
 
-#ifdef PTL_USE_TBB
+#if defined(PTL_USE_TBB)
     auto _useTBB = GetEnv<bool>("PTL_FORCE_TBB", GetEnv<bool>("FORCE_TBB", useTBB));
     if(_useTBB)
         useTBB = true;
