@@ -326,6 +326,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 
     thread_execute_map_t* thread_execute_map = new thread_execute_map_t();
 
+    std::vector<VTask*> _tasks{};
+    _tasks.reserve(m_workers + 1);
     AcquireHold();
     for(int i = 0; i < (m_workers + 1); ++i)
     {
@@ -366,6 +368,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         std::cerr << msg.str() << std::endl;
     }
     delete thread_execute_map;
+    for(auto& itr : _tasks)
+        delete itr;
     ReleaseHold();
 }
 
@@ -419,6 +423,8 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
     if(tid_set.count(ThisThread::get_id()) > 0)
         func();
 
+    std::vector<VTask*> _tasks{};
+    _tasks.reserve(m_workers + 1);
     AcquireHold();
     for(int i = 0; i < (m_workers + 1); ++i)
     {
@@ -427,6 +433,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
 
         auto _task = tg->wrap(thread_specific_func);
         InsertTask(_task, ThreadData::GetInstance(), i);
+        _tasks.emplace_back(_task);
     }
     tp->notify_all();
     int nexecuted = tg->join();
@@ -438,6 +445,8 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         std::cerr << msg.str() << std::endl;
     }
     delete thread_execute_map;
+    for(auto& itr : _tasks)
+        delete itr;
     ReleaseHold();
 }
 

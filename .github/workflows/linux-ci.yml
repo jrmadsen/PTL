@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Release
+  ASAN_OPTIONS: "detect_leaks=0"
 
 jobs:
   ci:
@@ -24,7 +25,7 @@ jobs:
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
-            extra_args: '--num-tasks=256 --tbb --sanitizer --sanitizer-type=leak --static-analysis'
+            extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=leak --static-analysis'
             extra_packages: 'clang-tidy-12'
             standard: '11'
           - build_type: 'RelWithDebInfo'
