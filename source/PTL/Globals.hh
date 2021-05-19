@@ -54,6 +54,8 @@
 #        else
 #            define PTL_NO_SANITIZE_THREAD
 #        endif
+#    elif defined(__clang__) || defined(__GNUC__)
+#        define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
 #    else
 // otherwise, make blank
 #        define PTL_NO_SANITIZE_THREAD

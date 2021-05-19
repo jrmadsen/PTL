@@ -362,10 +362,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
     {
         std::stringstream msg;
         msg << "Failure executing routine on all threads! Only " << nexecuted
-            << " threads executed function out of " << m_workers;
+            << " threads executed function out of " << m_workers << " workers";
         std::cerr << msg.str() << std::endl;
-        // Exception("UserTaskQueue::ExecuteOnAllThreads", "TaskQueue0000",
-        //            JustWarning, msg);
     }
     delete thread_execute_map;
     ReleaseHold();
@@ -432,14 +430,12 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
     }
     tp->notify_all();
     int nexecuted = tg->join();
-    if(nexecuted != m_workers)
+    if(nexecuted != tid_set.size())
     {
         std::stringstream msg;
-        msg << "Failure executing routine on all threads! Only " << nexecuted
-            << " threads executed function out of " << tid_set.size();
+        msg << "Failure executing routine on specific threads! Only " << nexecuted
+            << " threads executed function out of " << tid_set.size() << " workers";
         std::cerr << msg.str() << std::endl;
-        // Exception("UserTaskQueue::ExecuteOnSpecificThreads", "TaskQueue0001",
-        //            JustWarning, msg);
     }
     delete thread_execute_map;
     ReleaseHold();
