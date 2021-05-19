@@ -94,6 +94,7 @@ jobs:
         export PATH="/opt/conda/bin:${PATH}" &&
         source activate &&
         conda activate pyctest &&
+        export CMAKE_PREFIX_PATH="${CONDA_PREFIX}:${CMAKE_PREFIX_PATH}" &&
         export CC=$(which ${{ matrix.compiler }}) &&
         export CXX=$(which $(echo "${{ matrix.compiler }}" | sed 's/gcc/g++/1' | sed 's/clang/clang++/1')) &&
         echo "C compiler is ${CC}" &&
