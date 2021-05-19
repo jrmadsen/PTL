@@ -57,8 +57,12 @@ if(PTL_USE_COVERAGE)
         $<BUILD_INTERFACE:-ftest-coverage>)
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         target_compile_options(ptl-public-options INTERFACE
-            $<BUILD_INTERFACE:-fprofile-abs-path>
             $<BUILD_INTERFACE:--coverage>)
+        check_cxx_compiler_flag("-fprofile-abs-path -ftest-coverage -fprofile-arcs" fprofile_abs_path)
+        if(fprofile_abs_path)
+            target_compile_options(ptl-public-options INTERFACE
+                $<BUILD_INTERFACE:-fprofile-abs-path>)
+        endif()
         set_target_properties(ptl-public-options PROPERTIES
             INTERFACE_LINK_OPTIONS
                 $<BUILD_INTERFACE:--coverage>)
