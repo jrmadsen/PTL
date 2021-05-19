@@ -83,7 +83,7 @@ jobs:
         echo "C++ compiler is ${CXX}" &&
         sudo apt-get update &&
         sudo apt-get install -y build-essential ${CC} ${CXX} &&
-        sudo apt-get install -y lcov clang-tidy-10
+        sudo apt-get install -y lcov $(echo "${{ matrix.compiler }}" | sed 's/gcc/clang-tidy/1' | sed 's/6/8/g' | sed 's/7/8/g' | sed 's/clang/clang-tidy/1')
 
     - name: Build and Test
       run:
