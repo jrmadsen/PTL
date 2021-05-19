@@ -19,7 +19,7 @@ jobs:
           - build_type: 'Debug'
             build_libs: 'shared'
             compiler: 'gcc'
-            extra_args: '--coverage --tbb --num-tasks=64 --static-analysis'
+            extra_args: '--coverage --tbb --num-tasks=64'
             extra_packages: 'clang-tidy'
             standard: '11'
           - build_type: 'RelWithDebInfo'
