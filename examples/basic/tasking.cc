@@ -221,6 +221,13 @@ main(int argc, char** argv)
     ///                                                                      ///
     ///                                                                      ///
     ///======================================================================///
+
+#if defined(USE_TBB_TASKS)
+    cout << prefix << "Running with TBB backend..." << std::endl;
+#else
+    cout << prefix << "Running with PTL backend..." << std::endl;
+#endif
+
     Timer timer;
 
     //------------------------------------------------------------------------//
