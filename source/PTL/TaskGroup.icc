@@ -67,7 +67,7 @@ TaskGroup<Tp, Arg, MaxDepth>::~TaskGroup()
 
     if(m_tbb_task_group)
     {
-        auto _arena = m_pool->get_task_arena();
+        auto* _arena = m_pool->get_task_arena();
         _arena->execute([=]() { m_tbb_task_group->wait(); });
     }
     delete m_tbb_task_group;
@@ -94,7 +94,7 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
     auto _dtor = ScopeDestructor{ [&]() {
         if(m_tbb_task_group)
         {
-            auto _arena = m_pool->get_task_arena();
+            auto* _arena = m_pool->get_task_arena();
             _arena->execute([=]() { m_tbb_task_group->wait(); });
         }
     } };
@@ -305,12 +305,16 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
 
         if(m_tbb_task_group)
         {
-            auto _arena = m_pool->get_task_arena();
-            _arena->execute([=]() { m_tbb_task_group->run([_task]() { (*_task)(); }); });
+            auto* _arena          = m_pool->get_task_arena();
+            auto* _tbb_task_group = m_tbb_task_group;
+            auto* _ptask          = _task.get();
+            _arena->execute([_tbb_task_group, _ptask]() {
+                _tbb_task_group->run([_ptask]() { (*_ptask)(); });
+            });
         }
         else
         {
-            m_pool->add_task(_task);
+            m_pool->add_task(std::move(_task));
         }
     }
 }
@@ -347,12 +351,16 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
 
         if(m_tbb_task_group)
         {
-            auto _arena = m_pool->get_task_arena();
-            _arena->execute([=]() { m_tbb_task_group->run([_task]() { (*_task)(); }); });
+            auto* _arena          = m_pool->get_task_arena();
+            auto* _tbb_task_group = m_tbb_task_group;
+            auto* _ptask          = _task.get();
+            _arena->execute([_tbb_task_group, _ptask]() {
+                _tbb_task_group->run([_ptask]() { (*_ptask)(); });
+            });
         }
         else
         {
-            m_pool->add_task(_task);
+            m_pool->add_task(std::move(_task));
         }
     }
 }

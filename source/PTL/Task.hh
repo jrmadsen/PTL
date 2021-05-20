@@ -61,6 +61,12 @@ public:
 
     virtual ~TaskFuture() = default;
 
+    TaskFuture(const TaskFuture&) = delete;
+    TaskFuture& operator=(const TaskFuture&) = delete;
+
+    TaskFuture(TaskFuture&&) = default;
+    TaskFuture& operator=(TaskFuture&&) = default;
+
 public:
     // execution operator
     virtual future_type get_future() = 0;
@@ -98,6 +104,12 @@ public:
     {}
 
     virtual ~PackagedTask() = default;
+
+    PackagedTask(const PackagedTask&) = delete;
+    PackagedTask& operator=(const PackagedTask&) = delete;
+
+    PackagedTask(PackagedTask&&) = default;
+    PackagedTask& operator=(PackagedTask&&) = default;
 
 public:
     // execution operator
@@ -141,9 +153,19 @@ public:
 
     virtual ~Task() = default;
 
+    Task(const Task&) = delete;
+    Task& operator=(const Task&) = delete;
+
+    Task(Task&&)  = default;
+    Task& operator=(Task&&) = default;
+
 public:
     // execution operator
-    virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
+    virtual void operator()() final
+    {
+        if(m_ptask.valid())
+            mpl::apply(std::move(m_ptask), std::move(m_args));
+    }
     virtual future_type get_future() final { return m_ptask.get_future(); }
     virtual RetT        get() final { return m_ptask.get_future().get(); }
 
@@ -179,6 +201,12 @@ public:
     {}
 
     virtual ~Task() = default;
+
+    Task(const Task&) = delete;
+    Task& operator=(const Task&) = delete;
+
+    Task(Task&&)  = default;
+    Task& operator=(Task&&) = default;
 
 public:
     // execution operator
@@ -218,6 +246,12 @@ public:
     {}
 
     virtual ~Task() {}
+
+    Task(const Task&) = delete;
+    Task& operator=(const Task&) = delete;
+
+    Task(Task&&)  = default;
+    Task& operator=(Task&&) = default;
 
 public:
     // execution operator
