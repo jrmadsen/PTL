@@ -34,6 +34,7 @@
 #include <cassert>
 #include <deque>
 #include <list>
+#include <memory>
 #include <queue>
 #include <stack>
 
@@ -49,7 +50,7 @@ public:
     template <typename _Tp>
     using container = std::deque<_Tp>;
 
-    typedef VTask*                    task_pointer;
+    typedef std::shared_ptr<VTask>    task_pointer;
     typedef container<task_pointer>   container_type;
     typedef container_type::size_type size_type;
 
@@ -66,7 +67,7 @@ public:
     bool AcquireClaim();
     void ReleaseClaim();
 
-    void         PushTask(task_pointer) PTL_NO_SANITIZE_THREAD;
+    void         PushTask(task_pointer&&) PTL_NO_SANITIZE_THREAD;
     task_pointer PopTask(bool front = true) PTL_NO_SANITIZE_THREAD;
 
     size_type size() const;
@@ -148,11 +149,10 @@ TaskSubQueue::empty() const
 //======================================================================================//
 
 inline void
-TaskSubQueue::PushTask(task_pointer task)
+TaskSubQueue::PushTask(task_pointer&& task)
 {
     // no need to lock these if claim is acquired via atomic
     assert(m_available.load(std::memory_order_relaxed) == false);
-    //++(*m_all_tasks); already incremented
     ++m_ntasks;
 #if defined(PTL_USE_LOCKS)
     AutoLock lk{ m_mutex };

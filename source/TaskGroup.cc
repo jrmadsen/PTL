@@ -40,6 +40,8 @@
 
 namespace PTL
 {
+namespace internal
+{
 std::atomic_uintmax_t&
 task_group_counter()
 {
@@ -54,6 +56,13 @@ get_default_threadpool()
         return TaskRunManager::GetMasterRunManager()->GetThreadPool();
     return nullptr;
 }
+
+intmax_t
+get_task_depth()
+{
+    return (ThreadData::GetInstance()) ? ThreadData::GetInstance()->task_depth : 0;
+}
+}  // namespace internal
 }  // namespace PTL
 
 //======================================================================================//

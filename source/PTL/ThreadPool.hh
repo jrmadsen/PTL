@@ -81,7 +81,7 @@ public:
     using task_type    = VTask;
     using lock_t       = std::shared_ptr<Mutex>;
     using condition_t  = std::shared_ptr<Condition>;
-    using task_pointer = task_type*;
+    using task_pointer = std::shared_ptr<task_type>;
     using task_queue_t = VUserTaskQueue;
     // containers
     typedef std::deque<ThreadId>          thread_list_t;
@@ -97,8 +97,8 @@ public:
 public:
     // Constructor and Destructors
     ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-               bool _use_affinity     = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               const affinity_func_t& = [](intmax_t) {
+               bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               affinity_func_t    = [](intmax_t) {
                    static std::atomic<intmax_t> assigned;
                    intmax_t                     _assign = assigned++;
                    return _assign % Thread::hardware_concurrency();
@@ -137,7 +137,7 @@ public:
 
 public:
     // add tasks for threads to process
-    size_type add_task(task_pointer task, int bin = -1);
+    size_type add_task(task_pointer&& task, int bin = -1);
     // size_type add_thread_task(ThreadId id, task_pointer&& task);
     // add a generic container with iterator
     template <typename ListT>
@@ -205,8 +205,8 @@ public:
 
 protected:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
-    int  insert(const task_pointer&, int = -1);
-    int  run_on_this(task_pointer);
+    int  insert(task_pointer&&, int = -1);
+    int  run_on_this(task_pointer&&);
 
 protected:
     // called in THREAD INIT
@@ -232,11 +232,11 @@ private:
     bool             m_delete_task_queue = false;
     int              m_verbose           = GetEnv<int>("PTL_VERBOSE", 0);
     size_type        m_pool_size         = 0;
-    ThreadId         m_main_tid;
-    atomic_bool_type m_alive_flag    = std::make_shared<std::atomic_bool>(false);
-    pool_state_type  m_pool_state    = std::make_shared<std::atomic_short>(0);
-    atomic_int_type  m_thread_awake  = std::make_shared<std::atomic_uintmax_t>();
-    atomic_int_type  m_thread_active = std::make_shared<std::atomic_uintmax_t>();
+    ThreadId         m_main_tid          = ThisThread::get_id();
+    atomic_bool_type m_alive_flag        = std::make_shared<std::atomic_bool>(false);
+    pool_state_type  m_pool_state        = std::make_shared<std::atomic_short>(0);
+    atomic_int_type  m_thread_awake      = std::make_shared<std::atomic_uintmax_t>();
+    atomic_int_type  m_thread_active     = std::make_shared<std::atomic_uintmax_t>();
 
     // locks
     lock_t m_task_lock = std::make_shared<Mutex>();
@@ -348,17 +348,14 @@ ThreadPool::resize(size_type _n)
 }
 //--------------------------------------------------------------------------------------//
 inline int
-ThreadPool::run_on_this(task_pointer _task)
+ThreadPool::run_on_this(task_pointer&& _task)
 {
-    auto _func = [_task]() {
-        (*_task)();
-        if(!_task->is_grouped())
-            delete _task;
-    };
+    auto&& _func = [_task]() { (*_task)(); };
 
     if(m_tbb_tp && m_tbb_task_group)
     {
-        m_tbb_task_group->run(_func);
+        auto _arena = get_task_arena();
+        _arena->execute([=]() { m_tbb_task_group->run(_func); });
     }
     else
     {
@@ -369,28 +366,24 @@ ThreadPool::run_on_this(task_pointer _task)
 }
 //--------------------------------------------------------------------------------------//
 inline int
-ThreadPool::insert(const task_pointer& task, int bin)
+ThreadPool::insert(task_pointer&& task, int bin)
 {
     static thread_local ThreadData* _data = ThreadData::GetInstance();
 
     // pass the task to the queue
-    auto ibin = get_valid_queue(m_task_queue)->InsertTask(task, _data, bin);
+    auto ibin = get_valid_queue(m_task_queue)->InsertTask(std::move(task), _data, bin);
     notify();
     return ibin;
 }
 //--------------------------------------------------------------------------------------//
 inline ThreadPool::size_type
-ThreadPool::add_task(task_pointer task, int bin)
+ThreadPool::add_task(task_pointer&& task, int bin)
 {
-    // if not native (i.e. TBB) then return
-    if(!task->is_native_task())
-        return 0;
+    // if not native (i.e. TBB) or we haven't built thread-pool, just execute
+    if(m_tbb_tp || !task->is_native_task() || !m_alive_flag->load())
+        return static_cast<size_type>(run_on_this(std::move(task)));
 
-    // if we haven't built thread-pool, just execute
-    if(!m_alive_flag->load())
-        return static_cast<size_type>(run_on_this(task));
-
-    return static_cast<size_type>(insert(task, bin));
+    return static_cast<size_type>(insert(std::move(task), bin));
 }
 //--------------------------------------------------------------------------------------//
 template <typename ListT>

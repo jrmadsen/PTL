@@ -32,36 +32,36 @@
 //============================================================================//
 
 template <typename TaskGroup_t>
-uint64_t
-task_fibonacci(const uint64_t& n, const uint64_t& cutoff)
+int64_t
+task_fibonacci(const int64_t& n, const int64_t& cutoff)
 {
     if(n < 2)
         return n;
 
-    uint64_t x, y;
-    auto     g = new TaskGroup_t{};
+    int64_t     x = 0;
+    int64_t     y = 0;
+    TaskGroup_t g{};
     ++task_group_cnt();
     if(n >= cutoff)
     {
-        g->run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-        g->run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
+        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
     }
     else
     {
-        g->run([&]() { x = fibonacci(n - 1); });
-        g->run([&]() { y = fibonacci(n - 2); });
+        g.run([&]() { x = fibonacci(n - 1); });
+        g.run([&]() { y = fibonacci(n - 2); });
     }
     // wait for both tasks to complete
-    g->wait();
-    delete g;
+    g.wait();
     return x + y;
 }
 
 //============================================================================//
 
 void
-execute_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
-                   uint64_t& remaining)
+execute_iterations(int64_t num_iter, TaskGroup_t* task_group, int64_t n,
+                   int64_t& remaining)
 {
     if(!task_group)
         return;
@@ -83,8 +83,7 @@ execute_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
     t.Start();
     for(uint32_t i = 0; i < num_iter; ++i)
     {
-        int offset = get_random_int();
-        task_group->exec(fibonacci, n + offset);
+        task_group->exec(fibonacci, n + get_random_int());
     }
     t.Stop();
     cout << " " << t << endl;
@@ -133,13 +132,13 @@ main(int argc, char** argv)
                                             "Setting RNG range to +/- this value");
     unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
                                            "Getting the number of threads");
-    uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
-                                     "Setting the centerpoint of fib work distribution");
-    uint64_t grainsize  = GetEnv<uint64_t>(
+    int64_t  nfib       = GetEnv<int64_t>("FIBONACCI", default_fib,
+                                   "Setting the centerpoint of fib work distribution");
+    int64_t  grainsize  = GetEnv<int64_t>(
         "GRAINSIZE", numThreads, "Dividing number of task into grain of this size");
-    uint64_t num_iter = numThreads * numThreads;
-    uint64_t num_groups =
-        GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
+    int64_t num_iter = numThreads * numThreads;
+    int64_t num_groups =
+        GetEnv<int64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
 
     cutoff_value = GetEnv<long>("CUTOFF_VALUE", cutoff_value);
     cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_value);
@@ -171,9 +170,8 @@ main(int argc, char** argv)
     int64_t fib_async = 0;
     {
         singleTimer.Start();
-        std::future<intmax_t> fib_tmp =
-            taskManager->async<intmax_t>(fibonacci, cutoff_value);
-        fib_async = fib_tmp.get();
+        auto fib_tmp = taskManager->async<intmax_t>(fibonacci, cutoff_value);
+        fib_async    = fib_tmp->get();
         singleTimer.Stop();
 
         cout << prefix << "[async test] fibonacci(" << cutoff_value << ") * "
@@ -296,7 +294,7 @@ main(int argc, char** argv)
     ///                                                                      ///
     ///======================================================================///
     // this function joins task results
-    auto join = [&](Array_t& ref, const uint64_t& thread_local_solution) {
+    auto join = [&](Array_t& ref, const int64_t& thread_local_solution) {
         true_answer += thread_local_solution;
         // ref.push_back(thread_local_solution);
         ref.push_back(thread_local_solution);
@@ -317,11 +315,11 @@ main(int argc, char** argv)
     //------------------------------------------------------------------------//
     std::vector<TaskGroup_t*> task_groups(num_groups, nullptr);
     std::vector<Array_t>      results(num_groups);
-    uint64_t                  remaining = num_iter;
+    int64_t                   remaining = num_iter;
 
     while(remaining > 0)
     {
-        for(uint64_t i = 0; i < task_groups.size(); ++i)
+        for(size_t i = 0; i < task_groups.size(); ++i)
         {
             // wait for task group to finish (does join) before delete + create
             append(results[i], task_groups[i]);
@@ -333,7 +331,7 @@ main(int argc, char** argv)
             execute_iterations(grainsize, task_groups[i], nfib, remaining);
 
             // wait for old task groups to finish (does join)
-            if(i + 1 < num_groups)
+            if(i + 1 < static_cast<size_t>(num_groups))
                 append(results[i + 1], task_groups[i + 1]);
 
             if(remaining == 0)
@@ -342,11 +340,11 @@ main(int argc, char** argv)
     }
 
     // make sure all task groups finished (does join)
-    for(uint64_t i = 0; i < task_groups.size(); ++i)
+    for(size_t i = 0; i < task_groups.size(); ++i)
         append(results[i], task_groups[i]);
 
     // compute the anser
-    uint64_t answer = 0;
+    int64_t answer = 0;
     for(auto& itr : results)
     {
         answer += compute_sum(itr);

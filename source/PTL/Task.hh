@@ -58,36 +58,26 @@ public:
 public:
     // pass a free function pointer
     template <typename FuncT>
-    PackagedTask(FuncT&& func, Args... args)
-    : VTask()
-    , m_ptask(std::forward<FuncT>(func))
-    , m_args(args...)
-    {}
-
-    template <typename TaskGroupT, typename FuncT>
-    PackagedTask(TaskGroupT* tg, FuncT&& func, Args... args)
-    : VTask(tg)
-    , m_ptask(std::forward<FuncT>(func))
-    , m_args(args...)
+    PackagedTask(FuncT func, Args... args)
+    : VTask{ true, 0 }
+    , m_ptask{ std::move(func) }
+    , m_args{ args... }
     {}
 
     template <typename FuncT>
-    PackagedTask(ThreadPool* _pool, FuncT&& func, Args... args)
-    : VTask(_pool)
-    , m_ptask(std::forward<FuncT>(func))
-    , m_args(args...)
+    PackagedTask(bool _is_native, intmax_t _depth, FuncT func, Args... args)
+    : VTask{ _is_native, _depth }
+    , m_ptask{ std::move(func) }
+    , m_args{ args... }
     {}
 
     virtual ~PackagedTask() {}
 
 public:
     // execution operator
-    virtual void operator()() override
-    {
-        mpl::apply(std::move(m_ptask), std::move(m_args));
-    }
-    future_type  get_future() { return m_ptask.get_future(); }
-    virtual bool is_native_task() const override { return true; }
+    virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
+    inline future_type get_future() { return m_ptask.get_future(); }
+    inline RetT        get() { return get_future().get(); }
 
 private:
     packaged_task_type m_ptask;
@@ -110,24 +100,17 @@ public:
 
 public:
     template <typename FuncT>
-    Task(FuncT&& func, Args... args)
-    : VTask()
-    , m_ptask(std::forward<FuncT>(func))
-    , m_args(args...)
-    {}
-
-    template <typename TaskGroupT, typename FuncT>
-    Task(TaskGroupT* tg, FuncT&& func, Args... args)
-    : VTask(tg)
-    , m_ptask(std::forward<FuncT>(func))
-    , m_args(args...)
+    Task(FuncT func, Args... args)
+    : VTask{}
+    , m_ptask{ std::move(func) }
+    , m_args{ args... }
     {}
 
     template <typename FuncT>
-    Task(ThreadPool* tp, FuncT&& func, Args... args)
-    : VTask(tp)
-    , m_ptask(std::forward<FuncT>(func))
-    , m_args(args...)
+    Task(bool _is_native, intmax_t _depth, FuncT func, Args... args)
+    : VTask{ _is_native, _depth }
+    , m_ptask{ std::move(func) }
+    , m_args{ args... }
     {}
 
     virtual ~Task() {}
@@ -135,9 +118,8 @@ public:
 public:
     // execution operator
     virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
-
-    virtual bool is_native_task() const override { return true; }
-    future_type  get_future() { return m_ptask.get_future(); }
+    inline future_type get_future() { return m_ptask.get_future(); }
+    inline RetT        get() { return get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};
@@ -159,31 +141,24 @@ public:
 
 public:
     template <typename FuncT>
-    Task(FuncT&& func)
+    Task(FuncT func)
     : VTask()
-    , m_ptask(std::forward<FuncT>(func))
-    {}
-
-    template <typename TaskGroupT, typename FuncT>
-    Task(TaskGroupT* tg, FuncT&& func)
-    : VTask(tg)
-    , m_ptask(std::forward<FuncT>(func))
+    , m_ptask{ std::move(func) }
     {}
 
     template <typename FuncT>
-    Task(ThreadPool* tp, FuncT&& func)
-    : VTask(tp)
-    , m_ptask(std::forward<FuncT>(func))
+    Task(bool _is_native, intmax_t _depth, FuncT func)
+    : VTask{ _is_native, _depth }
+    , m_ptask{ std::move(func) }
     {}
 
     virtual ~Task() {}
 
 public:
     // execution operator
-    virtual void operator()() final { m_ptask(); }
-
-    virtual bool is_native_task() const override { return true; }
-    future_type  get_future() { return m_ptask.get_future(); }
+    virtual void       operator()() final { m_ptask(); }
+    inline future_type get_future() { return m_ptask.get_future(); }
+    inline RetT        get() { return get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};
@@ -205,31 +180,24 @@ public:
 
 public:
     template <typename FuncT>
-    explicit Task(FuncT&& func)
+    explicit Task(FuncT func)
     : VTask()
-    , m_ptask(std::forward<FuncT>(func))
-    {}
-
-    template <typename TaskGroupT, typename FuncT>
-    Task(TaskGroupT* tg, FuncT&& func)
-    : VTask(tg)
-    , m_ptask(std::forward<FuncT>(func))
+    , m_ptask{ std::move(func) }
     {}
 
     template <typename FuncT>
-    Task(ThreadPool* tp, FuncT&& func)
-    : VTask(tp)
-    , m_ptask(std::forward<FuncT>(func))
+    Task(bool _is_native, intmax_t _depth, FuncT func)
+    : VTask{ _is_native, _depth }
+    , m_ptask{ std::move(func) }
     {}
 
     virtual ~Task() {}
 
 public:
     // execution operator
-    virtual void operator()() final { m_ptask(); }
-
-    virtual bool is_native_task() const override { return true; }
-    future_type  get_future() { return m_ptask.get_future(); }
+    virtual void       operator()() final { m_ptask(); }
+    inline future_type get_future() { return m_ptask.get_future(); }
+    inline RetT        get() { return get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};

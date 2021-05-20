@@ -160,10 +160,10 @@ using index_type_t = decay_t<decltype(std::get<Idx>(std::declval<Tup>()))>;
 
 template <typename FnT, typename TupleT, size_t... Idx>
 static inline auto
-apply(FnT _func, TupleT _args, impl::index_sequence<Idx...>)
-    -> decltype(std::move(_func)(std::get<Idx>(std::move(_args))...))
+apply(FnT&& _func, TupleT _args, impl::index_sequence<Idx...>)
+    -> decltype(std::forward<FnT>(_func)(std::get<Idx>(std::move(_args))...))
 {
-    return std::move(_func)(std::get<Idx>(std::move(_args))...);
+    return std::forward<FnT>(_func)(std::get<Idx>(std::move(_args))...);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -186,10 +186,11 @@ using index_sequence_for = impl::make_index_sequence<sizeof...(Types)>;
 
 template <typename FnT, typename TupleT>
 static inline void
-apply(FnT&& __f, TupleT&& __t)
+apply(FnT&& _func, TupleT&& _args)
 {
-    constexpr auto N = std::tuple_size<TupleT>::value;
-    impl::apply(std::forward<FnT>(__f), std::forward<TupleT>(__t),
+    using tuple_type = typename std::decay<TupleT>::type;
+    constexpr auto N = std::tuple_size<tuple_type>::value;
+    impl::apply(std::forward<FnT>(_func), std::forward<TupleT>(_args),
                 impl::make_index_sequence<N>{});
 }
 

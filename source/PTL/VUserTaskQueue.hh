@@ -32,6 +32,7 @@
 #include "PTL/Types.hh"
 
 #include <cstddef>
+#include <memory>
 #include <set>
 #include <tuple>
 #include <type_traits>
@@ -46,18 +47,18 @@ class ThreadData;
 class VUserTaskQueue
 {
 public:
-    typedef VTask*                task_pointer;
-    typedef std::atomic<intmax_t> AtomicInt;
-    typedef uintmax_t             size_type;
-    typedef std::function<void()> function_type;
-    typedef std::set<ThreadId>    ThreadIdSet;
+    typedef std::shared_ptr<VTask> task_pointer;
+    typedef std::atomic<intmax_t>  AtomicInt;
+    typedef uintmax_t              size_type;
+    typedef std::function<void()>  function_type;
+    typedef std::set<ThreadId>     ThreadIdSet;
 
 public:
     // Constructor - accepting the number of workers
     explicit VUserTaskQueue(intmax_t nworkers = -1);
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
-    virtual ~VUserTaskQueue();
+    virtual ~VUserTaskQueue() = default;
 
 public:
     // Virtual function for getting a task from the queue
@@ -74,7 +75,7 @@ public:
     //      2. int - sub-queue to inserting into
     // return:
     //      int - subqueue inserted into
-    virtual intmax_t InsertTask(task_pointer, ThreadData* = nullptr,
+    virtual intmax_t InsertTask(task_pointer&&, ThreadData* = nullptr,
                                 intmax_t subq = -1) PTL_NO_SANITIZE_THREAD = 0;
 
     // Overload this function to hold threads

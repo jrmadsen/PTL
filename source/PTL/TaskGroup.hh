@@ -51,11 +51,17 @@
 
 namespace PTL
 {
+namespace internal
+{
 std::atomic_uintmax_t&
 task_group_counter();
 
 ThreadPool*
 get_default_threadpool();
+
+intmax_t
+get_task_depth();
+}  // namespace internal
 
 template <typename Tp, typename Arg = Tp, intmax_t MaxDepth = 0>
 class TaskGroup
@@ -73,7 +79,7 @@ public:
     using atomic_int             = std::atomic_intmax_t;
     using atomic_uint            = std::atomic_uintmax_t;
     using condition_t            = Condition;
-    using task_pointer           = VTask*;
+    using task_pointer           = std::shared_ptr<VTask>;
     using task_list_t            = container_type<task_pointer>;
     using ArgTp                  = decay_t<Arg>;
     using result_type            = Tp;
@@ -95,10 +101,10 @@ public:
 public:
     // Constructor
     template <typename Func>
-    TaskGroup(Func&& _join, ThreadPool* _tp = get_default_threadpool());
+    TaskGroup(Func&& _join, ThreadPool* _tp = internal::get_default_threadpool());
 
     template <typename Up = Tp>
-    TaskGroup(ThreadPool* _tp                           = get_default_threadpool(),
+    TaskGroup(ThreadPool* _tp = internal::get_default_threadpool(),
               enable_if_t<std::is_void<Up>::value, int> = 0);
 
     // Destructor
@@ -115,7 +121,7 @@ public:
 
 public:
     template <typename Up>
-    Up* operator+=(Up* _task);
+    std::shared_ptr<Up> operator+=(std::shared_ptr<Up>&& _task);
 
     // wait to finish
     void wait();
@@ -156,10 +162,10 @@ public:
 
 public:
     template <typename Func, typename... Args>
-    task_type<Args...>* wrap(Func&& func, Args... args)
+    std::shared_ptr<task_type<Args...>> wrap(Func func, Args... args)
     {
-        return operator+=(
-            new task_type<Args...>(this, std::forward<Func>(func), std::move(args)...));
+        return operator+=(std::make_shared<task_type<Args...>>(
+            is_native_task_group(), m_depth, std::move(func), std::move(args)...));
     }
 
     template <typename Func, typename... Args, typename Up = Tp>
@@ -239,13 +245,14 @@ protected:
 protected:
     static int f_verbose;
     // Private variables
-    uintmax_t         m_id       = task_group_counter()++;
+    uintmax_t         m_id       = internal::task_group_counter()++;
+    intmax_t          m_depth    = internal::get_task_depth();
     tid_type          m_main_tid = std::this_thread::get_id();
     atomic_int        m_tot_task_count{ 0 };
-    condition_t       m_task_cond = {};
     lock_t            m_task_lock = {};
+    condition_t       m_task_cond = {};
     join_type         m_join{};
-    ThreadPool*       m_pool           = get_default_threadpool();
+    ThreadPool*       m_pool           = internal::get_default_threadpool();
     tbb_task_group_t* m_tbb_task_group = nullptr;
     task_list_t       m_task_list      = {};
     future_list_t     m_future_list    = {};

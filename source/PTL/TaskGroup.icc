@@ -29,15 +29,14 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
-#pragma once
+#include "PTL/Types.hh"
 
 namespace PTL
 {
 template <typename Tp, typename Arg, intmax_t MaxDepth>
 template <typename Func>
 TaskGroup<Tp, Arg, MaxDepth>::TaskGroup(Func&& _join, ThreadPool* _tp)
-: m_id{ task_group_counter()++ }
-, m_join{ std::forward<Func>(_join) }
+: m_join{ std::forward<Func>(_join) }
 , m_pool{ _tp }
 {
     internal_update();
@@ -47,8 +46,7 @@ template <typename Tp, typename Arg, intmax_t MaxDepth>
 template <typename Up>
 TaskGroup<Tp, Arg, MaxDepth>::TaskGroup(ThreadPool* _tp,
                                         enable_if_t<std::is_void<Up>::value, int>)
-: m_id{ task_group_counter()++ }
-, m_join{ []() {} }
+: m_join{ []() {} }
 , m_pool{ _tp }
 {
     internal_update();
@@ -64,28 +62,37 @@ TaskGroup<Tp, Arg, MaxDepth>::~TaskGroup()
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
 template <typename Up>
-Up*
-TaskGroup<Tp, Arg, MaxDepth>::operator+=(Up* _task)
+std::shared_ptr<Up>
+TaskGroup<Tp, Arg, MaxDepth>::operator+=(std::shared_ptr<Up>&& _task)
 {
     // store in list
-    m_task_list.push_back(_task);
+    // m_task_list.push_back(_task);
     // thread-safe increment of tasks in task group
     operator++();
     // add the future
-    m_future_list.push_back(std::move(_task->get_future()));
+    m_future_list.emplace_back(_task->get_future());
     // return
-    return _task;
+    return std::move(_task);
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
 void
 TaskGroup<Tp, Arg, MaxDepth>::wait()
 {
+    auto _dtor = ScopeDestructor{ [&]() {
+        if(m_tbb_task_group)
+            m_tbb_task_group->wait();
+    } };
+
+    ThreadData* data = ThreadData::GetInstance();
+    if(!data)
+        return;
+
     // if no pool was initially present at creation
     if(!m_pool)
     {
         // check for master MT run-manager
-        m_pool = get_default_threadpool();
+        m_pool = internal::get_default_threadpool();
 
         // if no thread pool created
         if(!m_pool)
@@ -100,10 +107,6 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
             return;
         }
     }
-
-    ThreadData* data = ThreadData::GetInstance();
-    if(!data)
-        return;
 
     ThreadPool*     tpool = (m_pool) ? m_pool : data->thread_pool;
     VUserTaskQueue* taskq = (tpool) ? tpool->get_queue() : data->current_queue;
@@ -220,9 +223,6 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
         std::cerr << ss.str();
         this->wait();
     }
-
-    if(m_tbb_task_group)
-        m_tbb_task_group->wait();
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
@@ -291,7 +291,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
         if(m_tbb_task_group)
         {
             auto _arena = m_pool->get_task_arena();
-            _arena->execute([&]() { m_tbb_task_group->run([_task]() { (*_task)(); }); });
+            _arena->execute([=]() { m_tbb_task_group->run([_task]() { (*_task)(); }); });
         }
         else
         {
@@ -333,7 +333,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
         if(m_tbb_task_group)
         {
             auto _arena = m_pool->get_task_arena();
-            _arena->execute([&]() { m_tbb_task_group->run([_task]() { (*_task)(); }); });
+            _arena->execute([=]() { m_tbb_task_group->run([_task]() { (*_task)(); }); });
         }
         else
         {
@@ -421,9 +421,7 @@ void
 TaskGroup<Tp, Arg, MaxDepth>::clear()
 {
     m_future_list.clear();
-    for(auto& itr : m_task_list)
-        delete itr;
-    m_task_list.clear();
+    // m_task_list.clear();
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
@@ -431,7 +429,7 @@ void
 TaskGroup<Tp, Arg, MaxDepth>::internal_update()
 {
     if(!m_pool)
-        m_pool = get_default_threadpool();
+        m_pool = internal::get_default_threadpool();
 
     if(!m_pool)
     {

@@ -90,7 +90,7 @@ main(int argc, char** argv)
     Backtrace::Enable();
 
     auto hwthreads = std::thread::hardware_concurrency();
-    auto nthreads = hwthreads;
+    auto nthreads  = GetEnv<decltype(hwthreads)>("NUM_THREADS", hwthreads);
     if(argc > 1)
         nthreads = std::stoul(argv[1]) % (hwthreads + 1);
 
@@ -119,7 +119,7 @@ main(int argc, char** argv)
     //                                                                        //
     //------------------------------------------------------------------------//
 
-    std::atomic<int> _all_exec{ 0 };
+    std::atomic<size_t> _all_exec{ 0 };
     tp->execute_on_all_threads([&tids, &_all_exec]() {
         ++_all_exec;
         std::stringstream ss;
@@ -148,11 +148,11 @@ main(int argc, char** argv)
     auto _target_sz = tids.size() / 2 + ((tids.size() % 2 == 0) ? 0 : 1);
     if(_target_sz == 0)
         _target_sz = 1;
-    std::atomic<int> _specific_exec{ 0 };
+    std::atomic<size_t> _specific_exec{ 0 };
     while(tids.size() > _target_sz)
         tids.erase(tids.begin());
 
-    tp->execute_on_specific_threads(tids, [&tids, &_specific_exec]() {
+    tp->execute_on_specific_threads(tids, [&_specific_exec]() {
         ++_specific_exec;
         std::stringstream ss;
         ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed [specific]\n";
@@ -171,26 +171,16 @@ main(int argc, char** argv)
 
     //------------------------------------------------------------------------//
     //                                                                        //
-    //                      Asynchronous examples/tests                       //
-    //                                                                        //
-    //------------------------------------------------------------------------//
-    {
-        long nfib      = 35;
-        auto fib_async = task_manager->async<uint64_t>(fibonacci, nfib);
-        auto fib_n     = fib_async.get();
-        std::cout << "[async test] fibonacci(" << nfib << ") = " << fib_n << std::endl;
-        std::cout << std::endl;
-    }
-
-    //------------------------------------------------------------------------//
-    //                                                                        //
     //                        TaskGroup examples/tests                        //
     //                                                                        //
     //------------------------------------------------------------------------//
     {
-        long     nfib  = 30;
-        uint64_t nloop = 100;
-
+        long     nfib  = std::max<long>(GetEnv<long>("FIBONACCI", 30), 30);
+        long     nloop     = 100;
+        long     ndiv      = 4;
+        long     npart     = nloop / ndiv;
+        long expected = (fibonacci(nfib + 0) * npart) + (fibonacci(nfib + 1) * npart) +
+                        (fibonacci(nfib + 2) * npart) + (fibonacci(nfib + 3) * npart);
         auto join = [](long& lhs, long rhs) {
             std::stringstream ss;
             ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " adding "
@@ -220,9 +210,9 @@ main(int argc, char** argv)
 
         TaskGroup<long> tgf(join);
         TaskGroup<void> tgv;
-        for(uint64_t i = 0; i < nloop; ++i)
+        for(long i = 0; i < nloop; ++i)
         {
-            tgf.exec(fibonacci, nfib + (i % 4));
+            tgf.exec(fibonacci, nfib + (i % ndiv));
             tgv.exec(consume, 100);
             tgv.exec(do_sleep, 50);
             tgv.exec(entry, i + 1);
@@ -231,6 +221,47 @@ main(int argc, char** argv)
         auto ret = tgf.join();
         tgv.join();
         std::cout << "fibonacci(" << nfib << ") * " << nloop << " = " << ret << std::endl;
+        std::cout << std::endl;
+        if(expected != ret)
+        {
+            throw std::runtime_error(std::string{ "Error wrong answer! Expected: " } +
+                                     std::to_string(expected) +
+                                     ". Result: " + std::to_string(ret));
+        }
+    }
+
+    //------------------------------------------------------------------------//
+    //                                                                        //
+    //                      Asynchronous examples/tests                       //
+    //                                                                        //
+    //------------------------------------------------------------------------//
+    {
+        long nfib = std::max<long>(GetEnv<long>("FIBONACCI", 35), 30);
+        std::vector<std::shared_ptr<VTask>> _asyncs{};
+        std::vector<std::future<int64_t>>   _futures{};
+        _asyncs.reserve(nthreads);
+        _futures.reserve(nthreads);
+        Timer _at{};
+        _at.Start();
+        for(decltype(nthreads) i = 0; i < nthreads; ++i)
+        {
+            auto fib_async = task_manager->async<int64_t>(fibonacci, nfib);
+            _futures.emplace_back(fib_async->get_future());
+            _asyncs.emplace_back(fib_async);
+        }
+        std::vector<int64_t> _values{};
+        _values.reserve(nthreads);
+        for(decltype(nthreads) i = 0; i < nthreads; ++i)
+        {
+            _values.emplace_back(_futures.at(i).get());
+        }
+        _at.Stop();
+        for(decltype(nthreads) i = 0; i < nthreads; ++i)
+        {
+            std::cout << "[async test][" << i << "] fibonacci(" << nfib
+                      << ") = " << _values[i] << std::endl;
+        }
+        std::cout << "[async test] " << _at << std::endl;
         std::cout << std::endl;
     }
 

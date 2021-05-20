@@ -136,7 +136,7 @@ public:
     using TaskStack = std::deque<Tp>;
 
     ThreadData(ThreadPool* tp);
-    ~ThreadData();
+    ~ThreadData() = default;
 
     void update();
 

@@ -63,12 +63,7 @@ TaskRunManager::GetInstance(bool useTBB)
 //======================================================================================//
 
 TaskRunManager::TaskRunManager(bool useTBB)
-: m_is_initialized(false)
-, m_verbose(0)
-, m_workers(std::thread::hardware_concurrency())
-, m_task_queue(nullptr)
-, m_thread_pool(nullptr)
-, m_task_manager(nullptr)
+: m_workers(std::thread::hardware_concurrency())
 {
     if(!GetPrivateMasterRunManager(false))
     {
@@ -85,10 +80,6 @@ TaskRunManager::TaskRunManager(bool useTBB)
     ThreadPool::set_use_tbb(useTBB);
     m_workers = GetEnv<uint64_t>("PTL_NUM_THREADS", m_workers);
 }
-
-//======================================================================================//
-
-TaskRunManager::~TaskRunManager() {}
 
 //======================================================================================//
 

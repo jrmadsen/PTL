@@ -138,13 +138,11 @@ ThreadPool::get_this_thread_id()
 //======================================================================================//
 
 ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
-                       bool _use_affinity, const affinity_func_t& _affinity_func)
+                       bool _use_affinity, affinity_func_t _affinity_func)
 : m_use_affinity(_use_affinity)
-, m_tbb_tp(false)
-, m_main_tid(ThisThread::get_id())
 , m_pool_state(std::make_shared<std::atomic_short>(thread_pool::state::NONINIT))
 , m_task_queue(task_queue)
-, m_affinity_func(_affinity_func)
+, m_affinity_func(std::move(_affinity_func))
 {
     auto master_id = get_this_thread_id();
     if(master_id != 0 && m_verbose > 1)
@@ -586,13 +584,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
         auto _task        = _task_queue->GetTask();
         if(_task)
         {
-            bool _is_grouped = _task->is_grouped();
             (*_task)();
-            if(!_is_grouped)
-            {
-                delete _task;
-                _task = nullptr;
-            }
         }
         data->within_task = false;
     }
@@ -705,13 +697,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
             auto _task = _task_queue->GetTask();
             if(_task)
             {
-                bool _is_grouped = _task->is_grouped();
                 (*_task)();
-                if(!_is_grouped)
-                {
-                    delete _task;
-                    _task = nullptr;
-                }
             }
         }
         //----------------------------------------------------------------//

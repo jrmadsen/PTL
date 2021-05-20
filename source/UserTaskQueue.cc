@@ -235,9 +235,9 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
 //======================================================================================//
 
 intmax_t
-UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
+UserTaskQueue::InsertTask(task_pointer&& task, ThreadData* data, intmax_t subq)
 {
-    // skip increment here (handled externally)
+    // increment number of tasks
     ++(*m_ntasks);
 
     bool     spin = m_hold->load(std::memory_order_relaxed);
@@ -267,7 +267,7 @@ UserTaskQueue::InsertTask(task_pointer task, ThreadData* data, intmax_t subq)
         if(task_subq->AcquireClaim())
         {
             // push the task into the bin
-            task_subq->PushTask(task);
+            task_subq->PushTask(std::move(task));
             // release the claim on the bin
             task_subq->ReleaseClaim();
             // return success
@@ -324,9 +324,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
     while(tp->get_active_threads_count() > 0)
         ThisThread::sleep_for(std::chrono::milliseconds(10));
 
-    thread_execute_map_t* thread_execute_map = new thread_execute_map_t();
-
-    std::vector<VTask*> _tasks{};
+    thread_execute_map_t                thread_execute_map{};
+    std::vector<std::shared_ptr<VTask>> _tasks{};
     _tasks.reserve(m_workers + 1);
     AcquireHold();
     for(int i = 0; i < (m_workers + 1); ++i)
@@ -339,7 +338,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
             ScopeDestructor _dtor = tg->get_scope_destructor();
             static Mutex    _mtx;
             _mtx.lock();
-            bool& _executed = (*thread_execute_map)[GetThreadBin()];
+            bool& _executed = thread_execute_map[GetThreadBin()];
             _mtx.unlock();
             if(!_executed)
             {
@@ -351,11 +350,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         };
         //--------------------------------------------------------------------//
 
-        auto _task = tg->wrap(thread_specific_func);
-        //++(*m_ntasks);
-        // TaskSubQueue* task_subq = (*m_subqueues)[i];
-        // task_subq->PushTask(_task);
-        InsertTask(_task, ThreadData::GetInstance(), i);
+        InsertTask(tg->wrap(thread_specific_func), ThreadData::GetInstance(), i);
     }
 
     tp->notify_all();
@@ -367,9 +362,6 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
             << " threads executed function out of " << m_workers << " workers";
         std::cerr << msg.str() << std::endl;
     }
-    delete thread_execute_map;
-    for(auto& itr : _tasks)
-        delete itr;
     ReleaseHold();
 }
 
@@ -429,8 +421,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         if(i == GetThreadBin())
             continue;
 
-        auto _task = tg->wrap(thread_specific_func);
-        InsertTask(_task, ThreadData::GetInstance(), i);
+        InsertTask(tg->wrap(thread_specific_func), ThreadData::GetInstance(), i);
     }
     tp->notify_all();
     int nexecuted = tg->join();

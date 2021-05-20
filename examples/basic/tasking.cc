@@ -24,8 +24,8 @@
 //============================================================================//
 
 void
-execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
-                       uint64_t& remaining, bool verbose = true)
+execute_cpu_iterations(int64_t num_iter, TaskGroup_t* task_group, int64_t n,
+                       int64_t& remaining, bool verbose = true)
 {
     if(!task_group)
         return;
@@ -47,14 +47,13 @@ execute_cpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n,
            << "(" << remaining << " iterations remaining)..." << std::flush;
     }
 
-    TaskManager* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
+    auto taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
     Timer t;
     t.Start();
     for(uint32_t i = 0; i < num_iter; ++i)
     {
-        int offset = get_random_int();
-        taskManager->exec(*task_group, fibonacci, n + offset);
+        taskManager->exec(*task_group, fibonacci, n + get_random_int());
     }
     t.Stop();
     if(verbose)
@@ -103,14 +102,14 @@ main(int argc, char** argv)
                                             "Setting RNG range to +/- this value");
     unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
                                            "Getting the number of threads");
-    uint64_t nfib       = GetEnv<uint64_t>("FIBONACCI", default_fib,
-                                     "Setting the centerpoint of fib work distribution");
-    uint64_t grainsize  = GetEnv<uint64_t>(
+    int64_t  nfib       = GetEnv<int64_t>("FIBONACCI", default_fib,
+                                   "Setting the centerpoint of fib work distribution");
+    int64_t  grainsize  = GetEnv<int64_t>(
         "GRAINSIZE", numThreads, "Dividing number of task into grain of this size");
-    uint64_t num_iter = GetEnv<uint64_t>("NUM_TASKS", numThreads * numThreads,
-                                         "Setting the number of total tasks");
-    uint64_t num_groups =
-        GetEnv<uint64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
+    int64_t num_iter = GetEnv<int64_t>("NUM_TASKS", numThreads * numThreads,
+                                       "Setting the number of total tasks");
+    int64_t num_groups =
+        GetEnv<int64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
 
     cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_high);
     cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
@@ -138,8 +137,8 @@ main(int argc, char** argv)
     //                                                                        //
     //------------------------------------------------------------------------//
     {
-        fuint64_t fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
-        uint64_t  fib_n     = fib_async.get();
+        auto    fib_async = taskManager->async<int64_t>(fibonacci, nfib);
+        int64_t fib_n     = fib_async->get();
         std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- " << rng_range
                   << ") = " << fib_n << std::endl;
         std::cout << std::endl;
@@ -160,10 +159,10 @@ main(int argc, char** argv)
     ///                                                                      ///
     ///======================================================================///
     // this function joins task results
-    auto cpu_join = [&](Array_t& ref, const uint64_t& thread_local_solution) {
+    auto cpu_join = [&](Array_t& ref, const int64_t& thread_local_solution) {
         true_answer += thread_local_solution;
         // ref.push_back(thread_local_solution);
-        ref.push_back(thread_local_solution);
+        ref.emplace_back(thread_local_solution);
         return ref;
     };
     //------------------------------------------------------------------------//
@@ -180,7 +179,7 @@ main(int argc, char** argv)
     };
     //------------------------------------------------------------------------//
     std::vector<TaskGroup_t*> cpu_task_groups(num_groups, nullptr);
-    uint64_t                  remaining = num_iter;
+    int64_t                   remaining = num_iter;
 
     ///======================================================================///
     ///                                                                      ///
@@ -234,7 +233,7 @@ main(int argc, char** argv)
 
     while(remaining > 0)
     {
-        for(uint64_t i = 0; i < cpu_task_groups.size(); ++i)
+        for(size_t i = 0; i < cpu_task_groups.size(); ++i)
         {
             // create the task group
             cpu_create(cpu_task_groups[i]);
@@ -255,7 +254,7 @@ main(int argc, char** argv)
     std::cout << prefix << "CPU completed" << std::endl;
 
     // compute the anser
-    uint64_t cpu_answer = 0;
+    int64_t cpu_answer = 0;
     for(auto& itr : cpu_results)
     {
         cpu_answer += compute_sum(itr);
