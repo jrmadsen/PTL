@@ -114,7 +114,7 @@ typedef int (*thread_unlock)(Mutex*);
 //		a template class "Cache<T>" that required a static
 //		mutex for specific to type T:
 //			AutoLock l(TypeMutex<Cache<T>>());
-template <typename Tp, size_t N = 4, typename MutexTp = Mutex>
+template <typename Tp, typename MutexTp = Mutex, size_t N = 4>
 MutexTp&
 TypeMutex(const unsigned int& _n = 0)
 {

@@ -53,7 +53,7 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
 #if defined(DEBUG)
     if(GetEnv<int>("PTL_VERBOSE", 0) > 3)
     {
-        RecursiveAutoLock l(TypeRecursiveMutex<decltype(std::cout)>());
+        RecursiveAutoLock l(TypeMutex<decltype(std::cout), RecursiveMutex>());
         std::stringstream ss;
         ss << ThreadPool::get_this_thread_id() << "> " << ThisThread::get_id() << " ["
            << __FUNCTION__ << ":" << __LINE__ << "] "
