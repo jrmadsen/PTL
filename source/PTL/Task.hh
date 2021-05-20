@@ -44,8 +44,34 @@ class ThreadPool;
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
+template <typename RetT>
+class TaskFuture : public VTask
+{
+public:
+    typedef std::promise<RetT> promise_type;
+    typedef std::future<RetT>  future_type;
+    typedef RetT               result_type;
+
+public:
+    // pass a free function pointer
+    template <typename... Args>
+    TaskFuture(Args&&... args)
+    : VTask{ std::forward<Args>(args)... }
+    {}
+
+    virtual ~TaskFuture() = default;
+
+public:
+    // execution operator
+    virtual future_type get_future() = 0;
+    virtual RetT        get()        = 0;
+};
+
+//======================================================================================//
+
+/// \brief The task class is supplied to thread_pool.
 template <typename RetT, typename... Args>
-class PackagedTask : public VTask
+class PackagedTask : public TaskFuture<RetT>
 {
 public:
     typedef PackagedTask<RetT, Args...>       this_type;
@@ -59,25 +85,25 @@ public:
     // pass a free function pointer
     template <typename FuncT>
     PackagedTask(FuncT func, Args... args)
-    : VTask{ true, 0 }
+    : TaskFuture<RetT>{ true, 0 }
     , m_ptask{ std::move(func) }
     , m_args{ args... }
     {}
 
     template <typename FuncT>
     PackagedTask(bool _is_native, intmax_t _depth, FuncT func, Args... args)
-    : VTask{ _is_native, _depth }
+    : TaskFuture<RetT>{ _is_native, _depth }
     , m_ptask{ std::move(func) }
     , m_args{ args... }
     {}
 
-    virtual ~PackagedTask() {}
+    virtual ~PackagedTask() = default;
 
 public:
     // execution operator
     virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
-    inline future_type get_future() { return m_ptask.get_future(); }
-    inline RetT        get() { return get_future().get(); }
+    virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask;
@@ -88,7 +114,7 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <typename RetT, typename... Args>
-class Task : public VTask
+class Task : public TaskFuture<RetT>
 {
 public:
     typedef Task<RetT, Args...>               this_type;
@@ -101,25 +127,25 @@ public:
 public:
     template <typename FuncT>
     Task(FuncT func, Args... args)
-    : VTask{}
+    : TaskFuture<RetT>{}
     , m_ptask{ std::move(func) }
     , m_args{ args... }
     {}
 
     template <typename FuncT>
     Task(bool _is_native, intmax_t _depth, FuncT func, Args... args)
-    : VTask{ _is_native, _depth }
+    : TaskFuture<RetT>{ _is_native, _depth }
     , m_ptask{ std::move(func) }
     , m_args{ args... }
     {}
 
-    virtual ~Task() {}
+    virtual ~Task() = default;
 
 public:
     // execution operator
     virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
-    inline future_type get_future() { return m_ptask.get_future(); }
-    inline RetT        get() { return get_future().get(); }
+    virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};
@@ -130,7 +156,7 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <typename RetT>
-class Task<RetT, void> : public VTask
+class Task<RetT, void> : public TaskFuture<RetT>
 {
 public:
     typedef Task<RetT>                 this_type;
@@ -142,23 +168,23 @@ public:
 public:
     template <typename FuncT>
     Task(FuncT func)
-    : VTask()
+    : TaskFuture<RetT>()
     , m_ptask{ std::move(func) }
     {}
 
     template <typename FuncT>
     Task(bool _is_native, intmax_t _depth, FuncT func)
-    : VTask{ _is_native, _depth }
+    : TaskFuture<RetT>{ _is_native, _depth }
     , m_ptask{ std::move(func) }
     {}
 
-    virtual ~Task() {}
+    virtual ~Task() = default;
 
 public:
     // execution operator
-    virtual void       operator()() final { m_ptask(); }
-    inline future_type get_future() { return m_ptask.get_future(); }
-    inline RetT        get() { return get_future().get(); }
+    virtual void        operator()() final { m_ptask(); }
+    virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};
@@ -168,7 +194,7 @@ private:
 
 /// \brief The task class is supplied to thread_pool.
 template <>
-class Task<void, void> : public VTask
+class Task<void, void> : public TaskFuture<void>
 {
 public:
     typedef void                       RetT;
@@ -181,13 +207,13 @@ public:
 public:
     template <typename FuncT>
     explicit Task(FuncT func)
-    : VTask()
+    : TaskFuture<RetT>{}
     , m_ptask{ std::move(func) }
     {}
 
     template <typename FuncT>
     Task(bool _is_native, intmax_t _depth, FuncT func)
-    : VTask{ _is_native, _depth }
+    : TaskFuture<RetT>{ _is_native, _depth }
     , m_ptask{ std::move(func) }
     {}
 
@@ -195,9 +221,9 @@ public:
 
 public:
     // execution operator
-    virtual void       operator()() final { m_ptask(); }
-    inline future_type get_future() { return m_ptask.get_future(); }
-    inline RetT        get() { return get_future().get(); }
+    virtual void        operator()() final { m_ptask(); }
+    virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};

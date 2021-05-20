@@ -64,6 +64,12 @@ TaskGroup<Tp, Arg, MaxDepth>::~TaskGroup()
         if(!_lk.owns_lock())
             _lk.lock();
     }
+
+    if(m_tbb_task_group)
+    {
+        auto _arena = m_pool->get_task_arena();
+        _arena->execute([=]() { m_tbb_task_group->wait(); });
+    }
     delete m_tbb_task_group;
     this->clear();
 }
@@ -73,13 +79,11 @@ template <typename Up>
 std::shared_ptr<Up>
 TaskGroup<Tp, Arg, MaxDepth>::operator+=(std::shared_ptr<Up>&& _task)
 {
-    // store in list
-    // m_task_list.push_back(_task);
     // thread-safe increment of tasks in task group
     operator++();
-    // add the future
-    m_future_list.emplace_back(_task->get_future());
-    // return
+    // copy the shared pointer to abstract instance
+    m_task_list.push_back(_task);
+    // return the derived instance
     return std::move(_task);
 }
 
@@ -89,7 +93,10 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
 {
     auto _dtor = ScopeDestructor{ [&]() {
         if(m_tbb_task_group)
-            m_tbb_task_group->wait();
+        {
+            auto _arena = m_pool->get_task_arena();
+            _arena->execute([=]() { m_tbb_task_group->wait(); });
+        }
     } };
 
     ThreadData* data = ThreadData::GetInstance();
@@ -141,7 +148,7 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
             {
                 if(!taskq->empty())
                 {
-                    task_pointer _task = taskq->GetTask(bin);
+                    auto _task = taskq->GetTask(bin);
                     if(_task)
                         (*_task)();
                 }
@@ -387,6 +394,11 @@ inline Up
 TaskGroup<Tp, Arg, MaxDepth>::join(Up accum)
 {
     this->wait();
+    for(auto& itr : m_task_list)
+    {
+        using RetT = decay_t<decltype(itr->get())>;
+        accum      = std::move(m_join(std::ref(accum), std::forward<RetT>(itr->get())));
+    }
     for(auto& itr : m_future_list)
     {
         using RetT = decay_t<decltype(itr.get())>;
@@ -403,6 +415,8 @@ inline void
 TaskGroup<Tp, Arg, MaxDepth>::join()
 {
     this->wait();
+    for(auto& itr : m_task_list)
+        itr->get();
     for(auto& itr : m_future_list)
         itr.get();
     m_join();
@@ -416,6 +430,11 @@ inline void
 TaskGroup<Tp, Arg, MaxDepth>::join()
 {
     this->wait();
+    for(auto& itr : m_task_list)
+    {
+        using RetT = decay_t<decltype(itr->get())>;
+        m_join(std::forward<RetT>(itr->get()));
+    }
     for(auto& itr : m_future_list)
     {
         using RetT = decay_t<decltype(itr.get())>;
@@ -429,7 +448,7 @@ void
 TaskGroup<Tp, Arg, MaxDepth>::clear()
 {
     m_future_list.clear();
-    // m_task_list.clear();
+    m_task_list.clear();
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>

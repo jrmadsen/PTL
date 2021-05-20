@@ -70,8 +70,6 @@ public:
     //------------------------------------------------------------------------//
     template <typename Up>
     using container_type = std::vector<Up>;
-    template <typename Up>
-    using list_type = std::vector<Up>;
 
     using tid_type               = std::thread::id;
     using size_type              = uintmax_t;
@@ -79,15 +77,15 @@ public:
     using atomic_int             = std::atomic_intmax_t;
     using atomic_uint            = std::atomic_uintmax_t;
     using condition_t            = Condition;
-    using task_pointer           = std::shared_ptr<VTask>;
-    using task_list_t            = container_type<task_pointer>;
     using ArgTp                  = decay_t<Arg>;
     using result_type            = Tp;
+    using task_pointer           = std::shared_ptr<TaskFuture<ArgTp>>;
+    using task_list_t            = container_type<task_pointer>;
     using this_type              = TaskGroup<Tp, Arg, MaxDepth>;
     using promise_type           = std::promise<ArgTp>;
     using future_type            = std::future<ArgTp>;
     using packaged_task_type     = std::packaged_task<ArgTp()>;
-    using future_list_t          = list_type<future_type>;
+    using future_list_t          = container_type<future_type>;
     using join_type              = typename JoinFunction<Tp, Arg>::Type;
     using iterator               = typename future_list_t::iterator;
     using reverse_iterator       = typename future_list_t::reverse_iterator;
@@ -159,6 +157,12 @@ public:
 
     void notify();
     void notify_all();
+
+    void reserve(size_t _n)
+    {
+        m_task_list.reserve(_n);
+        m_future_list.reserve(_n);
+    }
 
 public:
     template <typename Func, typename... Args>

@@ -175,7 +175,10 @@ main(int argc, char** argv)
     // create a task group
     auto cpu_create = [=](TaskGroup_t*& _task_group) {
         if(!_task_group)
+        {
             _task_group = new TaskGroup_t(cpu_join);
+            _task_group->reserve(grainsize);
+        }
     };
     //------------------------------------------------------------------------//
     std::vector<TaskGroup_t*> cpu_task_groups(num_groups, nullptr);
