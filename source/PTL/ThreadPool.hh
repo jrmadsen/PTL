@@ -125,7 +125,7 @@ public:
                                      FuncT&&                          _func);
 
     task_queue_t*  get_queue() const { return m_task_queue; }
-    task_queue_t*& get_valid_queue(task_queue_t*&);
+    task_queue_t*& get_valid_queue(task_queue_t*&) const;
 
     bool is_tbb_threadpool() const { return m_tbb_tp; }
 

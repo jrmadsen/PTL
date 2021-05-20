@@ -56,6 +56,14 @@ TaskGroup<Tp, Arg, MaxDepth>::TaskGroup(ThreadPool* _tp,
 template <typename Tp, typename Arg, intmax_t MaxDepth>
 TaskGroup<Tp, Arg, MaxDepth>::~TaskGroup()
 {
+    {
+        // task will decrement counter and then acquire the lock to notify
+        // condition variable so acquiring lock here will prevent the
+        // task group from being destroyed before this is completed
+        AutoLock _lk{ m_task_lock, std::defer_lock };
+        if(!_lk.owns_lock())
+            _lk.lock();
+    }
     delete m_tbb_task_group;
     this->clear();
 }

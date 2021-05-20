@@ -534,7 +534,7 @@ ThreadPool::stop_thread()
 //======================================================================================//
 
 ThreadPool::task_queue_t*&
-ThreadPool::get_valid_queue(task_queue_t*& _queue)
+ThreadPool::get_valid_queue(task_queue_t*& _queue) const
 {
     if(!_queue)
         _queue = new UserTaskQueue{ static_cast<intmax_t>(m_pool_size) };
