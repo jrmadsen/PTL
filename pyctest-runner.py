@@ -129,7 +129,7 @@ def run_pyctest():
     # Compiler version
     #
     if os.environ.get("CXX") is None:
-        os.environ["CXX"] = helpers.FindExePath("c++")
+        os.environ["CXX"] = os.path.realpath(helpers.FindExePath("c++"))
     cmd = pyct.command([os.environ["CXX"], "-dumpversion"])
     cmd.SetOutputStripTrailingWhitespace(True)
     cmd.Execute()
@@ -143,7 +143,7 @@ def run_pyctest():
         platform.uname()[0],
         helpers.GetSystemVersionInfo(),
         platform.uname()[4],
-        os.path.basename(os.path.realpath(os.environ["CXX"])),
+        os.path.basename(os.environ["CXX"]),
         compiler_version,
     )
 
@@ -180,6 +180,7 @@ def run_pyctest():
             pyct.BUILD_TYPE = "Debug"
     build_opts["BUILD_SHARED_LIBS"] = "ON" if "shared" in args.build_libs else "OFF"
     build_opts["BUILD_STATIC_LIBS"] = "ON" if "static" in args.build_libs else "OFF"
+    pyct.BUILD_NAME = "{} [{}]".format(pyct.BUILD_NAME, pyct.BUILD_TYPE)
 
     # default options
     cmake_args = "-DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON".format(pyct.BUILD_TYPE)
