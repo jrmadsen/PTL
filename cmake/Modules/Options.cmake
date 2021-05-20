@@ -31,18 +31,23 @@ ptl_add_option(PTL_DEVELOPER_INSTALL "Install headers, cmake export, and shared 
 
 ptl_add_option(PTL_USE_TBB "Enable TBB" ON ${_FEATURE})
 ptl_add_option(PTL_USE_GPU "Enable GPU preprocessor" OFF ${_FEATURE})
-# add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
+ptl_add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_CLANG_TIDY "Enable running clang-tidy on" OFF ${_FEATURE})
 ptl_add_option(PTL_USE_COVERAGE "Enable code coverage" OFF ${_FEATURE})
+ptl_add_option(PTL_USE_LOCKS "Enable mutex locking in task subqueues for extra safety" OFF ${_FEATURE})
 # add_option(PTL_USE_PROFILE "Enable profiling" OFF ${_FEATURE})
 
 if(PTL_USE_ARCH)
     ptl_add_option(PTL_USE_AVX512 "Enable AVX-512 flags (if available)" OFF ${_FEATURE})
 endif()
 
+if(PTL_USE_COVERAGE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 if(PTL_USE_SANITIZER)
     ptl_add_feature(PTL_SANITIZER_TYPE "Sanitizer type (-fsanitize=<type>)")
-    set(PTL_SANITIZER_TYPE leak CACHE STRING "Sanitizer type (-fsanitize=<type>)")
+    set(PTL_SANITIZER_TYPE thread CACHE STRING "Sanitizer type (-fsanitize=<type>)")
 endif()
 
 if(PTL_USE_GPU)
@@ -85,23 +90,32 @@ unset(_RPATH_LINK)
 
 # clang-tidy
 if(PTL_USE_CLANG_TIDY)
-    find_program(CLANG_TIDY_COMMAND NAMES clang-tidy)
+    find_program(CLANG_TIDY_COMMAND NAMES
+        clang-tidy
+        clang-tidy-12
+        clang-tidy-11
+        clang-tidy-10
+        clang-tidy-9
+        clang-tidy-8
+        clang-tidy-7)
     ptl_add_feature(CLANG_TIDY_COMMAND "Path to clang-tidy command")
     if(NOT CLANG_TIDY_COMMAND)
         message(WARNING "PTL_USE_CLANG_TIDY is ON but clang-tidy is not found!")
         set(PTL_USE_CLANG_TIDY OFF)
-    else()
-        set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
-
-        # Create a preprocessor definition that depends on .clang-tidy content so
-        # the compile command will change when .clang-tidy changes.  This ensures
-        # that a subsequent build re-runs clang-tidy on all sources even if they
-        # do not otherwise need to be recompiled.  Nothing actually uses this
-        # definition.  We add it to targets on which we run clang-tidy just to
-        # get the build dependency on the .clang-tidy file.
-        file(SHA1 ${PROJECT_SOURCE_DIR}/.clang-tidy clang_tidy_sha1)
-        set(CLANG_TIDY_DEFINITIONS "CLANG_TIDY_SHA1=${clang_tidy_sha1}")
-        unset(clang_tidy_sha1)
     endif()
-    configure_file(${PROJECT_SOURCE_DIR}/.clang-tidy ${PROJECT_SOURCE_DIR}/.clang-tidy COPYONLY)
 endif()
+
+macro(PTL_ACTIVATE_CLANG_TIDY)
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+
+    # Create a preprocessor definition that depends on .clang-tidy content so
+    # the compile command will change when .clang-tidy changes.  This ensures
+    # that a subsequent build re-runs clang-tidy on all sources even if they
+    # do not otherwise need to be recompiled.  Nothing actually uses this
+    # definition.  We add it to targets on which we run clang-tidy just to
+    # get the build dependency on the .clang-tidy file.
+    file(SHA1 ${PROJECT_SOURCE_DIR}/.clang-tidy clang_tidy_sha1)
+    set(CLANG_TIDY_DEFINITIONS "CLANG_TIDY_SHA1=${clang_tidy_sha1}")
+    unset(clang_tidy_sha1)
+    configure_file(${PROJECT_SOURCE_DIR}/.clang-tidy ${PROJECT_SOURCE_DIR}/.clang-tidy COPYONLY)
+endmacro()

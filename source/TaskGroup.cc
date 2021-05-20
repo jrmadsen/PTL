@@ -16,43 +16,53 @@
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-// ------------------------------------------------------------
-// Tasking class header file
+// ---------------------------------------------------------------
+//  Tasking class implementation
 //
 // Class Description:
 //
-// A class to store all TaskAllocator objects in a thread for the sake
-// of cleanly deleting them.
+// This file creates an abstract base class for the grouping the thread-pool
+// tasking system into independently joinable units
 //
-// ------------------------------------------------------------
+// ---------------------------------------------------------------
+// Author: Jonathan Madsen (Feb 13th 2018)
+// ---------------------------------------------------------------
 
-#pragma once
-
+#include "PTL/TaskGroup.hh"
 #include "PTL/Globals.hh"
-#include <vector>
+#include "PTL/Task.hh"
+#include "PTL/TaskRunManager.hh"
+#include "PTL/ThreadData.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/VTask.hh"
+
+//======================================================================================//
 
 namespace PTL
 {
-class TaskAllocatorBase;
-
-class TaskAllocatorList
+namespace internal
 {
-public:  // with description
-    static TaskAllocatorList* GetAllocatorList();
-    static TaskAllocatorList* GetAllocatorListIfExist();
+std::atomic_uintmax_t&
+task_group_counter()
+{
+    static std::atomic_uintmax_t _instance(0);
+    return _instance;
+}
 
-public:
-    ~TaskAllocatorList();
-    void Register(TaskAllocatorBase*);
-    void Destroy(int nStat = 0, int verboseLevel = 0);
-    int  Size() const;
+ThreadPool*
+get_default_threadpool()
+{
+    if(TaskRunManager::GetMasterRunManager())
+        return TaskRunManager::GetMasterRunManager()->GetThreadPool();
+    return nullptr;
+}
 
-private:
-    TaskAllocatorList();
-
-private:
-    static TaskAllocatorList*&      fAllocatorList();
-    std::vector<TaskAllocatorBase*> fList;
-};
-
+intmax_t
+get_task_depth()
+{
+    return (ThreadData::GetInstance()) ? ThreadData::GetInstance()->task_depth : 0;
+}
+}  // namespace internal
 }  // namespace PTL
+
+//======================================================================================//

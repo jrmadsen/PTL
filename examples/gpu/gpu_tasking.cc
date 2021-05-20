@@ -199,8 +199,8 @@ main(int argc, char** argv)
     //                                                                        //
     //------------------------------------------------------------------------//
     {
-        fuint64_t fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
-        uint64_t  fib_n     = fib_async.get();
+        auto     fib_async = taskManager->async<uint64_t>(fibonacci, nfib);
+        uint64_t fib_n     = fib_async->get();
         std::cout << prefix << "[async test] fibonacci(" << nfib << " +/- " << rng_range
                   << ") = " << fib_n << std::endl;
         std::cout << std::endl;

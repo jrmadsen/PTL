@@ -207,7 +207,7 @@ get_this_thread_id()
 // debugging
 #if !defined(PRINT_HERE)
 #    define PRINT_HERE(extra)                                                            \
-        printf("[%lu]> %s@'%s':%i %s\n", get_this_thread_id(), __FUNCTION__, __FILE__,      \
+        printf("[%lu]> %s@'%s':%i %s\n", get_this_thread_id(), __FUNCTION__, __FILE__,   \
                __LINE__, extra)
 #endif
 
@@ -224,8 +224,9 @@ get_this_thread_id()
         {                                                                                \
             auto                          end_time = std::chrono::system_clock::now();   \
             std::chrono::duration<double> elapsed_seconds = end_time - start_time;       \
-            printf("[%li]> %-16s :: %3i of %3i... %5.2f seconds\n", get_this_thread_id(),   \
-                   note, counter, total_count, elapsed_seconds.count());                 \
+            printf("[%li]> %-16s :: %3i of %3i... %5.2f seconds\n",                      \
+                   get_this_thread_id(), note, counter, total_count,                     \
+                   elapsed_seconds.count());                                             \
         }
 #endif
 

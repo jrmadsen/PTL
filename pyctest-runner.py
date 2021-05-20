@@ -11,7 +11,8 @@ import platform
 import traceback
 import warnings
 import multiprocessing as mp
-import pyctest.pyctest as pyctest
+import pyctest.pyctest as pyct
+import pyctest.pycmake as pycm
 import pyctest.helpers as helpers
 
 
@@ -40,6 +41,13 @@ def configure():
         action="store_true",
     )
     parser.add_argument(
+        "--sanitizer-type",
+        help="PTL_SANITIZER_TYPE=<type>",
+        default="leak",
+        type=str,
+        choices=("leak", "thread", "memory", "address"),
+    )
+    parser.add_argument(
         "--static-analysis",
         help="PTL_USE_CLANG_TIDY=ON",
         default=False,
@@ -54,12 +62,24 @@ def configure():
     parser.add_argument(
         "--num-tasks", help="Set the number of tasks", default=65536, type=int
     )
+    parser.add_argument(
+        "--use-locks",
+        help="Enable mutex locking in task subqueues for extra safety",
+        default=None,
+        action="store_true",
+    )
+    parser.add_argument(
+        "--build-libs",
+        help="Set the number of tasks",
+        default=["shared", "static"],
+        type=str,
+        nargs="*",
+        choices=("shared", "static"),
+    )
 
     args = parser.parse_args()
 
-    if os.path.exists(
-        os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")
-    ):
+    if os.path.exists(os.path.join(pyct.BINARY_DIRECTORY, "CMakeCache.txt")):
         from pyctest import cmake_executable as cm
         from pyctest import version_info as _pyctest_version
 
@@ -68,20 +88,30 @@ def configure():
             and _pyctest_version[1] == 0
             and _pyctest_version[2] < 11
         ):
-            cmd = pyctest.command(
-                [cm, "--build", pyctest.BINARY_DIRECTORY, "--target", "clean"]
+            cmd = pyct.command(
+                [cm, "--build", pyct.BINARY_DIRECTORY, "--target", "clean"]
             )
-            cmd.SetWorkingDirectory(pyctest.BINARY_DIRECTORY)
+            cmd.SetWorkingDirectory(pyct.BINARY_DIRECTORY)
             cmd.SetOutputQuiet(True)
             cmd.SetErrorQuiet(True)
             cmd.Execute()
         else:
             from pyctest.cmake import CMake
 
-            CMake("--build", pyctest.BINARY_DIRECTORY, "--target", "clean")
-        helpers.RemovePath(
-            os.path.join(pyctest.BINARY_DIRECTORY, "CMakeCache.txt")
-        )
+            CMake("--build", pyct.BINARY_DIRECTORY, "--target", "clean")
+        helpers.RemovePath(os.path.join(pyct.BINARY_DIRECTORY, "CMakeCache.txt"))
+
+    pyct.set(
+        "CTEST_CUSTOM_COVERAGE_EXCLUDE",
+        ";".join(
+            [
+                "/usr/.*",
+                ".*external/.*",
+                ".*examples/.*",
+                ".*/Backtrace.hh",
+            ]
+        ),
+    )
 
     return args
 
@@ -99,8 +129,8 @@ def run_pyctest():
     # Compiler version
     #
     if os.environ.get("CXX") is None:
-        os.environ["CXX"] = helpers.FindExePath("c++")
-    cmd = pyctest.command([os.environ["CXX"], "-dumpversion"])
+        os.environ["CXX"] = os.path.realpath(helpers.FindExePath("c++"))
+    cmd = pyct.command([os.environ["CXX"], "-dumpversion"])
     cmd.SetOutputStripTrailingWhitespace(True)
     cmd.Execute()
     compiler_version = cmd.Output()
@@ -108,12 +138,12 @@ def run_pyctest():
     # ----------------------------------------------------------------------- #
     # Set the build name
     #
-    pyctest.BUILD_NAME = "[{}] [{} {} {}] [{} {}]".format(
-        pyctest.GetGitBranch(pyctest.SOURCE_DIRECTORY),
+    pyct.BUILD_NAME = "[{}] [{} {} {}] [{} {}]".format(
+        pyct.GetGitBranch(pyct.SOURCE_DIRECTORY),
         platform.uname()[0],
         helpers.GetSystemVersionInfo(),
         platform.uname()[4],
-        os.path.basename(os.path.realpath(os.environ["CXX"])),
+        os.path.basename(os.environ["CXX"]),
         compiler_version,
     )
 
@@ -126,33 +156,34 @@ def run_pyctest():
         "PTL_USE_SANITIZER": "OFF",
         "PTL_USE_CLANG_TIDY": "OFF",
         "PTL_USE_COVERAGE": "OFF",
+        "PTL_USE_LOCKS": "ON" if args.use_locks else "OFF",
     }
 
     if args.tbb:
-        pyctest.BUILD_NAME = "{} [tbb]".format(pyctest.BUILD_NAME)
+        pyct.BUILD_NAME = "{} [tbb]".format(pyct.BUILD_NAME)
         build_opts["PTL_USE_TBB"] = "ON"
     if args.arch:
-        pyctest.BUILD_NAME = "{} [arch]".format(pyctest.BUILD_NAME)
+        pyct.BUILD_NAME = "{} [arch]".format(pyct.BUILD_NAME)
         build_opts["PTL_USE_ARCH"] = "ON"
     if args.sanitizer:
-        pyctest.BUILD_NAME = "{} [asan]".format(pyctest.BUILD_NAME)
+        pyct.BUILD_NAME = "{} [{}]".format(pyct.BUILD_NAME, args.sanitizer_type)
         build_opts["PTL_USE_SANITIZER"] = "ON"
+        build_opts["PTL_SANITIZER_TYPE"] = args.sanitizer_type
     if args.static_analysis:
         build_opts["PTL_USE_CLANG_TIDY"] = "ON"
     if args.coverage:
         gcov_exe = helpers.FindExePath("gcov")
         if gcov_exe is not None:
-            pyctest.COVERAGE_COMMAND = "{}".format(gcov_exe)
+            pyct.COVERAGE_COMMAND = "{}".format(gcov_exe)
             build_opts["PTL_USE_COVERAGE"] = "ON"
-            warnings.warn(
-                "Forcing build type to 'Debug' when coverage is enabled"
-            )
-            pyctest.BUILD_TYPE = "Debug"
+            warnings.warn("Forcing build type to 'Debug' when coverage is enabled")
+            pyct.BUILD_TYPE = "Debug"
+    build_opts["BUILD_SHARED_LIBS"] = "ON" if "shared" in args.build_libs else "OFF"
+    build_opts["BUILD_STATIC_LIBS"] = "ON" if "static" in args.build_libs else "OFF"
+    pyct.BUILD_NAME = "{} [{}]".format(pyct.BUILD_NAME, pyct.BUILD_TYPE)
 
     # default options
-    cmake_args = "-DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON".format(
-        pyctest.BUILD_TYPE
-    )
+    cmake_args = "-DCMAKE_BUILD_TYPE={} -DPTL_BUILD_EXAMPLES=ON".format(pyct.BUILD_TYPE)
 
     # customized from args
     for key, val in build_opts.items():
@@ -162,15 +193,15 @@ def run_pyctest():
     # how to build the code
     #
     ctest_cmake_cmd = "${CTEST_CMAKE_COMMAND}"
-    pyctest.CONFIGURE_COMMAND = "{} {} {}".format(
-        ctest_cmake_cmd, cmake_args, pyctest.SOURCE_DIRECTORY
+    pyct.CONFIGURE_COMMAND = "{} {} {} {}".format(
+        ctest_cmake_cmd, cmake_args, " ".join(pycm.ARGUMENTS), pyct.SOURCE_DIRECTORY
     )
 
     # ----------------------------------------------------------------------- #
     # how to build the code
     #
-    pyctest.BUILD_COMMAND = "{} --build {} --target all".format(
-        ctest_cmake_cmd, pyctest.BINARY_DIRECTORY
+    pyct.BUILD_COMMAND = "{} --build {} --target all".format(
+        ctest_cmake_cmd, pyct.BINARY_DIRECTORY
     )
 
     # ----------------------------------------------------------------------- #
@@ -178,30 +209,26 @@ def run_pyctest():
     #
     if not args.static_analysis:
         if platform.system() != "Windows":
-            pyctest.BUILD_COMMAND = "{} -- -j{} VERBOSE=1".format(
-                pyctest.BUILD_COMMAND, mp.cpu_count()
+            pyct.BUILD_COMMAND = "{} -- -j{} VERBOSE=1".format(
+                pyct.BUILD_COMMAND, mp.cpu_count()
             )
         else:
-            pyctest.BUILD_COMMAND = "{} -- /MP -A x64".format(
-                pyctest.BUILD_COMMAND
-            )
+            pyct.BUILD_COMMAND = "{} -- /MP -A x64".format(pyct.BUILD_COMMAND)
 
     # ----------------------------------------------------------------------- #
     # how to update the code
     #
     git_exe = helpers.FindExePath("git")
-    pyctest.UPDATE_COMMAND = "{}".format(git_exe)
-    pyctest.set("CTEST_UPDATE_TYPE", "git")
-    pyctest.set("CTEST_GIT_COMMAND", "{}".format(git_exe))
+    pyct.UPDATE_COMMAND = "{}".format(git_exe)
+    pyct.set("CTEST_UPDATE_TYPE", "git")
+    pyct.set("CTEST_GIT_COMMAND", "{}".format(git_exe))
 
     # ----------------------------------------------------------------------- #
     # static analysis
     #
     clang_tidy_exe = helpers.FindExePath("clang-tidy")
     if clang_tidy_exe:
-        pyctest.set(
-            "CMAKE_CXX_CLANG_TIDY", "{};-checks=*".format(clang_tidy_exe)
-        )
+        pyct.set("CMAKE_CXX_CLANG_TIDY", "{};-checks=*".format(clang_tidy_exe))
 
     # ----------------------------------------------------------------------- #
     # find the CTEST_TOKEN_FILE
@@ -209,11 +236,9 @@ def run_pyctest():
     if args.pyctest_token_file is None and args.pyctest_token is None:
         home = helpers.GetHomePath()
         if home is not None:
-            token_path = os.path.join(
-                home, os.path.join(".tokens", "nersc-cdash")
-            )
+            token_path = os.path.join(home, os.path.join(".tokens", "nersc-cdash"))
             if os.path.exists(token_path):
-                pyctest.set("CTEST_TOKEN_FILE", token_path)
+                pyct.set("CTEST_TOKEN_FILE", token_path)
 
     # ----------------------------------------------------------------------- #
     # construct a command
@@ -231,8 +256,8 @@ def run_pyctest():
             mp.cpu_count(), prof_fname, extra
         )
 
-    # pyctest.set("ENV{GCOV_PREFIX}", pyctest.BINARY_DIRECTORY)
-    # pyctest.set("ENV{GCOV_PREFIX_STRIP}", "4")
+    # pyct.set("ENV{GCOV_PREFIX}", pyct.BINARY_DIRECTORY)
+    # pyct.set("ENV{GCOV_PREFIX_STRIP}", "4")
 
     # ----------------------------------------------------------------------- #
     # create tests
@@ -240,9 +265,9 @@ def run_pyctest():
     tasking_suffix = ""
     if args.num_tasks != 65536:
         tasking_suffix = "_{}".format(args.num_tasks)
-    test = pyctest.test()
+    test = pyct.test()
     test.SetName("tasking{}".format(tasking_suffix))
-    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+    test.SetProperty("WORKING_DIRECTORY", pyct.BINARY_DIRECTORY)
     test.SetProperty(
         "ENVIRONMENT",
         test_env_settings(
@@ -254,19 +279,30 @@ def run_pyctest():
     test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./tasking"], args))
 
-    test = pyctest.test()
+    test = pyct.test()
     test.SetName("recursive_tasking")
-    test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
-    test.SetProperty(
-        "ENVIRONMENT", test_env_settings("cpu-prof-recursive-tasking")
-    )
+    test.SetProperty("WORKING_DIRECTORY", pyct.BINARY_DIRECTORY)
+    test.SetProperty("ENVIRONMENT", test_env_settings("cpu-prof-recursive-tasking"))
     test.SetProperty("RUN_SERIAL", "ON")
     test.SetCommand(construct_command(["./recursive_tasking"], args))
 
+    test = pyct.test()
+    test.SetName("minimal")
+    test.SetProperty("WORKING_DIRECTORY", pyct.BINARY_DIRECTORY)
+    test.SetProperty("RUN_SERIAL", "ON")
+    test.SetCommand(construct_command(["./ptl-minimal"], args))
+
     if args.tbb:
-        test = pyctest.test()
+        test = pyct.test()
+        test.SetName("tbb_minimal")
+        test.SetProperty("WORKING_DIRECTORY", pyct.BINARY_DIRECTORY)
+        test.SetProperty("RUN_SERIAL", "ON")
+        test.SetProperty("ENVIRONMENT", "PTL_USE_TBB=ON")
+        test.SetCommand(construct_command(["./ptl-minimal"], args))
+
+        test = pyct.test()
         test.SetName("tbb_tasking{}".format(tasking_suffix))
-        test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+        test.SetProperty("WORKING_DIRECTORY", pyct.BINARY_DIRECTORY)
         test.SetProperty(
             "ENVIRONMENT",
             test_env_settings(
@@ -277,18 +313,18 @@ def run_pyctest():
         test.SetProperty("RUN_SERIAL", "ON")
         test.SetCommand(construct_command(["./tbb_tasking"], args))
 
-        test = pyctest.test()
+        test = pyct.test()
         test.SetName("recursive_tbb_tasking")
-        test.SetProperty("WORKING_DIRECTORY", pyctest.BINARY_DIRECTORY)
+        test.SetProperty("WORKING_DIRECTORY", pyct.BINARY_DIRECTORY)
         test.SetProperty(
             "ENVIRONMENT", test_env_settings("cpu-prof-tbb-recursive-tasking")
         )
         test.SetProperty("RUN_SERIAL", "ON")
         test.SetCommand(construct_command(["./recursive_tbb_tasking"], args))
 
-    pyctest.generate_config(pyctest.BINARY_DIRECTORY)
-    pyctest.generate_test_file(pyctest.BINARY_DIRECTORY)
-    pyctest.run(pyctest.ARGUMENTS, pyctest.BINARY_DIRECTORY)
+    pyct.generate_config(pyct.BINARY_DIRECTORY)
+    pyct.generate_test_file(pyct.BINARY_DIRECTORY)
+    pyct.run(pyct.ARGUMENTS, pyct.BINARY_DIRECTORY)
 
 
 # --------------------------------------------------------------------------- #

@@ -2,6 +2,10 @@
 cmake_policy(SET CMP0053 NEW)
 include(CheckCXXCompilerFlag)
 
+if(PTL_USE_CLANG_TIDY)
+    ptl_activate_clang_tidy()
+endif()
+
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 execute_process(COMMAND
@@ -62,8 +66,14 @@ if(BUILD_SHARED_LIBS)
         EXTRA_ARGS POSITION_INDEPENDENT_CODE ON
                    WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-    target_link_libraries(ptl-shared PUBLIC ptl-external-packages)
-    target_link_libraries(ptl-shared PRIVATE ptl-external-libraries ptl-compile-options)
+    target_link_libraries(ptl-shared PUBLIC
+        ptl-public-options
+        ptl-sanitizer-options
+        ptl-external-packages)
+
+    target_link_libraries(ptl-shared PRIVATE
+        ptl-compile-options
+        ptl-external-libraries)
 
     target_include_directories(ptl-shared INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
@@ -84,8 +94,13 @@ if(BUILD_STATIC_LIBS)
         SOURCES ${ptl_headers} ${ptl_sources}
         EXTRA_ARGS POSITION_INDEPENDENT_CODE ON)
 
-    target_link_libraries(ptl-static PUBLIC ptl-external-packages)
-    target_link_libraries(ptl-static PRIVATE ptl-external-libraries ptl-compile-options)
+    target_link_libraries(ptl-static PUBLIC
+        ptl-public-options
+        ptl-external-packages)
+
+    target_link_libraries(ptl-static PRIVATE
+        ptl-compile-options
+        ptl-external-libraries)
 
     target_include_directories(ptl-static INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>

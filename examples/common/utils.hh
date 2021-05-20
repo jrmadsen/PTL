@@ -88,8 +88,7 @@ using std::string;
 //============================================================================//
 
 // some typedefs to simplify declarations
-typedef std::vector<uint64_t>      Array_t;
-typedef std::future<uint64_t>      fuint64_t;
+typedef std::vector<int64_t>       Array_t;
 typedef std::default_random_engine random_engine_t;
 typedef std::vector<float>         farray_t;
 typedef std::vector<int64_t>       iarray_t;
@@ -112,15 +111,15 @@ static int16_t rng_range = 2;
 // hence why I am using it here
 
 #if defined(USE_TBB_TASKS)
-const bool                                     useTBB = true;
-typedef TBBTaskGroup<Array_t, const uint64_t&> TaskGroup_t;
-typedef tbb::task_group                        VoidGroup_t;
-typedef TBBTaskGroup<long>                     LongGroup_t;
+const bool                                    useTBB = true;
+typedef TBBTaskGroup<Array_t, const int64_t&> TaskGroup_t;
+typedef tbb::task_group                       VoidGroup_t;
+typedef TBBTaskGroup<long>                    LongGroup_t;
 #else
-const bool                                  useTBB = false;
-typedef TaskGroup<Array_t, const uint64_t&> TaskGroup_t;
-typedef TaskGroup<void>                     VoidGroup_t;
-typedef TaskGroup<long>                     LongGroup_t;
+const bool                                 useTBB = false;
+typedef TaskGroup<Array_t, const int64_t&> TaskGroup_t;
+typedef TaskGroup<void, void, 10>          VoidGroup_t;
+typedef TaskGroup<long>                    LongGroup_t;
 #endif
 
 //============================================================================//
@@ -233,18 +232,18 @@ get_random()
 
 //============================================================================//
 
-inline int16_t
-get_random_int(int16_t _range = rng_range)
+inline int64_t
+get_random_int(int64_t _range = rng_range)
 {
-    static thread_local std::uniform_int_distribution<int16_t>* _instance =
-        new std::uniform_int_distribution<int16_t>(-_range, _range);
+    static thread_local std::uniform_int_distribution<int64_t>* _instance =
+        new std::uniform_int_distribution<int64_t>(-_range, _range);
     return (*_instance)(get_engine());
 }
 
 //============================================================================//
 
-inline uint64_t
-fibonacci(const uint64_t& n)
+inline int64_t
+fibonacci(int64_t n)
 {
     return (n < 2) ? n : (fibonacci(n - 1) + fibonacci(n - 2));
 }
@@ -252,7 +251,7 @@ fibonacci(const uint64_t& n)
 //============================================================================//
 
 inline std::atomic_uintmax_t&
-task_group_counter()
+task_group_cnt()
 {
     static std::atomic_uintmax_t _instance(0);
     return _instance;
@@ -260,10 +259,10 @@ task_group_counter()
 
 //============================================================================//
 
-inline uint64_t
+inline int64_t
 compute_sum(const Array_t& arr)
 {
-    uint64_t _sum = 0;
+    int64_t _sum = 0;
     for(const auto& itr : arr)
     {
         _sum += itr;
