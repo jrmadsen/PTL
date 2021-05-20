@@ -33,7 +33,7 @@
 
 template <typename TaskGroup_t>
 int64_t
-task_fibonacci(const int64_t& n, const int64_t& cutoff)
+task_fibonacci(int64_t n, int64_t cutoff)
 {
     if(n < 2)
         return n;
@@ -44,13 +44,13 @@ task_fibonacci(const int64_t& n, const int64_t& cutoff)
     ++task_group_cnt();
     if(n >= cutoff)
     {
-        g.run([&]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
-        g.run([&]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
+        g.run([&x, n, cutoff]() { x = task_fibonacci<TaskGroup_t>(n - 1, cutoff); });
+        g.run([&y, n, cutoff]() { y = task_fibonacci<TaskGroup_t>(n - 2, cutoff); });
     }
     else
     {
-        g.run([&]() { x = fibonacci(n - 1); });
-        g.run([&]() { y = fibonacci(n - 2); });
+        g.run([&x, n]() { x = fibonacci(n - 1); });
+        g.run([&y, n]() { y = fibonacci(n - 2); });
     }
     // wait for both tasks to complete
     g.wait();
