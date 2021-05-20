@@ -70,20 +70,11 @@ Threading::SetThreadId(int value)
 {
     ThreadID = value;
 }
+
 int
 Threading::GetThreadId()
 {
     return ThreadID;
-}
-bool
-Threading::IsWorkerThread()
-{
-    return (ThreadID >= 0);
-}
-bool
-Threading::IsMasterThread()
-{
-    return (ThreadID == MASTER_ID);
 }
 
 //======================================================================================//
@@ -101,24 +92,6 @@ Threading::SetPinAffinity(int cpu, NativeThread& aT)
     ConsumeParameters(cpu, aT);
     return true;
 #endif
-}
-
-//======================================================================================//
-
-int
-Threading::WorkerThreadLeavesPool()
-{
-    return numActThreads--;
-}
-int
-Threading::WorkerThreadJoinsPool()
-{
-    return numActThreads++;
-}
-int
-Threading::GetNumberOfRunningWorkerThreads()
-{
-    return numActThreads.load();
 }
 
 //======================================================================================//

@@ -304,8 +304,8 @@ UserTaskQueue::InsertTask(task_pointer&& task, ThreadData* data, intmax_t subq)
 void
 UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 {
-    typedef TaskGroup<int, int>     task_group_type;
-    typedef std::map<int64_t, bool> thread_execute_map_t;
+    using task_group_type      = TaskGroup<int, int>;
+    using thread_execute_map_t = std::map<int64_t, bool>;
 
     if(!tp->is_alive())
     {
@@ -313,11 +313,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         return;
     }
 
-    auto join_func = [=](int& ref, int i) {
-        ref += i;
-        return ref;
-    };
-    task_group_type* tg = new task_group_type(join_func, tp);
+    task_group_type tg{ [](int& ref, int i) { return (ref += i); }, tp };
 
     // wait for all threads to finish any work
     // NOTE: will cause deadlock if called from a task
@@ -335,7 +331,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 
         //--------------------------------------------------------------------//
         auto thread_specific_func = [&]() {
-            ScopeDestructor _dtor = tg->get_scope_destructor();
+            ScopeDestructor _dtor = tg.get_scope_destructor();
             static Mutex    _mtx;
             _mtx.lock();
             bool& _executed = thread_execute_map[GetThreadBin()];
@@ -350,11 +346,11 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
         };
         //--------------------------------------------------------------------//
 
-        InsertTask(tg->wrap(thread_specific_func), ThreadData::GetInstance(), i);
+        InsertTask(tg.wrap(thread_specific_func), ThreadData::GetInstance(), i);
     }
 
     tp->notify_all();
-    int nexecuted = tg->join();
+    int nexecuted = tg.join();
     if(nexecuted != m_workers)
     {
         std::stringstream msg;
@@ -371,14 +367,10 @@ void
 UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
                                         function_type func)
 {
-    typedef TaskGroup<int, int>     task_group_type;
-    typedef std::map<int64_t, bool> thread_execute_map_t;
+    using task_group_type      = TaskGroup<int, int>;
+    using thread_execute_map_t = std::map<int64_t, bool>;
 
-    auto join_func = [=](int& ref, int i) {
-        ref += i;
-        return ref;
-    };
-    task_group_type* tg = new task_group_type(join_func, tp);
+    task_group_type tg{ [](int& ref, int i) { return (ref += i); }, tp };
 
     // wait for all threads to finish any work
     // NOTE: will cause deadlock if called from a task
@@ -391,16 +383,16 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         return;
     }
 
-    thread_execute_map_t* thread_execute_map = new thread_execute_map_t();
+    thread_execute_map_t thread_execute_map{};
 
     //========================================================================//
     // wrap the function so that it will only be executed if the thread
     // has an ID in the set
-    auto thread_specific_func = [=]() {
-        ScopeDestructor _dtor = tg->get_scope_destructor();
+    auto thread_specific_func = [&]() {
+        ScopeDestructor _dtor = tg.get_scope_destructor();
         static Mutex    _mtx;
         _mtx.lock();
-        bool& _executed = (*thread_execute_map)[GetThreadBin()];
+        bool& _executed = thread_execute_map[GetThreadBin()];
         _mtx.unlock();
         if(!_executed && tid_set.count(ThisThread::get_id()) > 0)
         {
@@ -421,10 +413,10 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         if(i == GetThreadBin())
             continue;
 
-        InsertTask(tg->wrap(thread_specific_func), ThreadData::GetInstance(), i);
+        InsertTask(tg.wrap(thread_specific_func), ThreadData::GetInstance(), i);
     }
     tp->notify_all();
-    int nexecuted = tg->join();
+    int nexecuted = tg.join();
     if(nexecuted != tid_set.size())
     {
         std::stringstream msg;
@@ -432,7 +424,6 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
             << " threads executed function out of " << tid_set.size() << " workers";
         std::cerr << msg.str() << std::endl;
     }
-    delete thread_execute_map;
     ReleaseHold();
 }
 

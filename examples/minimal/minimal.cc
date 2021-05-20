@@ -109,8 +109,8 @@ main(int argc, char** argv)
 
     // the TaskManager is a utility that wraps the function calls into tasks for the
     // ThreadPool
-    TaskManager* task_manager = run_manager.GetTaskManager();
-    auto tp = task_manager->thread_pool();
+    TaskManager*              task_manager = run_manager.GetTaskManager();
+    auto*                     tp           = task_manager->thread_pool();
     std::set<std::thread::id> tids{};
 
     //------------------------------------------------------------------------//

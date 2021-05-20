@@ -2,6 +2,10 @@
 cmake_policy(SET CMP0053 NEW)
 include(CheckCXXCompilerFlag)
 
+if(PTL_USE_CLANG_TIDY)
+    ptl_activate_clang_tidy()
+endif()
+
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 execute_process(COMMAND

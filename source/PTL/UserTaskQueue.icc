@@ -47,8 +47,8 @@ class VTask;
 class TaskSubQueue
 {
 public:
-    template <typename _Tp>
-    using container = std::deque<_Tp>;
+    template <typename Tp>
+    using container = std::list<Tp>;
 
     typedef std::shared_ptr<VTask>    task_pointer;
     typedef container<task_pointer>   container_type;

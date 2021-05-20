@@ -47,7 +47,7 @@ execute_cpu_iterations(int64_t num_iter, TaskGroup_t* task_group, int64_t n,
            << "(" << remaining << " iterations remaining)..." << std::flush;
     }
 
-    auto taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
+    auto* taskManager = TaskRunManager::GetMasterRunManager()->GetTaskManager();
 
     Timer t;
     t.Start();
