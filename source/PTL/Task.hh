@@ -70,6 +70,7 @@ public:
 public:
     // execution operator
     virtual future_type get_future() = 0;
+    virtual void        wait()       = 0;
     virtual RetT        get()        = 0;
 };
 
@@ -115,6 +116,7 @@ public:
     // execution operator
     virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
     virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual void        wait() final { return m_ptask.get_future().wait(); }
     virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
@@ -167,6 +169,7 @@ public:
             mpl::apply(std::move(m_ptask), std::move(m_args));
     }
     virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual void        wait() final { return m_ptask.get_future().wait(); }
     virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
@@ -212,6 +215,7 @@ public:
     // execution operator
     virtual void        operator()() final { m_ptask(); }
     virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual void        wait() final { return m_ptask.get_future().wait(); }
     virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
@@ -245,7 +249,7 @@ public:
     , m_ptask{ std::move(func) }
     {}
 
-    virtual ~Task() {}
+    virtual ~Task() = default;
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
@@ -257,6 +261,7 @@ public:
     // execution operator
     virtual void        operator()() final { m_ptask(); }
     virtual future_type get_future() final { return m_ptask.get_future(); }
+    virtual void        wait() final { return m_ptask.get_future().wait(); }
     virtual RetT        get() final { return m_ptask.get_future().get(); }
 
 private:

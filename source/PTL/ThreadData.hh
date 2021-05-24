@@ -103,7 +103,7 @@ public:
         (void) reserved_for_masters;
     }
 
-    ~task_arena() {}
+    ~task_arena() = default;
 
     void initialize(int max_concurrency = automatic, unsigned reserved_for_masters = 1);
 

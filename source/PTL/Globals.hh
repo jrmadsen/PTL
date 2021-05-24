@@ -163,6 +163,13 @@ static inline auto
 apply(FnT&& _func, TupleT _args, impl::index_sequence<Idx...>)
     -> decltype(std::forward<FnT>(_func)(std::get<Idx>(std::move(_args))...))
 {
+    // GCC 5.3 warns about unused variable _args when the index sequence is empty
+#if defined(__GNUC__) && (__GNUC__ < 6)
+    if(sizeof...(Idx) == 0)
+    {
+        consume_parameters(_args);
+    }
+#endif
     return std::forward<FnT>(_func)(std::get<Idx>(std::move(_args))...);
 }
 

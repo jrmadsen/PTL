@@ -164,6 +164,6 @@ SetThreadId(int aNewValue);
 
 bool
 SetPinAffinity(int idx, NativeThread& at);
-}  // namespace Threading
 
+}  // namespace Threading
 }  // namespace PTL
