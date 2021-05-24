@@ -43,7 +43,6 @@ using namespace PTL;
 namespace
 {
 thread_local int ThreadID = Threading::MASTER_ID;
-std::atomic_int  numActThreads(0);
 }  // namespace
 
 //======================================================================================//

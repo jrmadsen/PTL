@@ -323,6 +323,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
     thread_execute_map_t                thread_execute_map{};
     std::vector<std::shared_ptr<VTask>> _tasks{};
     _tasks.reserve(m_workers + 1);
+
     AcquireHold();
     for(int i = 0; i < (m_workers + 1); ++i)
     {
@@ -416,7 +417,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         InsertTask(tg.wrap(thread_specific_func), ThreadData::GetInstance(), i);
     }
     tp->notify_all();
-    int nexecuted = tg.join();
+    decltype(tid_set.size()) nexecuted = tg.join();
     if(nexecuted != tid_set.size())
     {
         std::stringstream msg;
