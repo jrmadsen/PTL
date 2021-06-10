@@ -463,7 +463,7 @@ ThreadPool::execute_on_all_threads(FuncT&& _func)
         // number of cores
         size_t _ncore = Threading::GetNumberOfCores();
         // maximum depth for recursion
-        size_t _dmax = std::max<size_t>(_ncore, 8);
+        size_t _dmax = std::max<size_t>(_ncore, 4);
         // how many threads we need to initialize
         size_t _num = std::min(_maxp, std::min(_sz, _ncore));
         // this is the task passed to the task-group
@@ -575,7 +575,7 @@ ThreadPool::execute_on_specific_threads(const std::set<std::thread::id>& _tids,
         // number of cores
         size_t _ncore = Threading::GetNumberOfCores();
         // maximum depth for recursion
-        size_t _dmax = std::max<size_t>(_ncore, 8);
+        size_t _dmax = std::max<size_t>(_ncore, 4);
         // how many threads we need to initialize
         size_t _num = _tids.size();
         // create a task arena

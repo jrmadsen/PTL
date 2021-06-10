@@ -94,17 +94,9 @@ execute_iterations(int64_t num_iter, TaskGroup_t* task_group, int64_t n,
 int
 main(int argc, char** argv)
 {
-#if defined(PTL_USE_TIMEMORY)
-    tim::enable_signal_detection();
-#endif
-
     _pause_collection;  // VTune
     //_heap_profiler_start(get_gperf_filename(argv[0], "heap").c_str());  //
     // gperf
-
-#if defined(PTL_USE_TIMEMORY)
-    tim::manager* manager = tim::manager::instance();
-#endif
 
     ConsumeParameters(argc, argv);
 
@@ -404,10 +396,6 @@ main(int argc, char** argv)
     delete runManager;
 
     //_heap_profiler_stop;
-#if defined(PTL_USE_TIMEMORY)
-    tim::disable_signal_detection();
-#endif
-
     return ret;
 }
 

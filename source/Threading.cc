@@ -42,17 +42,8 @@ using namespace PTL;
 
 namespace
 {
-thread_local int ThreadID = Threading::MASTER_ID;
+thread_local int ThreadID = -1;
 }  // namespace
-
-//======================================================================================//
-
-Pid_t
-Threading::GetPidId()
-{
-    // In multithreaded mode return Thread ID
-    return std::this_thread::get_id();
-}
 
 //======================================================================================//
 

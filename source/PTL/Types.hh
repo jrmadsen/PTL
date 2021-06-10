@@ -80,44 +80,6 @@ struct native
 struct tbb
 {};
 }  // namespace api
-//
-//--------------------------------------------------------------------------------------//
-//
-template <typename Tp, typename Tag = api::native, typename Ptr = std::shared_ptr<Tp>,
-          typename Pair = std::pair<Ptr, Ptr>>
-Pair&
-GetSharedPointerPair()
-{
-    static auto                 _master = std::make_shared<Tp>();
-    static std::atomic<int64_t> _count(0);
-    static thread_local auto    _inst =
-        Pair(_master, Ptr((_count++ == 0) ? nullptr : new Tp()));
-    return _inst;
-}
-//
-//--------------------------------------------------------------------------------------//
-//
-template <typename Tp, typename Tag = api::native, typename Ptr = std::shared_ptr<Tp>,
-          typename Pair = std::pair<Ptr, Ptr>>
-Ptr
-GetSharedPointerPairInstance()
-{
-    static thread_local auto& _pinst = GetSharedPointerPair<Tp, Tag>();
-    static thread_local auto& _inst  = _pinst.second.get() ? _pinst.second : _pinst.first;
-    return _inst;
-}
-//
-//--------------------------------------------------------------------------------------//
-//
-template <typename Tp, typename Tag = api::native, typename Ptr = std::shared_ptr<Tp>,
-          typename Pair = std::pair<Ptr, Ptr>>
-Ptr
-GetSharedPointerPairMasterInstance()
-{
-    static auto& _pinst = GetSharedPointerPair<Tp, Tag>();
-    static auto  _inst  = _pinst.first;
-    return _inst;
-}
 
 //======================================================================================//
 

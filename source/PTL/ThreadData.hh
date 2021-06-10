@@ -135,7 +135,7 @@ public:
     template <typename Tp>
     using TaskStack = std::deque<Tp>;
 
-    ThreadData(ThreadPool* tp);
+    explicit ThreadData(ThreadPool* tp);
     ~ThreadData() = default;
 
     void update();

@@ -62,7 +62,22 @@ get_default_threadpool();
 intmax_t
 get_task_depth();
 }  // namespace internal
-
+//
+/// \class TaskGroup< Tp, Arg, MaxDepth >
+/// \tparam Tp Type that will be returned from join(), i.e. accumulation type
+/// \tparam Arg Type that each task will return
+/// \tparam MaxDepth if greater than zero, than if the task-depth is >= this
+/// value then it will execute the task immediately instead of submitting to the
+/// task-queue
+///
+/// \code{.cpp}
+/// TaskGroup<std::vector<double>, double> tg {
+///     [](std::vector<double>& ret, double val) {
+///         ret.push_back(val); return ret; }
+/// };
+/// \endcode
+///
+///
 template <typename Tp, typename Arg = Tp, intmax_t MaxDepth = 0>
 class TaskGroup
 {

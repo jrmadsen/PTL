@@ -94,7 +94,7 @@ UserTaskQueue::~UserTaskQueue()
 void
 UserTaskQueue::resize(intmax_t n)
 {
-    AutoLock l(m_mutex);
+    AutoLock _lk{ *m_mutex };
     if(m_workers < n)
     {
         while(m_workers < n)
@@ -187,7 +187,7 @@ UserTaskQueue::GetTask(intmax_t subq, intmax_t nitr)
     intmax_t tbin = GetThreadBin();
     intmax_t n    = (subq < 0) ? tbin : subq;
     if(nitr < 1)
-        nitr = (m_workers + 1);  // * m_ntasks->load(std::memory_order_relaxed);
+        nitr = (m_workers + 2);  // * m_ntasks->load(std::memory_order_relaxed);
 
     if(m_hold->load(std::memory_order_relaxed))
     {
@@ -292,9 +292,13 @@ UserTaskQueue::InsertTask(task_pointer&& task, ThreadData* data, intmax_t subq)
     // execute num_workers+2 iterations so the thread checks its bin twice
     while(true)
     {
-        auto _n = (n++) % (m_workers + 1);
-        if(insert_task(_n))
-            return _n;
+        auto _n   = (n++) % (m_workers + 1);
+        auto nitr = (_n == tbin) ? m_workers : 1;
+        for(intmax_t i = 0; i < nitr; ++i)
+        {
+            if(insert_task(_n))
+                return _n;
+        }
     }
     return GetThreadBin();
 }

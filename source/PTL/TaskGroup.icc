@@ -307,7 +307,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
         {
             auto* _arena          = m_pool->get_task_arena();
             auto* _tbb_task_group = m_tbb_task_group;
-            auto* _ptask          = _task.get();
+            auto* _ptask          = _task.get();  // raw pointer to TaskFuture
             _arena->execute([_tbb_task_group, _ptask]() {
                 _tbb_task_group->run([_ptask]() { (*_ptask)(); });
             });

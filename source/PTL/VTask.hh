@@ -53,9 +53,8 @@ class ThreadPool;
 class VTask
 {
 public:
-    typedef std::thread::id       tid_type;
-    typedef size_t                size_type;
-    typedef std::function<void()> void_func_t;
+    typedef std::thread::id tid_type;
+    typedef size_t          size_type;
 
 public:
     VTask(bool _is_native, intmax_t _depth);
@@ -78,9 +77,8 @@ public:
     intmax_t depth() const { return m_depth; }
 
 protected:
-    bool        m_is_native = false;
-    intmax_t    m_depth     = 0;
-    void_func_t m_func      = []() {};
+    bool     m_is_native = false;
+    intmax_t m_depth     = 0;
 };
 
 //======================================================================================//
