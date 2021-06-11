@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "PTL/Config.hh"
+
 #include <cstddef>
 #include <cstdint>
 #include <deque>

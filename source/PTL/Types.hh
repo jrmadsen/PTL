@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "PTL/Config.hh"
+
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
 // Disable warning C4786 on WIN32 architectures:
 // identifier was truncated to '255' characters

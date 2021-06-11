@@ -50,13 +50,3 @@ if(PTL_USE_TBB)
         COMPILE_DEFINITIONS USE_TBB_TASKS)
     target_link_libraries(recursive_tbb_tasking ${EXTERNAL_LIBRARIES})
 endif(PTL_USE_TBB)
-
-
-#----------------------------------------------------------------------------
-# installation
-if(NOT DEFINED PTL_DEVELOPER_INSTALL OR PTL_DEVELOPER_INSTALL)
-    install(TARGETS tasking recursive_tasking DESTINATION bin)
-    if(PTL_USE_TBB)
-        install(TARGETS recursive_tasking recursive_tbb_tasking DESTINATION bin)
-    endif(PTL_USE_TBB)
-endif()

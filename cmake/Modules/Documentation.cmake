@@ -7,7 +7,6 @@
 # root of the source directory)
 
 include(MacroUtilities)
-include(CMakeDependentOption)
 
 #------------------------------------------------------------------------------#
 
@@ -40,7 +39,7 @@ set(AVAILABLE_DOXYGEN_DOC_FORMATS HTML LATEX MAN XML RTF)
 set(_default_on "MAN")
 foreach(_doc_format ${AVAILABLE_DOXYGEN_DOC_FORMATS})
     # find if we want it on
-    STRING(REGEX MATCH "${_doc_format}" SET_TO_ON "${_default_on}")
+    string(REGEX MATCH "${_doc_format}" SET_TO_ON "${_default_on}")
     # if doc format is MAN and it is not a UNIX machine --> turn off
     if("${_doc_format}" STREQUAL "MAN" AND NOT UNIX)
         set(SET_TO_ON "")
@@ -95,7 +94,7 @@ if("${BUILDTREE_DIRS}" STREQUAL "")
     message(FATAL_ERROR "Property PTL_DOCUMENTATION_DIRS is empty")
 endif()
 
-LIST(REMOVE_DUPLICATES BUILDTREE_DIRS)
+list(REMOVE_DUPLICATES BUILDTREE_DIRS)
 
 set(SOURCE_FILES)
 set(EXTENSIONS h hh hpp c cc cpp icc tcc py)
@@ -108,7 +107,6 @@ foreach(_DIR ${BUILDTREE_DIRS})
         unset(_FILES CACHE)
     endforeach()
 endforeach()
-#message(STATUS "source files: ${SOURCE_FILES}")
 
 # Doxyfiles was spaces not semi-colon separated lists
 STRING(REPLACE ";" " " BUILDTREE_DIRS "${BUILDTREE_DIRS}")
@@ -129,7 +127,7 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/Templates/Doxyfile.in
                 @ONLY)
 
 if(${PROJECT_NAME}_HTML_DOCS)
-    FILE(WRITE ${PROJECT_BINARY_DIR}/doc/${PROJECT_NAME}_Documentation.html
+    file(WRITE ${PROJECT_BINARY_DIR}/doc/${PROJECT_NAME}_Documentation.html
         "<meta http-equiv=\"refresh\" content=\"1;url=html/index.html\">")
 endif()
 
@@ -137,25 +135,25 @@ endif()
 # Macro to generate documentation
 # from:
 #   http://www.cmake.org/pipermail/cmake/2007-May/014174.html
-MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
+macro(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
 
-    FIND_PACKAGE(Doxygen)
+    find_package(Doxygen)
     if(NOT Doxygen_FOUND)
      message(STATUS "Doxygen executable cannot be found. Disable ${PROJECT_NAME}_DOXYGEN_DOCS")
 	 return()
     endif()
-    SET(DOXYFILE_FOUND false)
+    set(DOXYFILE_FOUND false)
 
-    IF(EXISTS ${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE})
-        SET(DOXYFILE_FOUND true)
-    ELSE(EXISTS ${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE})
-        MESSAGE(STATUS "Doxygen config file was not found at ${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE}")
-    ENDIF(EXISTS ${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE})
+    if(EXISTS ${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE})
+        set(DOXYFILE_FOUND true)
+    else()
+        message(STATUS "Doxygen config file was not found at ${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE}")
+    endif()
 
-    IF( DOXYGEN_FOUND )
-        IF( DOXYFILE_FOUND )
+    if(DOXYGEN_FOUND)
+        if(DOXYFILE_FOUND)
             # Add target
-            ADD_CUSTOM_TARGET(docs ${DOXYGEN_EXECUTABLE}
+            add_custom_target(docs ${DOXYGEN_EXECUTABLE}
                               "${PROJECT_BINARY_DIR}/doc/${DOXYGEN_CONFIG_FILE}" )
 
             install(DIRECTORY   ${PROJECT_BINARY_DIR}/doc/man/
@@ -182,19 +180,19 @@ MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
                     COMPONENT documentation
             )
 
-        ELSE( DOXYFILE_FOUND )
-            MESSAGE( STATUS "Doxygen configuration file not found - Documentation will not be generated" )
-        ENDIF( DOXYFILE_FOUND )
-    ELSE(DOXYGEN_FOUND)
-        MESSAGE(STATUS "Doxygen not found - Documentation will not be generated")
-    ENDIF(DOXYGEN_FOUND)
+        else()
+            message(STATUS "Doxygen configuration file not found - Documentation will not be generated" )
+        endif()
+    else()
+        message(STATUS "Doxygen not found - Documentation will not be generated")
+    endif()
 
-ENDMACRO(GENERATE_DOCUMENTATION)
+endmacro()
 
 #------------------------------------------------------------------------------#
 # Macro to generate PDF manual from LaTeX using pdflatex
 # assumes manual is in ${CMAKE_SOURCE_DIR}/doc
-MACRO(GENERATE_MANUAL MANUAL_TEX MANUAL_BUILD_PATH EXTRA_FILES_TO_COPY)
+macro(GENERATE_MANUAL MANUAL_TEX MANUAL_BUILD_PATH EXTRA_FILES_TO_COPY)
 
     find_program(PDFLATEX pdflatex)
 
@@ -224,4 +222,4 @@ MACRO(GENERATE_MANUAL MANUAL_TEX MANUAL_BUILD_PATH EXTRA_FILES_TO_COPY)
                             ${MANUAL_BUILD_PATH}
         )
     endif()
-ENDMACRO()
+endmacro()

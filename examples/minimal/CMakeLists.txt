@@ -15,9 +15,3 @@ find_package(PTL REQUIRED)
 #
 add_executable(ptl-minimal minimal.cc)
 target_link_libraries(ptl-minimal PRIVATE PTL::ptl)
-
-#----------------------------------------------------------------------------
-# installation
-if(NOT DEFINED PTL_DEVELOPER_INSTALL OR PTL_DEVELOPER_INSTALL)
-    install(TARGETS ptl-minimal DESTINATION bin)
-endif()

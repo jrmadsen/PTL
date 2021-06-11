@@ -5,11 +5,10 @@ include(FindPackageHandleStandardArgs)
 
 #------------------------------------------------------------------------------#
 
-IF (CMAKE_VERSION VERSION_GREATER 2.8.7)
-  SET (GPerfTools_CHECK_COMPONENTS FALSE)
-ELSE (CMAKE_VERSION VERSION_GREATER 2.8.7)
-  SET (GPerfTools_CHECK_COMPONENTS TRUE)
-ENDIF (CMAKE_VERSION VERSION_GREATER 2.8.7)
+set(GPerfTools_CHECK_COMPONENTS TRUE)
+if(CMAKE_VERSION VERSION_GREATER 2.8.7)
+  set(GPerfTools_CHECK_COMPONENTS FALSE)
+endif()
 
 #------------------------------------------------------------------------------#
 
@@ -25,13 +24,13 @@ set(_GPerfTools_COMPONENT_OPTIONS
 
 #------------------------------------------------------------------------------#
 
-IF("${GPerfTools_FIND_COMPONENTS}" STREQUAL "")
-    IF("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        LIST(APPEND GPerfTools_FIND_COMPONENTS profiler tcmalloc_debug)
-    ELSE()
-        LIST(APPEND GPerfTools_FIND_COMPONENTS tcmalloc_and_profiler)
-    ENDIF()
-ENDIF("${GPerfTools_FIND_COMPONENTS}" STREQUAL "")
+if("${GPerfTools_FIND_COMPONENTS}" STREQUAL "")
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        list(APPEND GPerfTools_FIND_COMPONENTS profiler tcmalloc_debug)
+    else()
+        list(APPEND GPerfTools_FIND_COMPONENTS tcmalloc_and_profiler)
+    endif()
+endif()
 
 #------------------------------------------------------------------------------#
 
@@ -68,58 +67,56 @@ set(GPerfTools_INCLUDE_DIRS ${GPerfTools_INCLUDE_DIR})
 #------------------------------------------------------------------------------#
 # Find components
 
-FOREACH (_GPerfTools_COMPONENT ${GPerfTools_FIND_COMPONENTS})
-    IF(NOT "${_GPerfTools_COMPONENT_OPTIONS}" MATCHES "${_GPerfTools_COMPONENT}")
-        MESSAGE(WARNING "${_GPerfTools_COMPONENT} is not listed as a real component")
-    ENDIF()
+foreach(_GPerfTools_COMPONENT ${GPerfTools_FIND_COMPONENTS})
+    if(NOT "${_GPerfTools_COMPONENT_OPTIONS}" MATCHES "${_GPerfTools_COMPONENT}")
+        message(WARNING "${_GPerfTools_COMPONENT} is not listed as a real component")
+    endif()
 
-    STRING (TOUPPER ${_GPerfTools_COMPONENT} _GPerfTools_COMPONENT_UPPER)
-    SET (_GPerfTools_LIBRARY_BASE GPerfTools_${_GPerfTools_COMPONENT_UPPER}_LIBRARY)
+    string(TOUPPER ${_GPerfTools_COMPONENT} _GPerfTools_COMPONENT_UPPER)
+    set(_GPerfTools_LIBRARY_BASE GPerfTools_${_GPerfTools_COMPONENT_UPPER}_LIBRARY)
 
-    SET (_GPerfTools_LIBRARY_NAME ${_GPerfTools_COMPONENT})
+    set(_GPerfTools_LIBRARY_NAME ${_GPerfTools_COMPONENT})
 
-    FIND_LIBRARY (${_GPerfTools_LIBRARY_BASE}
+    find_library(${_GPerfTools_LIBRARY_BASE}
         NAMES ${_GPerfTools_LIBRARY_NAME}
         HINTS ${GPerfTools_ROOT_DIR}
         PATH_SUFFIXES ${_GPerfTools_POSSIBLE_LIB_SUFFIXES}
         DOC "MKL ${_GPerfTools_COMPONENT} library")
 
-    MARK_AS_ADVANCED (${_GPerfTools_LIBRARY_BASE})
+    mark_as_advanced(${_GPerfTools_LIBRARY_BASE})
 
-    SET (GPerfTools_${_GPerfTools_COMPONENT_UPPER}_FOUND TRUE)
+    set(GPerfTools_${_GPerfTools_COMPONENT_UPPER}_FOUND TRUE)
 
-    IF (NOT ${_GPerfTools_LIBRARY_BASE})
+    if(NOT ${_GPerfTools_LIBRARY_BASE})
         # Component missing: record it for a later report
-        LIST (APPEND _GPerfTools_MISSING_COMPONENTS ${_GPerfTools_COMPONENT})
-        SET (GPerfTools_${_GPerfTools_COMPONENT_UPPER}_FOUND FALSE)
-    ENDIF (NOT ${_GPerfTools_LIBRARY_BASE})
+        list(APPEND _GPerfTools_MISSING_COMPONENTS ${_GPerfTools_COMPONENT})
+        set(GPerfTools_${_GPerfTools_COMPONENT_UPPER}_FOUND FALSE)
+    endif()
 
-    SET (GPerfTools_${_GPerfTools_COMPONENT}_FOUND
+    set(GPerfTools_${_GPerfTools_COMPONENT}_FOUND
         ${GPerfTools_${_GPerfTools_COMPONENT_UPPER}_FOUND})
 
-    IF (${_GPerfTools_LIBRARY_BASE})
+    if(${_GPerfTools_LIBRARY_BASE})
         # setup the GPerfTools_<COMPONENT>_LIBRARIES variable
-        SET (GPerfTools_${_GPerfTools_COMPONENT_UPPER}_LIBRARIES
+        set(GPerfTools_${_GPerfTools_COMPONENT_UPPER}_LIBRARIES
             ${${_GPerfTools_LIBRARY_BASE}})
-        LIST (APPEND GPerfTools_LIBRARIES ${${_GPerfTools_LIBRARY_BASE}})
-    ELSE (${_GPerfTools_LIBRARY_BASE})
-        LIST (APPEND _GPerfTools_MISSING_LIBRARIES ${_GPerfTools_LIBRARY_BASE})
-    ENDIF (${_GPerfTools_LIBRARY_BASE})
-
-ENDFOREACH (_GPerfTools_COMPONENT ${GPerfTools_FIND_COMPONENTS})
+        list(APPEND GPerfTools_LIBRARIES ${${_GPerfTools_LIBRARY_BASE}})
+    else()
+        list(APPEND _GPerfTools_MISSING_LIBRARIES ${_GPerfTools_LIBRARY_BASE})
+    endif()
+endforeach()
 
 
 #----- Missing components
-IF (DEFINED _GPerfTools_MISSING_COMPONENTS AND _GPerfTools_CHECK_COMPONENTS)
-    IF (NOT GPerfTools_FIND_QUIETLY)
-        MESSAGE (STATUS "One or more MKL components were not found:")
+if(DEFINED _GPerfTools_MISSING_COMPONENTS AND _GPerfTools_CHECK_COMPONENTS)
+    if(NOT GPerfTools_FIND_QUIETLY)
+        message(STATUS "One or more MKL components were not found:")
         # Display missing components indented, each on a separate line
-        FOREACH (_GPerfTools_MISSING_COMPONENT ${_GPerfTools_MISSING_COMPONENTS})
-            MESSAGE (STATUS "  " ${_GPerfTools_MISSING_COMPONENT})
-        ENDFOREACH (_GPerfTools_MISSING_COMPONENT ${_GPerfTools_MISSING_COMPONENTS})
-    ENDIF (NOT GPerfTools_FIND_QUIETLY)
-ENDIF (DEFINED _GPerfTools_MISSING_COMPONENTS AND _GPerfTools_CHECK_COMPONENTS)
-
+        foreach(_GPerfTools_MISSING_COMPONENT ${_GPerfTools_MISSING_COMPONENTS})
+            message(STATUS "  " ${_GPerfTools_MISSING_COMPONENT})
+        endforeach()
+    endif()
+endif()
 #------------------------------------------------------------------------------#
 
 mark_as_advanced(GPerfTools_INCLUDE_DIR)

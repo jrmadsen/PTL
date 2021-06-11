@@ -49,13 +49,4 @@ target_link_libraries(${EXE_NAME} PUBLIC
 target_include_directories(${EXE_NAME} PRIVATE
     ${TARGET_INCLUDE_DIRECTORIES})
 
-target_compile_options(${EXE_NAME} PUBLIC
-    $<$<COMPILE_LANGUAGE:C>:${${PROJECT_NAME}_C_FLAGS}>
-    $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
 
-
-#----------------------------------------------------------------------------
-# installation
-if(NOT DEFINED PTL_DEVELOPER_INSTALL OR PTL_DEVELOPER_INSTALL)
-    install(TARGETS ${EXE_NAME} DESTINATION bin)
-endif()
