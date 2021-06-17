@@ -1,52 +1,23 @@
 #----------------------------------------------------------------------------
-# Setup the project
-#
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
-project(PTL_Basic_Examples LANGUAGES C CXX)
-
-
-#----------------------------------------------------------------------------
-# Find PTL project
-#
-find_package(PTL REQUIRED)
-set(EXTERNAL_INCLUDE_DIRS ${PTL_INCLUDE_DIRS})
-set(EXTERNAL_LIBRARIES ${PTL_LIBRARIES})
-include_directories(${EXTERNAL_INCLUDE_DIRS})
-if(NOT DEFINED common_headers)
-    get_filename_component(COMMON_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
-    include_directories(${COMMON_DIR})
-endif()
-
-
-#----------------------------------------------------------------------------
-# Source files
-#
-file(GLOB headers ${CMAKE_CURRENT_LIST_DIR}/*.h ${CMAKE_CURRENT_LIST_DIR}/*.hh)
-
-
-#----------------------------------------------------------------------------
 # standard example
 #
-add_executable(tasking tasking.cc ${headers})
-target_link_libraries(tasking ${EXTERNAL_LIBRARIES})
+add_executable(tasking tasking.cc)
+target_link_libraries(tasking PRIVATE PTL::ptl common)
 
-if(PTL_USE_TBB)
-    add_executable(tbb_tasking tasking.cc ${headers})
-    set_target_properties(tbb_tasking PROPERTIES
-        COMPILE_DEFINITIONS USE_TBB_TASKS)
-    target_link_libraries(tbb_tasking ${EXTERNAL_LIBRARIES})
-endif(PTL_USE_TBB)
-
+if(PTL_TBB_FOUND)
+    add_executable(tbb_tasking tasking.cc)
+    target_compile_definitions(tbb_tasking PRIVATE USE_TBB_TASKS)
+    target_link_libraries(tbb_tasking PTL::ptl common)
+endif()
 
 #----------------------------------------------------------------------------
 # recursive example
 #
-add_executable(recursive_tasking recursive_tasking.cc ${headers})
-target_link_libraries(recursive_tasking ${EXTERNAL_LIBRARIES})
+add_executable(recursive_tasking recursive_tasking.cc)
+target_link_libraries(recursive_tasking PRIVATE PTL::ptl common)
 
-if(PTL_USE_TBB)
-    add_executable(recursive_tbb_tasking recursive_tasking.cc ${headers})
-    set_target_properties(recursive_tbb_tasking PROPERTIES
-        COMPILE_DEFINITIONS USE_TBB_TASKS)
-    target_link_libraries(recursive_tbb_tasking ${EXTERNAL_LIBRARIES})
-endif(PTL_USE_TBB)
+if(PTL_TBB_FOUND)
+    add_executable(recursive_tbb_tasking recursive_tasking.cc)
+    target_compile_definitions(recursive_tbb_tasking PRIVATE USE_TBB_TASKS)
+    target_link_libraries(recursive_tbb_tasking PTL::ptl common)
+endif()
