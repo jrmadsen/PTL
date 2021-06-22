@@ -10,8 +10,9 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion)
 
 # Install Tree
-set(INCLUDE_INSTALL_DIR     ${PTL_INSTALL_INCLUDEDIR})
-set(LIB_INSTALL_DIR         ${PTL_INSTALL_LIBDIR})
+set(INCLUDE_INSTALL_DIR "${PTL_INSTALL_INCLUDEDIR}")
+set(LIB_INSTALL_DIR     "${PTL_INSTALL_LIBDIR}")
+set(CMAKE_MODULE_INSTALL_DIR   "${PTL_INSTALL_CMAKEDIR}/Modules")
 
 configure_package_config_file(
     ${PROJECT_SOURCE_DIR}/cmake/Templates/${PROJECT_NAME}Config.cmake.in
@@ -20,7 +21,8 @@ configure_package_config_file(
     INSTALL_PREFIX ${PTL_INSTALL_PREFIX}
     PATH_VARS
         INCLUDE_INSTALL_DIR
-        LIB_INSTALL_DIR)
+        LIB_INSTALL_DIR
+        CMAKE_MODULE_INSTALL_DIR)
 
 install(FILES ${PROJECT_BINARY_DIR}/installation/${PROJECT_NAME}Config.cmake
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
@@ -33,8 +35,10 @@ install(FILES ${PROJECT_SOURCE_DIR}/cmake/Modules/FindTBB.cmake
 
 
 # Build Tree
-set(INCLUDE_INSTALL_DIR     "${PROJECT_SOURCE_DIR}/source")
-set(LIB_INSTALL_DIR         "${PROJECT_BINARY_DIR}")
+set(INCLUDE_INSTALL_DIR "${PROJECT_SOURCE_DIR}/source")
+set(LIB_INSTALL_DIR     "${PROJECT_BINARY_DIR}")
+set(CMAKE_MODULE_INSTALL_DIR   "${PROJECT_SOURCE_DIR}/cmake/Modules")
+
 configure_package_config_file(
     ${PROJECT_SOURCE_DIR}/cmake/Templates/${PROJECT_NAME}Config.cmake.in
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
@@ -42,7 +46,8 @@ configure_package_config_file(
     INSTALL_PREFIX ${PROJECT_BINARY_DIR}
     PATH_VARS
         INCLUDE_INSTALL_DIR
-        LIB_INSTALL_DIR)
+        LIB_INSTALL_DIR
+        CMAKE_MODULE_INSTALL_DIR)
 
 configure_file(${PROJECT_SOURCE_DIR}/cmake/Templates/${PROJECT_NAME}BuildTargets.cmake
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake COPYONLY)
