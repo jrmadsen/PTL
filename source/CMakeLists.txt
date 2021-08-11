@@ -50,7 +50,7 @@ if(BUILD_SHARED_LIBS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
 
-    if(PTL_USE_SANITIZER AND "${PTL_SANITIZER_TYPE}" STREQUAL "address")
+    if(PTL_USE_SANITIZER AND NOT ("${PTL_SANITIZER_TYPE}" STREQUAL "leak"))
         string(REPLACE " " ";" _sanitize_args "${ptl_sanitize_args}")
         set_target_properties(ptl-shared PROPERTIES
             INTERFACE_LINK_OPTIONS "${_sanitize_args}")
