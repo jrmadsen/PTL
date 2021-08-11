@@ -50,6 +50,11 @@ if(BUILD_SHARED_LIBS)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:${PTL_INSTALL_INCLUDEDIR}>)
 
+    if(PTL_USE_SANITIZER AND "${PTL_SANITIZER_TYPE}" STREQUAL "address")
+        string(REPLACE " " ";" _sanitize_args "${ptl_sanitize_args}")
+        target_link_options(ptl-shared INTERFACE "${_sanitize_args}")
+    endif()
+
     export(TARGETS ptl-shared
         NAMESPACE PTL::
         FILE ${PROJECT_BINARY_DIR}/ptl-shared.cmake)
