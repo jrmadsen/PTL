@@ -52,7 +52,8 @@ if(BUILD_SHARED_LIBS)
 
     if(PTL_USE_SANITIZER AND "${PTL_SANITIZER_TYPE}" STREQUAL "address")
         string(REPLACE " " ";" _sanitize_args "${ptl_sanitize_args}")
-        target_link_options(ptl-shared INTERFACE "${_sanitize_args}")
+        set_target_properties(ptl-shared PROPERTIES
+            INTERFACE_LINK_OPTIONS "${_sanitize_args}")
     endif()
 
     export(TARGETS ptl-shared
