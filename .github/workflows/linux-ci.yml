@@ -32,7 +32,7 @@ jobs:
             build_libs: 'shared'
             compiler: 'clang-12'
             extra_args: '--num-tasks=256 --tbb --sanitizer --sanitizer-type=address --static-analysis'
-            extra_packages: 'clang-tidy-12'
+            extra_packages: 'clang-tidy-12 libasan4 libasan5 libasan6'
             standard: '14'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
