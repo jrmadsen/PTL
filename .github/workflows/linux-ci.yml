@@ -117,5 +117,5 @@ jobs:
         conda activate pyctest &&
         export CMAKE_PREFIX_PATH="${HOME}/ptl-install:${CMAKE_PREFIX_PATH}:${CONDA_PREFIX}" &&
         cmake --build build-PTL --target install &&
-        cmake -B ${HOME}/ptl-examples-build ${PWD}/examples/basic &&
+        cmake -B ${HOME}/ptl-examples-build ${PWD}/examples &&
         cmake --build ${HOME}/ptl-examples-build --target all

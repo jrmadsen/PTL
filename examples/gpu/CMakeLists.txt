@@ -28,11 +28,6 @@ file(GLOB headers ${CMAKE_CURRENT_LIST_DIR}/*.h ${CMAKE_CURRENT_LIST_DIR}/*.hh)
 #
 if(PTL_USE_CUDA)
     #------------------------------------------------------------------------
-    # Configuration for CUDA
-    #
-    include(CudaConfig)
-
-    #------------------------------------------------------------------------
     # Add the executable, and link it to the Tasking libraries
     #
     cuda_add_library(sum STATIC sum.cc sum.h sum.hh sum.cu)

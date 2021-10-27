@@ -151,7 +151,6 @@ def run_pyctest():
     #   build specifications
     #
     build_opts = {
-        "PTL_USE_ARCH": "OFF",
         "PTL_USE_TBB": "OFF",
         "PTL_USE_SANITIZER": "OFF",
         "PTL_USE_CLANG_TIDY": "OFF",

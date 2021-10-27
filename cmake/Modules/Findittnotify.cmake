@@ -9,7 +9,7 @@ set(_ITTNOTIFY_PATH_HINTS)
 
 #------------------------------------------------------------------------------#
 # function to check for hints in environment
-function(_ITTNOTIFY_CHECK_VAR)
+function(_ittnotify_check_var)
     foreach(_VAR ${ARGN})
         if(NOT "$ENV{${_VAR}}" STREQUAL "")
             list(APPEND _HINTS "$ENV{${_VAR}}")
