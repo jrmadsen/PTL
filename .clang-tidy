@@ -38,7 +38,6 @@ readability-*,\
 -readability-static-accessed-through-instance,\
 -readability-const-return-type,\
 -readability-function-cognitive-complexity,\
--header-filter=.*timemory/.*,\
 "
 HeaderFilterRegex: 'source/[^/]*\.(hh|cc)$'
 CheckOptions:

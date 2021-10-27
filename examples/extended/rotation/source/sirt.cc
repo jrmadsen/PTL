@@ -50,13 +50,11 @@ cxx_sirt(const float* data, int dy, int dt, int dx, const float* center,
     int                     count = active++;
 
     START_TIMER(cxx_timer);
-    TIMEMORY_AUTO_TIMER("");
 
     printf("[%lu]> %s : nitr = %i, dy = %i, dt = %i, dx = %i, nx = %i, ny = %i\n",
            get_this_thread_id(), __FUNCTION__, num_iter, dy, dt, dx, ngridx, ngridy);
 
     {
-        TIMEMORY_AUTO_TIMER("");
         // run_algorithm(sirt_cpu, sirt_cuda, data, dy, dt, dx, center, theta, recon,
         // ngridx,
         //              ngridy, num_iter);
@@ -175,8 +173,6 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     init_run_manager(run_man, nthreads);
     TaskManager* task_man = run_man->GetTaskManager();
 
-    TIMEMORY_AUTO_TIMER("");
-
     Mutex       upd_mutex;
     Mutex       sum_mutex;
     uintmax_t   recon_pixels = scast<uintmax_t>(dy * ngridx * ngridy);
@@ -191,7 +187,6 @@ sirt_cpu(const float* data, int dy, int dt, int dx, const float* /*center*/,
     for(int i = 0; i < num_iter; i++)
     {
         START_TIMER(t_start);
-        TIMEMORY_AUTO_TIMER();
 
         // reset global update
         memset(update.data(), 0, recon_pixels * sizeof(float));

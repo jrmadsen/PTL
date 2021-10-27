@@ -71,10 +71,6 @@ main(int argc, char** argv)
 {
     _pause_collection;  // for VTune
 
-#if defined(PTL_USE_TIMEMORY)
-    tim::manager* manager = tim::manager::instance();
-#endif
-
     ConsumeParameters(argc, argv);
 
     auto hwthreads      = std::thread::hardware_concurrency();
