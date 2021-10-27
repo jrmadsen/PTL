@@ -30,7 +30,6 @@
 
 #pragma once
 
-
 #include "PTL/AutoLock.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"

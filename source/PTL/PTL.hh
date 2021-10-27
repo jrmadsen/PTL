@@ -20,6 +20,7 @@
 #pragma once
 
 #include "PTL/AutoLock.hh"
+#include "PTL/Backtrace.hh"
 #include "PTL/Globals.hh"
 #include "PTL/TBBTaskGroup.hh"
 #include "PTL/Task.hh"
@@ -30,7 +31,6 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
 #include "PTL/Timer.hh"
-#include "PTL/Backtrace.hh"
 #include "PTL/Types.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/Utility.hh"
