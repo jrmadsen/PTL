@@ -158,7 +158,6 @@
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/TiMemory.hh"
 #include "PTL/Types.hh"
 #include "PTL/Utility.hh"
 

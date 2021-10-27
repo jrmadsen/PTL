@@ -414,8 +414,6 @@ compute_sum(farray_t& cpu_data)
     static thread_local uint64_t      tid    = ThreadPool::get_this_thread_id();
     static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
 
-    TIMEMORY_AUTO_TIMER("[cuda]");
-
     float _sum = 0.0f;
 
     uintmax_t grainsize = static_cast<uintmax_t>(cuda_max_threads_per_block());
@@ -476,8 +474,6 @@ compute_sum(thrust::host_vector<float>& cpu_data)
 
     static thread_local uint64_t      tid    = ThreadPool::get_this_thread_id();
     static thread_local cudaStream_t& stream = cuda_streams::instance()->get(tid);
-
-    TIMEMORY_AUTO_TIMER("[thrust]");
 
     float*             buffer   = nullptr;
     aligned_ptr<float> gpu_data = aligned_async_malloc_and_memcpy<float, 512>(

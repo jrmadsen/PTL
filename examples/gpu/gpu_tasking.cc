@@ -26,11 +26,6 @@
 #include "common/utils.hh"
 #include "sum.hh"
 
-#if defined(PTL_USE_TIMEMORY)
-#    include "timemory/auto_timer.hpp"
-#    include "timemory/manager.hpp"
-#endif
-
 //============================================================================//
 
 ThreadPool*&
@@ -129,10 +124,6 @@ int
 main(int argc, char** argv)
 {
     _pause_collection;  // for VTune
-
-#if defined(PTL_USE_TIMEMORY)
-    tim::manager* manager = tim::manager::instance();
-#endif
 
     ConsumeParameters(argc, argv);
 
@@ -404,13 +395,6 @@ main(int argc, char** argv)
     std::cout << std::endl;
 
     delete runManager;
-
-#if defined(PTL_USE_TIMEMORY)
-    std::string fname(argv[0]);
-    manager->report(std::cout, true);
-    manager->write_report(fname + ".out");
-    manager->write_json(fname + ".json");
-#endif
 
     return static_cast<int>(ret);
 }
