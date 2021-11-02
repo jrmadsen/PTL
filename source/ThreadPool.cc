@@ -29,12 +29,16 @@
 // ---------------------------------------------------------------
 
 #include "PTL/ThreadPool.hh"
+#include "PTL/Backtrace.hh"
 #include "PTL/Globals.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/VUserTaskQueue.hh"
 
 #include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <sstream>
 
 using namespace PTL;
 
@@ -59,6 +63,37 @@ thread_data()
 {
     return ThreadData::GetInstance();
 }
+
+std::exception_ptr&
+global_exception_ptr()
+{
+    static std::exception_ptr _v = nullptr;
+    return _v;
+}
+
+std::stringstream&
+global_exception_bt()
+{
+    static std::stringstream _v{};
+    return _v;
+}
+
+void
+handle_global_exception_ptr()
+{
+    if(global_exception_ptr())
+    {
+        try
+        {
+            std::rethrow_exception(global_exception_ptr());
+        } catch(std::exception& e)
+        {
+            std::cerr << "Thread exited with exception: " << e.what() << "\n"
+                      << global_exception_bt().str() << std::endl;
+            std::rethrow_exception(std::current_exception());
+        }
+    }
+}
 }  // namespace
 
 //======================================================================================//
@@ -82,10 +117,42 @@ ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
         Threading::SetThreadId(_idx);
         _data->emplace_back(_thr_data);
     }
-    thread_data() = _thr_data.get();
-    tp->record_entry();
-    tp->execute_thread(thread_data()->current_queue);
-    tp->record_exit();
+    try
+    {
+        thread_data() = _thr_data.get();
+        tp->record_entry();
+        tp->execute_thread(thread_data()->current_queue);
+        tp->record_exit();
+    } catch(std::exception& e)
+    {
+        std::cerr << "Thread exited with exception: " << e.what() << std::endl;
+        global_exception_ptr() = std::current_exception();
+#if defined(PTL_SIGNAL_AVAILABLE)
+        std::stringstream os{};
+        auto              bt = Backtrace::GetDemangled<256, 0>(
+            [](const char* _s) { return (_s) ? std::string{ _s } : std::string{}; });
+        char prefix[64];
+        snprintf(prefix, 64, "[PID=%i, TID=%i]", (int) getpid(),
+                 (int) Threading::GetThreadId());
+        size_t sz = 0;
+        for(auto& itr : bt)
+        {
+            if(itr.empty())
+                break;
+            ++sz;
+        }
+        os << "\n" << prefix << " Backtrace:\n";
+        auto _w = std::log10(sz) + 1;
+        for(size_t i = 0; i < sz; ++i)
+        {
+            os << prefix << "[" << std::setw(_w) << std::right << i << '/'
+               << std::setw(_w) << std::right << sz << "]> " << std::left << bt.at(i)
+               << '\n';
+        }
+        global_exception_bt() << os.str() << "\n";
+#endif
+        tp->destroy_threadpool();
+    }
 }
 
 //======================================================================================//
@@ -355,6 +422,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
                   << std::endl;
     }
 
+    handle_global_exception_ptr();
     return m_main_threads.size();
 }
 
@@ -363,6 +431,8 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
 ThreadPool::size_type
 ThreadPool::destroy_threadpool()
 {
+    handle_global_exception_ptr();
+
     // Note: this is not for synchronization, its for thread communication!
     // destroy_threadpool() will only be called from the main thread, yet
     // the modified m_pool_state may not show up to other threads until its
@@ -486,6 +556,8 @@ ThreadPool::destroy_threadpool()
         delete m_task_queue;
         m_task_queue = nullptr;
     }
+
+    handle_global_exception_ptr();
 
     return 0;
 }
