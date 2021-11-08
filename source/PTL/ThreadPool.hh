@@ -94,15 +94,32 @@ public:
     typedef std::function<void()>             initialize_func_t;
     typedef std::function<intmax_t(intmax_t)> affinity_func_t;
 
+    static affinity_func_t& affinity_functor()
+    {
+        static affinity_func_t _v = [](intmax_t) {
+            static std::atomic<intmax_t> assigned;
+            intmax_t                     _assign = assigned++;
+            return _assign % Thread::hardware_concurrency();
+        };
+        return _v;
+    }
+
+    static initialize_func_t& initialization_functor()
+    {
+        static initialize_func_t _v = []() {};
+        return _v;
+    }
+
 public:
     // Constructor and Destructors
     ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
                bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               affinity_func_t    = [](intmax_t) {
-                   static std::atomic<intmax_t> assigned;
-                   intmax_t                     _assign = assigned++;
-                   return _assign % Thread::hardware_concurrency();
-               });
+               affinity_func_t    = affinity_functor(),
+               initialize_func_t  = initialization_functor());
+    ThreadPool(const size_type& pool_size, initialize_func_t,
+               bool             _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               affinity_func_t                = affinity_functor(),
+               VUserTaskQueue* task_queue     = nullptr);
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~ThreadPool();
@@ -149,7 +166,7 @@ public:
     // only relevant when compiled with PTL_USE_TBB
     static tbb_global_control_t*& tbb_global_control();
 
-    void set_initialization(initialize_func_t f) { m_init_func = f; }
+    void set_initialization(initialize_func_t f) { m_init_func = std::move(f); }
     void reset_initialization()
     {
         auto f      = []() {};
@@ -257,8 +274,8 @@ private:
     tbb_task_group_t* m_tbb_task_group = nullptr;
 
     // functions
-    initialize_func_t m_init_func = []() {};
-    affinity_func_t   m_affinity_func;
+    initialize_func_t m_init_func     = initialization_functor();
+    affinity_func_t   m_affinity_func = affinity_functor();
 
 private:
     // Private static variables
