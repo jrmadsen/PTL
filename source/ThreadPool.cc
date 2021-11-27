@@ -32,6 +32,7 @@
 #include "PTL/Globals.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/UserTaskQueue.hh"
+#include "PTL/Utility.hh"
 #include "PTL/VUserTaskQueue.hh"
 
 #include <cstdlib>
@@ -138,11 +139,14 @@ ThreadPool::get_this_thread_id()
 //======================================================================================//
 
 ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
-                       bool _use_affinity, affinity_func_t _affinity_func)
+                       bool _use_affinity, affinity_func_t _affinity_func,
+                       initialize_func_t _init_func, finalize_func_t _fini_func)
 : m_use_affinity(_use_affinity)
 , m_pool_state(std::make_shared<std::atomic_short>(thread_pool::state::NONINIT))
 , m_task_queue(task_queue)
 , m_affinity_func(std::move(_affinity_func))
+, m_init_func(std::move(_init_func))
+, m_fini_func(std::move(_fini_func))
 {
     auto master_id = get_this_thread_id();
     if(master_id != 0 && m_verbose > 1)
@@ -156,6 +160,17 @@ ThreadPool::ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue,
     if(!m_task_queue)
         m_task_queue = new UserTaskQueue(m_pool_size);
 }
+
+ThreadPool::ThreadPool(const size_type& pool_size, initialize_func_t _init_func,
+                       finalize_func_t _fini_func, bool _use_affinity,
+                       affinity_func_t _affinity_func, VUserTaskQueue* task_queue)
+: ThreadPool{ pool_size,
+              task_queue,
+              _use_affinity,
+              std::move(_affinity_func),
+              std::move(_init_func),
+              std::move(_fini_func) }
+{}
 
 //======================================================================================//
 
@@ -552,6 +567,9 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 
     // initialization function
     m_init_func();
+
+    // finalization function (executed when scope is destroyed)
+    Destructor _dtor{ [this]() { m_fini_func(); } };
 
     ThreadId    tid  = ThisThread::get_id();
     ThreadData* data = thread_data();

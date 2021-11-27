@@ -25,6 +25,7 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -360,6 +361,42 @@ PrintEnv(std::ostream& os = std::cout)
 {
     os << (*EnvSettings::GetInstance());
 }
+
+//--------------------------------------------------------------------------------------//
+
+struct Destructor
+{
+    template <typename FuncT>
+    Destructor(FuncT&& _func)
+    : m_functor(std::forward<FuncT>(_func))
+    {}
+
+    // delete copy operations
+    Destructor(const Destructor&) = delete;
+    Destructor& operator=(const Destructor&) = delete;
+
+    // allow move operations
+    Destructor(Destructor&& rhs) noexcept
+    : m_functor(std::move(rhs.m_functor))
+    {
+        rhs.m_functor = []() {};
+    }
+
+    Destructor& operator=(Destructor&& rhs) noexcept
+    {
+        if(this != &rhs)
+        {
+            m_functor     = std::move(rhs.m_functor);
+            rhs.m_functor = []() {};
+        }
+        return *this;
+    }
+
+    ~Destructor() { m_functor(); }
+
+private:
+    std::function<void()> m_functor = []() {};
+};
 
 //--------------------------------------------------------------------------------------//
 
