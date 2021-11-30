@@ -149,7 +149,7 @@ public:
     // only relevant when compiled with PTL_USE_TBB
     static tbb_global_control_t*& tbb_global_control();
 
-    void set_initialization(initialize_func_t f) { m_init_func = f; }
+    void set_initialization(initialize_func_t f) { m_init_func = std::move(f); }
     void reset_initialization()
     {
         auto f      = []() {};
@@ -175,7 +175,7 @@ public:
         return (m_thread_awake) ? m_thread_awake->load() : 0;
     }
 
-    void set_affinity(affinity_func_t f) { m_affinity_func = f; }
+    void set_affinity(affinity_func_t f) { m_affinity_func = std::move(f); }
     void set_affinity(intmax_t i, Thread&);
 
     void set_verbose(int n) { m_verbose = n; }
@@ -354,7 +354,7 @@ ThreadPool::run_on_this(task_pointer&& _task)
 
     if(m_tbb_tp && m_tbb_task_group)
     {
-        auto _arena = get_task_arena();
+        auto* _arena = get_task_arena();
         _arena->execute([this, _func]() { this->m_tbb_task_group->run(_func); });
     }
     else
