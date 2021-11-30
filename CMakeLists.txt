@@ -54,6 +54,13 @@ include(PTLBuildSettings)
 # User options
 ptl_add_option(PTL_USE_TBB "Enable TBB" ON)
 ptl_add_option(PTL_USE_LOCKS "Enable mutex locking in task subqueues for extra safety" OFF)
+ptl_add_option(PTL_INSTALL_HEADERS "Install the headers" ON)
+ptl_add_option(PTL_INSTALL_CONFIG "Install the cmake configuration" ON)
+
+if(DEFINED PTL_DEVELOPER_INSTALL)
+    set(PTL_INSTALL_HEADERS ${PTL_DEVELOPER_INSTALL} CACHE BOOL "Set via PTL_DEVELOPER_INSTALL" FORCE)
+    set(PTL_INSTALL_CONFIG ${PTL_DEVELOPER_INSTALL} CACHE BOOL "Set via PTL_DEVELOPER_INSTALL" FORCE)
+endif()
 
 ################################################################################
 # Build Dependencies
@@ -92,4 +99,3 @@ endif()
 if(PTL_MASTER_PROJECT)
     ptl_print_features()
 endif()
-

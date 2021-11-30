@@ -84,25 +84,50 @@ public:
     using task_pointer = std::shared_ptr<task_type>;
     using task_queue_t = VUserTaskQueue;
     // containers
-    typedef std::deque<ThreadId>          thread_list_t;
-    typedef std::vector<bool>             bool_list_t;
-    typedef std::map<ThreadId, uintmax_t> thread_id_map_t;
-    typedef std::map<uintmax_t, ThreadId> thread_index_map_t;
-    using thread_vec_t  = std::vector<Thread>;
-    using thread_data_t = std::vector<std::shared_ptr<ThreadData>>;
+    using thread_list_t      = std::deque<ThreadId>;
+    using bool_list_t        = std::vector<bool>;
+    using thread_id_map_t    = std::map<ThreadId, uintmax_t>;
+    using thread_index_map_t = std::map<uintmax_t, ThreadId>;
+    using thread_vec_t       = std::vector<Thread>;
+    using thread_data_t      = std::vector<std::shared_ptr<ThreadData>>;
     // functions
-    typedef std::function<void()>             initialize_func_t;
-    typedef std::function<intmax_t(intmax_t)> affinity_func_t;
+    using initialize_func_t = std::function<void()>;
+    using finalize_func_t   = std::function<void()>;
+    using affinity_func_t   = std::function<intmax_t(intmax_t)>;
+
+    static affinity_func_t& affinity_functor()
+    {
+        static affinity_func_t _v = [](intmax_t) {
+            static std::atomic<intmax_t> assigned;
+            intmax_t                     _assign = assigned++;
+            return _assign % Thread::hardware_concurrency();
+        };
+        return _v;
+    }
+
+    static initialize_func_t& initialization_functor()
+    {
+        static initialize_func_t _v = []() {};
+        return _v;
+    }
+
+    static finalize_func_t& finalization_functor()
+    {
+        static finalize_func_t _v = []() {};
+        return _v;
+    }
 
 public:
     // Constructor and Destructors
     ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
                bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
-               affinity_func_t    = [](intmax_t) {
-                   static std::atomic<intmax_t> assigned;
-                   intmax_t                     _assign = assigned++;
-                   return _assign % Thread::hardware_concurrency();
-               });
+               affinity_func_t    = affinity_functor(),
+               initialize_func_t  = initialization_functor(),
+               finalize_func_t    = finalization_functor());
+    ThreadPool(const size_type& pool_size, initialize_func_t, finalize_func_t,
+               bool             _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               affinity_func_t                = affinity_functor(),
+               VUserTaskQueue* task_queue     = nullptr);
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
     virtual ~ThreadPool();
@@ -149,11 +174,16 @@ public:
     // only relevant when compiled with PTL_USE_TBB
     static tbb_global_control_t*& tbb_global_control();
 
-    void set_initialization(initialize_func_t f) { m_init_func = f; }
+    void set_initialization(initialize_func_t f) { m_init_func = std::move(f); }
+    void set_finalization(finalize_func_t f) { m_fini_func = std::move(f); }
+
     void reset_initialization()
     {
-        auto f      = []() {};
-        m_init_func = f;
+        m_init_func = []() {};
+    }
+    void reset_finalization()
+    {
+        m_fini_func = []() {};
     }
 
 public:
@@ -175,7 +205,7 @@ public:
         return (m_thread_awake) ? m_thread_awake->load() : 0;
     }
 
-    void set_affinity(affinity_func_t f) { m_affinity_func = f; }
+    void set_affinity(affinity_func_t f) { m_affinity_func = std::move(f); }
     void set_affinity(intmax_t i, Thread&);
 
     void set_verbose(int n) { m_verbose = n; }
@@ -257,8 +287,9 @@ private:
     tbb_task_group_t* m_tbb_task_group = nullptr;
 
     // functions
-    initialize_func_t m_init_func = []() {};
-    affinity_func_t   m_affinity_func;
+    initialize_func_t m_init_func     = initialization_functor();
+    finalize_func_t   m_fini_func     = finalization_functor();
+    affinity_func_t   m_affinity_func = affinity_functor();
 
 private:
     // Private static variables
@@ -354,7 +385,7 @@ ThreadPool::run_on_this(task_pointer&& _task)
 
     if(m_tbb_tp && m_tbb_task_group)
     {
-        auto _arena = get_task_arena();
+        auto* _arena = get_task_arena();
         _arena->execute([this, _func]() { this->m_tbb_task_group->run(_func); });
     }
     else

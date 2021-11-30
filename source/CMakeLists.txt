@@ -91,13 +91,17 @@ endif()
 #                                                                              #
 ################################################################################
 
-# install export
-install(EXPORT ${PROJECT_NAME}Targets
-    NAMESPACE PTL::
-    DESTINATION ${PTL_INSTALL_CMAKEDIR}
-    COMPONENT Development)
+if(PTL_INSTALL_CONFIG)
+    # install export
+    install(EXPORT ${PROJECT_NAME}Targets
+        NAMESPACE PTL::
+        DESTINATION ${PTL_INSTALL_CMAKEDIR}
+        COMPONENT Development)
+endif()
 
-# headers
-install(FILES ${ptl_headers}
-    DESTINATION ${PTL_INSTALL_INCLUDEDIR}/PTL
-    COMPONENT Development)
+if(PTL_INSTALL_HEADERS)
+    # headers
+    install(FILES ${ptl_headers}
+        DESTINATION ${PTL_INSTALL_INCLUDEDIR}/PTL
+        COMPONENT Development)
+endif()

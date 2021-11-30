@@ -18,6 +18,7 @@ modernize-*,\
 -modernize-use-using,\
 -modernize-use-auto,\
 -modernize-concat-nested-namespaces,\
+-modernize-use-nodiscard,\
 performance-*,\
 readability-*,\
 -readability-function-size,\
@@ -38,6 +39,7 @@ readability-*,\
 -readability-static-accessed-through-instance,\
 -readability-const-return-type,\
 -readability-function-cognitive-complexity,\
+-readability-redundant-access-specifiers,\
 "
 HeaderFilterRegex: 'source/[^/]*\.(hh|cc)$'
 CheckOptions:
