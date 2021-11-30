@@ -35,6 +35,7 @@
 #include "PTL/Task.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
+#include "PTL/Utility.hh"
 
 #include <atomic>
 #include <cstdint>

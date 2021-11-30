@@ -266,6 +266,8 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         // create task group (used for async)
         if(!m_tbb_task_group)
             m_tbb_task_group = new tbb_task_group_t();
+
+        execute_on_all_threads([this]() { m_init_func(); });
         return m_pool_size;
     }
 #endif
@@ -390,6 +392,7 @@ ThreadPool::destroy_threadpool()
 #if defined(PTL_USE_TBB)
     if(m_tbb_task_group)
     {
+        execute_on_all_threads([this]() { m_fini_func(); });
         auto _func = [&]() { m_tbb_task_group->wait(); };
         if(m_tbb_task_arena)
             m_tbb_task_arena->execute(_func);
@@ -567,9 +570,8 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 
     // initialization function
     m_init_func();
-
     // finalization function (executed when scope is destroyed)
-    Destructor _dtor{ [this]() { m_fini_func(); } };
+    ScopeDestructor _fini{ [this]() { m_fini_func(); } };
 
     ThreadId    tid  = ThisThread::get_id();
     ThreadData* data = thread_data();

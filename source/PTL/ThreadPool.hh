@@ -123,9 +123,9 @@ public:
                bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
                affinity_func_t    = affinity_functor(),
                initialize_func_t  = initialization_functor(),
-               finalize_func_t = finalization_functor());
+               finalize_func_t    = finalization_functor());
     ThreadPool(const size_type& pool_size, initialize_func_t, finalize_func_t,
-               bool _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
+               bool             _use_affinity = GetEnv<bool>("PTL_CPU_AFFINITY", false),
                affinity_func_t                = affinity_functor(),
                VUserTaskQueue* task_queue     = nullptr);
     // Virtual destructors are required by abstract classes
@@ -175,10 +175,15 @@ public:
     static tbb_global_control_t*& tbb_global_control();
 
     void set_initialization(initialize_func_t f) { m_init_func = std::move(f); }
+    void set_finalization(finalize_func_t f) { m_fini_func = std::move(f); }
+
     void reset_initialization()
     {
-        auto f      = []() {};
-        m_init_func = f;
+        m_init_func = []() {};
+    }
+    void reset_finalization()
+    {
+        m_fini_func = []() {};
     }
 
 public:

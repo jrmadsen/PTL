@@ -364,25 +364,25 @@ PrintEnv(std::ostream& os = std::cout)
 
 //--------------------------------------------------------------------------------------//
 
-struct Destructor
+struct ScopeDestructor
 {
     template <typename FuncT>
-    Destructor(FuncT&& _func)
+    ScopeDestructor(FuncT&& _func)
     : m_functor(std::forward<FuncT>(_func))
     {}
 
     // delete copy operations
-    Destructor(const Destructor&) = delete;
-    Destructor& operator=(const Destructor&) = delete;
+    ScopeDestructor(const ScopeDestructor&) = delete;
+    ScopeDestructor& operator=(const ScopeDestructor&) = delete;
 
     // allow move operations
-    Destructor(Destructor&& rhs) noexcept
+    ScopeDestructor(ScopeDestructor&& rhs) noexcept
     : m_functor(std::move(rhs.m_functor))
     {
         rhs.m_functor = []() {};
     }
 
-    Destructor& operator=(Destructor&& rhs) noexcept
+    ScopeDestructor& operator=(ScopeDestructor&& rhs) noexcept
     {
         if(this != &rhs)
         {
@@ -392,7 +392,7 @@ struct Destructor
         return *this;
     }
 
-    ~Destructor() { m_functor(); }
+    ~ScopeDestructor() { m_functor(); }
 
 private:
     std::function<void()> m_functor = []() {};
