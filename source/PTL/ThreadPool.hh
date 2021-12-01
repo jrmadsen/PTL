@@ -529,7 +529,7 @@ ThreadPool::execute_on_all_threads(FuncT&& _func)
         size_t nitr        = 0;
         auto   _fname      = __FUNCTION__;
         auto   _write_info = [&]() {
-            std::cout << "[" << _fname << "]> Total initalized: " << _total_init
+            std::cout << "[" << _fname << "]> Total initialized: " << _total_init
                       << ", expected: " << _num << ", max-parallel: " << _maxp
                       << ", size: " << _sz << ", ncore: " << _ncore << std::endl;
         };
