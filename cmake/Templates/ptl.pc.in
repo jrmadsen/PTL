@@ -6,6 +6,6 @@ Name: PTL
 Description: Parallel Tasking Library for C++
 Version: @PTL_VERSION_STRING@
 Requires: @PTL_PC_TBB_REQUIREMENT@
-Requires.private: -pthread
+Libs.private: -pthread
 Libs: -L${libdir} -lptl
 CFlags: -std=c++@CMAKE_CXX_STANDARD@ -pthread -I${includedir}
