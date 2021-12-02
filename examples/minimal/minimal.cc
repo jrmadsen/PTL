@@ -20,12 +20,16 @@
 /// \brief Example showing the usage of tasking
 
 #include "PTL/PTL.hh"
+#include "PTL/ThreadPool.hh"
+#include "PTL/Threading.hh"
 
 #include <chrono>
 #include <condition_variable>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <random>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 
@@ -34,7 +38,7 @@ using lock_t  = std::unique_lock<mutex_t>;
 
 using namespace PTL;
 
-static std::mt19937 rng;
+static thread_local std::mt19937 rng{};
 
 //============================================================================//
 
@@ -75,7 +79,6 @@ Tp
 random_entry(const std::vector<Tp>& v)
 {
     std::uniform_int_distribution<std::mt19937::result_type> dist(0, v.size() - 1);
-    AutoLock lk{ TypeMutex<decltype(rng)>() };
     return v.at(dist(rng));
 }
 
@@ -85,7 +88,7 @@ int
 main(int argc, char** argv)
 {
     ConsumeParameters(argc, argv);
-    rng.seed(std::random_device()());
+    rng.seed(std::random_device{}());
     Threading::SetThreadId(0);
     Backtrace::Enable();
 
@@ -97,20 +100,56 @@ main(int argc, char** argv)
     if(nthreads == 0)
         nthreads = 1;
 
-    std::cout << "[" << argv[0] << "]> "
+    std::cout << "[ptl-minimal]> "
               << "Number of threads: " << nthreads << std::endl;
     Timer total_timer;
     total_timer.Start();
 
     // Construct the default run manager
-    bool use_tbb     = GetEnv("PTL_USE_TBB", false);
-    auto run_manager = TaskRunManager(use_tbb);
-    run_manager.Initialize(nthreads);
+    bool _use_tbb = GetEnv("PTL_USE_TBB", false);
+    bool _pin     = GetEnv("PTL_PIN_THREADS", true);
+
+    std::atomic<unsigned> ninit{ 0 };
+    std::atomic<unsigned> nfini{ 0 };
+    auto                  _init = [&ninit]() {
+        rng.seed(std::random_device{}());
+        ++ninit;
+        AutoLock _lk{ TypeMutex<decltype(std::cout)>() };
+        printf("[ptl-minimal]> Thread %2i started\n", Threading::GetThreadId());
+    };
+    auto _fini = [&nfini]() {
+        ++nfini;
+        AutoLock _lk{ TypeMutex<decltype(std::cout)>() };
+        printf("[ptl-minimal]> Thread %2i finished\n", Threading::GetThreadId());
+    };
+
+    PTL::ThreadPool::Config _config{};
+    _config.use_tbb      = _use_tbb;
+    _config.use_affinity = _pin;
+    _config.verbose      = 3;
+    _config.pool_size    = nthreads;
+    _config.initializer  = _init;
+    _config.finalizer    = _fini;
+
+    auto tp = std::unique_ptr<PTL::ThreadPool>{ new PTL::ThreadPool{ _config } };
+
+    if(!tp->is_initialized())
+        throw std::runtime_error("ThreadPool is not initialized");
+    if(!tp->is_alive())
+        throw std::runtime_error("ThreadPool is not alive");
+    if(_use_tbb && !tp->is_tbb_threadpool())
+        throw std::runtime_error("ThreadPool is not a TBB threadpool (should be)");
+    if(!_use_tbb && tp->is_tbb_threadpool())
+        throw std::runtime_error("ThreadPool is a TBB threadpool (should not be)");
+    if(!tp->is_main())
+        throw std::runtime_error("ThreadPool does not think it is on main thread");
 
     // the TaskManager is a utility that wraps the function calls into tasks for the
-    // ThreadPool
-    TaskManager*              task_manager = run_manager.GetTaskManager();
-    auto*                     tp           = task_manager->thread_pool();
+    // ThreadPool and helps manage the lifetime of the threadpool (it will stop the
+    // threads in the thread pool when it's destructor is called unless false
+    // is passed as second parameter)
+    TaskManager task_manager{ tp.get(), false };
+
     std::set<std::thread::id> tids{};
 
     //------------------------------------------------------------------------//
@@ -123,7 +162,8 @@ main(int argc, char** argv)
     tp->execute_on_all_threads([&tids, &_all_exec]() {
         ++_all_exec;
         std::stringstream ss;
-        ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed\n";
+        ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::Threading::GetThreadId()
+           << " executed\n";
         AutoLock lk{ TypeMutex<decltype(std::cout)>() };
         std::cout << ss.str();
         tids.insert(std::this_thread::get_id());
@@ -136,7 +176,8 @@ main(int argc, char** argv)
             std::to_string(_all_exec.load()) + " vs. " + std::to_string(_size));
     else
     {
-        printf("Successful execution on every thread: %i\n", (int) _all_exec);
+        printf("[ptl-minimal]> Successful execution on every thread: %i\n",
+               (int) _all_exec);
     }
 
     //------------------------------------------------------------------------//
@@ -155,7 +196,8 @@ main(int argc, char** argv)
     tp->execute_on_specific_threads(tids, [&_specific_exec]() {
         ++_specific_exec;
         std::stringstream ss;
-        ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " executed [specific]\n";
+        ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::Threading::GetThreadId()
+           << " executed [specific]\n";
         AutoLock lk{ TypeMutex<decltype(std::cout)>() };
         std::cout << ss.str();
     });
@@ -166,7 +208,8 @@ main(int argc, char** argv)
             std::to_string(_specific_exec.load()) + " vs. " + std::to_string(_target_sz));
     else
     {
-        printf("Successful execution on subset of threads: %i\n", (int) _specific_exec);
+        printf("[ptl-minimal]> Successful execution on subset of threads: %i\n",
+               (int) _specific_exec);
     }
 
     //------------------------------------------------------------------------//
@@ -175,16 +218,17 @@ main(int argc, char** argv)
     //                                                                        //
     //------------------------------------------------------------------------//
     {
-        long     nfib  = std::max<long>(GetEnv<long>("FIBONACCI", 30), 30);
-        long     nloop     = 100;
-        long     ndiv      = 4;
-        long     npart     = nloop / ndiv;
+        long nfib     = std::max<long>(GetEnv<long>("FIBONACCI", 30), 30);
+        long nloop    = 100;
+        long ndiv     = 4;
+        long npart    = nloop / ndiv;
         long expected = (fibonacci(nfib + 0) * npart) + (fibonacci(nfib + 1) * npart) +
                         (fibonacci(nfib + 2) * npart) + (fibonacci(nfib + 3) * npart);
         auto join = [](long& lhs, long rhs) {
             std::stringstream ss;
-            ss << "thread " << std::setw(4) << PTL::Threading::GetThreadId() << " adding "
-               << rhs << " to " << lhs << std::endl;
+            ss << "[ptl-minimal]> Thread " << std::setw(2)
+               << PTL::Threading::GetThreadId() << " adding " << rhs << " to " << lhs
+               << std::endl;
             {
                 AutoLock lk{ TypeMutex<decltype(std::cout)>() };
                 std::cout << ss.str();
@@ -192,24 +236,22 @@ main(int argc, char** argv)
             return lhs += rhs;
         };
 
-        auto     entry = [](uint64_t n) {
+        auto entry = [](uint64_t n) {
             std::vector<double> v(n * 100, 0);
             for(auto& itr : v)
-            {
-                AutoLock lk{ TypeMutex<decltype(rng)>() };
                 itr = std::generate_canonical<double, 12>(rng);
-            }
-            auto e = random_entry(v);
+            auto              e = random_entry(v);
             std::stringstream ss;
-            ss << "[" << n << "]> random entry from thread " << std::setw(4)
-               << PTL::Threading::GetThreadId() << " was : " << std::setw(8)
-               << std::setprecision(6) << std::fixed << e << std::endl;
+            ss << "[ptl-minimal][" << std::setw(4) << n << "]> Random entry from thread "
+               << std::setw(2) << PTL::Threading::GetThreadId()
+               << " was : " << std::setw(8) << std::setprecision(6) << std::fixed << e
+               << std::endl;
             AutoLock lk{ TypeMutex<decltype(std::cout)>() };
             std::cout << ss.str();
         };
 
-        TaskGroup<long> tgf(join);
-        TaskGroup<void> tgv;
+        TaskGroup<long> tgf{ join, tp.get() };  // uses default thread-pool
+        TaskGroup<void> tgv{ tp.get() };        // uses existing thread-pool
         for(long i = 0; i < nloop; ++i)
         {
             tgf.exec(fibonacci, nfib + (i % ndiv));
@@ -220,7 +262,8 @@ main(int argc, char** argv)
 
         auto ret = tgf.join();
         tgv.join();
-        std::cout << "fibonacci(" << nfib << ") * " << nloop << " = " << ret << std::endl;
+        std::cout << "[ptl-minimal]> fibonacci(" << nfib << ") * " << nloop << " = "
+                  << ret << std::endl;
         std::cout << std::endl;
         if(expected != ret)
         {
@@ -245,7 +288,7 @@ main(int argc, char** argv)
         _at.Start();
         for(decltype(nthreads) i = 0; i < nthreads; ++i)
         {
-            auto fib_async = task_manager->async<int64_t>(fibonacci, nfib);
+            auto fib_async = task_manager.async<int64_t>(fibonacci, nfib);
             _futures.emplace_back(fib_async->get_future());
             _asyncs.emplace_back(fib_async);
         }
@@ -258,10 +301,10 @@ main(int argc, char** argv)
         _at.Stop();
         for(decltype(nthreads) i = 0; i < nthreads; ++i)
         {
-            std::cout << "[async test][" << i << "] fibonacci(" << nfib
+            std::cout << "[ptl-minimal][async test][" << i << "] fibonacci(" << nfib
                       << ") = " << _values[i] << std::endl;
         }
-        std::cout << "[async test] " << _at << std::endl;
+        std::cout << "[ptl-minimal][async test] " << _at << std::endl;
         std::cout << std::endl;
     }
 
@@ -273,8 +316,16 @@ main(int argc, char** argv)
 
     // print the time for the calculation
     total_timer.Stop();
-    std::cout << "Total time: \t" << total_timer << std::endl;
+    std::cout << "[ptl-minimal]> Total time: \t" << total_timer << std::endl;
 
     tp->destroy_threadpool();
-    task_manager->finalize();
+
+    std::cout << "[ptl-minimal]> Number of threads:                " << nthreads << "\n";
+    std::cout << "[ptl-minimal]> Number of thread initialization:  " << ninit.load()
+              << "\n";
+    std::cout << "[ptl-minimal]> Number of thread finalizations :  " << nfini.load()
+              << "\n";
+
+    tp.reset();
+    return (2 * nthreads) - ninit - nfini;
 }

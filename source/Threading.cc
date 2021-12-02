@@ -79,16 +79,59 @@ Threading::GetThreadId()
 //======================================================================================//
 
 bool
-Threading::SetPinAffinity(int cpu, NativeThread& aT)
+Threading::SetPinAffinity(int _cpu)
 {
 #if defined(__linux__) || defined(_AIX)
-    cpu_set_t* aset = new cpu_set_t;
-    CPU_ZERO(aset);
-    CPU_SET(cpu, aset);
-    pthread_t& _aT = static_cast<pthread_t&>(aT);
-    return (pthread_setaffinity_np(_aT, sizeof(cpu_set_t), aset) == 0);
+    cpu_set_t _cpu_set{};
+    CPU_ZERO(&_cpu_set);
+    if(_cpu >= 0)
+        CPU_SET(_cpu, &_cpu_set);
+    return (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &_cpu_set) == 0);
 #else  // Not available for Mac, WIN,...
-    ConsumeParameters(cpu, aT);
+    ConsumeParameters(_cpu);
+    return true;
+#endif
+}
+
+//======================================================================================//
+
+bool
+Threading::SetThreadPriority(int _prio)
+{
+#if defined(__linux__) || defined(_AIX)
+    return (pthread_setschedprio(pthread_self(), _prio) == 0);
+#else  // Not available for Mac, WIN,...
+    ConsumeParameters(_prio);
+    return true;
+#endif
+}
+
+//======================================================================================//
+
+bool
+Threading::SetPinAffinity(int _cpu, NativeThread& _t)
+{
+#if defined(__linux__) || defined(_AIX)
+    cpu_set_t _cpu_set{};
+    CPU_ZERO(&_cpu_set);
+    CPU_SET(_cpu, &_cpu_set);
+    return (pthread_setaffinity_np(static_cast<pthread_t>(_t), sizeof(cpu_set_t),
+                                   &_cpu_set) == 0);
+#else  // Not available for Mac, WIN,...
+    ConsumeParameters(_cpu, _t);
+    return true;
+#endif
+}
+
+//======================================================================================//
+
+bool
+Threading::SetThreadPriority(int _prio, NativeThread& _t)
+{
+#if defined(__linux__) || defined(_AIX)
+    return (pthread_setschedprio(static_cast<pthread_t>(_t), _prio) == 0);
+#else
+    ConsumeParameters(_prio, _t);
     return true;
 #endif
 }
