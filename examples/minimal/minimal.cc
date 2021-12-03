@@ -149,8 +149,10 @@ main(int argc, char** argv)
 
     if(!tp->is_initialized())
         throw std::runtime_error("ThreadPool is not initialized");
-    if(!tp->is_alive())
+    if(!_use_tbb && !tp->is_alive())
         throw std::runtime_error("ThreadPool is not alive");
+    if(_use_tbb && tp->is_alive())
+        throw std::runtime_error("ThreadPool is alive and shouldn't be");
     if(_use_tbb && !tp->is_tbb_threadpool())
         throw std::runtime_error("ThreadPool is not a TBB threadpool (should be)");
     if(!_use_tbb && tp->is_tbb_threadpool())
