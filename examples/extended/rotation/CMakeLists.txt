@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # OpenCV
 #
 set(OpenCV_COMPONENTS opencv_core opencv_imgproc opencv_highgui)
@@ -8,13 +8,13 @@ if(NOT OpenCV_FOUND)
     return()
 endif()
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Data files
 #
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/cameraman.tif
-    ${CMAKE_BINARY_DIR}/data/cameraman.tif COPYONLY)
+               ${CMAKE_BINARY_DIR}/data/cameraman.tif COPYONLY)
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Build and link executable
 #
 file(GLOB headers ${CMAKE_CURRENT_LIST_DIR}/source/*.hh)

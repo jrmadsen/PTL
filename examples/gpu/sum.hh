@@ -171,17 +171,15 @@ struct aligned_pointer
     uintmax_t storage_size;
 
     aligned_pointer(const uintmax_t _size)
-    :  // pointer to data
-        ptr(nullptr)
-    ,
-        // size of data
-        size(_size)
-    ,
-        // extra padding aligning to "_AlignWidth" byte width
-        padding((_size % _AlignWidth == 0) ? 0 : (_AlignWidth - (size % _AlignWidth)))
-    ,
-        // size of allocation
-        storage_size(size + padding)
+    : ptr(nullptr)  // pointer to data
+    , size(_size)   // size of data
+    , padding(
+          (_size % _AlignWidth == 0)
+              ? 0
+              : (_AlignWidth -
+                 (size %
+                  _AlignWidth)))    // extra padding aligning to "_AlignWidth" byte width
+    , storage_size(size + padding)  // size of allocation
     {}
 
     this_type& allocate()

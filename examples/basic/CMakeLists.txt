@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # standard example
 #
 add_executable(tasking tasking.cc)
@@ -10,7 +10,7 @@ if(PTL_TBB_FOUND)
     target_link_libraries(tbb_tasking PTL::ptl common)
 endif()
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # recursive example
 #
 add_executable(recursive_tasking recursive_tasking.cc)

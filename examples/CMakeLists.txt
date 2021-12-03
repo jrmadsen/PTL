@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Setup the project
 #
 cmake_minimum_required(VERSION 3.8...3.20 FATAL_ERROR)
@@ -13,8 +13,7 @@ endif()
 
 find_package(PTL REQUIRED)
 
-# add the common library
-# Gperf and ittnotify options?
+# add the common library Gperf and ittnotify options?
 add_subdirectory(common)
 
 # now the actual examples
@@ -22,5 +21,4 @@ add_subdirectory(minimal)
 add_subdirectory(basic)
 add_subdirectory(extended)
 
-# Commenting as it can not currently compile
-#add_subdirectory(gpu)
+# Commenting as it can not currently compile add_subdirectory(gpu)
