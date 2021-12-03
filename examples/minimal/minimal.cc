@@ -250,7 +250,7 @@ main(int argc, char** argv)
             std::cout << ss.str();
         };
 
-        TaskGroup<long> tgf{ join, tp.get() };  // uses default thread-pool
+        TaskGroup<long> tgf{ join, tp.get() };  // uses existing thread-pool
         TaskGroup<void> tgv{ tp.get() };        // uses existing thread-pool
         for(long i = 0; i < nloop; ++i)
         {
