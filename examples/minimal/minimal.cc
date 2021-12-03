@@ -130,6 +130,20 @@ main(int argc, char** argv)
     _config.pool_size    = nthreads;
     _config.initializer  = _init;
     _config.finalizer    = _fini;
+    _config.set_affinity = [](intmax_t i) {
+        static intmax_t idx    = 0;
+        static intmax_t ncores = Threading::GetNumberOfCores();
+        static intmax_t ncpus  = Threading::GetNumberOfPhysicalCpus();
+        static intmax_t nincr  = std::max<intmax_t>(ncores / ncpus, 1);
+        auto            _idx   = idx + nincr;
+        idx += nincr;
+        if(_idx % ncores == 0)
+            idx++;
+        auto     _v = (_idx - nincr) % ncores;
+        AutoLock _lk{ TypeMutex<decltype(std::cout)>() };
+        printf("[ptl-minimal]> Thread %2i was pinned to CPU %2i...\n", (int) i, (int) _v);
+        return _v;
+    };
 
     auto tp = std::unique_ptr<PTL::ThreadPool>{ new PTL::ThreadPool{ _config } };
 
