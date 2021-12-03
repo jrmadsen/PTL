@@ -25,13 +25,18 @@
 #include "PTL/Threading.hh"
 #include "PTL/AutoLock.hh"
 #include "PTL/Globals.hh"
+#include "PTL/Types.hh"
 
-#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#if defined(PTL_WINDOWS)
 #    include <Windows.h>
-#else
+#elif defined(PTL_UNIX)
 #    include <sys/syscall.h>
 #    include <sys/types.h>
 #    include <unistd.h>
+#endif
+
+#if defined(PTL_LINUX)
+#    include <fstream>
 #endif
 
 #include <atomic>
@@ -43,6 +48,7 @@ using namespace PTL;
 namespace
 {
 thread_local int ThreadID = Threading::MASTER_ID;
+
 }  // namespace
 
 //======================================================================================//
@@ -60,6 +66,47 @@ unsigned
 Threading::GetNumberOfCores()
 {
     return std::thread::hardware_concurrency();
+}
+
+//======================================================================================//
+
+unsigned
+Threading::GetNumberOfPhysicalCpus()
+{
+#if defined(PTL_MACOS)
+    int    count;
+    size_t count_len = sizeof(count);
+    sysctlbyname("hw.physicalcpu", &count, &count_len, nullptr, 0);
+    return static_cast<int64_t>(count);
+#elif defined(PTL_LINUX)
+    std::ifstream ifs("/proc/cpuinfo");
+    if(ifs)
+    {
+        std::set<std::string> core_ids;
+        while(true)
+        {
+            std::string line = {};
+            getline(ifs, line);
+            if(!ifs.good())
+                break;
+            if(line.find("core id") != std::string::npos)
+            {
+                for(std::string&& itr : { "core id", ":", " ", "\t" })
+                {
+                    static auto _npos = std::string::npos;
+                    auto        _pos  = _npos;
+                    while((_pos = line.find(itr)) != _npos)
+                        line = line.replace(_pos, itr.length(), "");
+                }
+                core_ids.insert(line);
+            }
+        }
+        return core_ids.size();
+    }
+    return GetNumberOfCores();
+#else
+    return GetNumberOfCores();
+#endif
 }
 
 //======================================================================================//

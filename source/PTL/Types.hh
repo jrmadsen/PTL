@@ -23,7 +23,37 @@
 
 #include "PTL/Config.hh"
 
+#if defined(__APPLE__) || defined(__MACH__)
+#    if !defined(PTL_MACOS)
+#        define PTL_MACOS 1
+#    endif
+#    if !defined(PTL_UNIX)
+#        define PTL_UNIX 1
+#    endif
+#endif
+
 #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#    if !defined(PTL_WINDOWS)
+#        define PTL_WINDOWS 1
+#    endif
+#endif
+
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
+#    if !defined(PTL_LINUX)
+#        define PTL_LINUX 1
+#    endif
+#    if !defined(PTL_UNIX)
+#        define PTL_UNIX 1
+#    endif
+#endif
+
+#if defined(__unix__) || defined(__unix) || defined(unix)
+#    if !defined(PTL_UNIX)
+#        define PTL_UNIX 1
+#    endif
+#endif
+
+#if defined(PTL_WINDOWS)
 // Disable warning C4786 on WIN32 architectures:
 // identifier was truncated to '255' characters
 // in the debug information

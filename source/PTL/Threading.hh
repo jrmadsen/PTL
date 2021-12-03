@@ -152,6 +152,9 @@ Pid_t
 GetPidId();
 
 unsigned
+GetNumberOfPhysicalCpus();
+
+unsigned
 GetNumberOfCores();
 
 int
