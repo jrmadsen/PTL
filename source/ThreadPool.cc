@@ -486,7 +486,10 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     }
 
     if(!m_task_queue)
+    {
+        m_delete_task_queue = true;
         m_task_queue = new UserTaskQueue(proposed_size);
+    }
 
     auto this_tid = get_this_thread_id();
     for(size_type i = m_pool_size; i < proposed_size; ++i)
