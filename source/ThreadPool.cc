@@ -433,9 +433,11 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
 
         // create task group (used for async)
         if(!m_tbb_task_group)
-            m_tbb_task_group = new tbb_task_group_t();
+        {
+            m_tbb_task_group = new tbb_task_group_t{};
+            execute_on_all_threads([this]() { m_init_func(); });
+        }
 
-        execute_on_all_threads([this]() { m_init_func(); });
         return m_pool_size;
     }
 #endif
