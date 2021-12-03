@@ -188,17 +188,23 @@ ThreadPool::get_thread_ids()
 uintmax_t
 ThreadPool::get_thread_id(ThreadId _tid)
 {
+    uintmax_t _idx = 0;
     {
         AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
         if(!lock.owns_lock())
             lock.lock();
-        if(f_thread_ids().find(_tid) == f_thread_ids().end())
+        auto itr = f_thread_ids().find(_tid);
+        if(itr == f_thread_ids().end())
         {
-            auto _idx            = f_thread_ids().size();
+            _idx                 = f_thread_ids().size();
             f_thread_ids()[_tid] = _idx;
         }
+        else
+        {
+            _idx = itr->second;
+        }
     }
-    return f_thread_ids()[_tid];
+    return _idx;
 }
 
 //======================================================================================//
@@ -488,7 +494,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     if(!m_task_queue)
     {
         m_delete_task_queue = true;
-        m_task_queue = new UserTaskQueue(proposed_size);
+        m_task_queue        = new UserTaskQueue(proposed_size);
     }
 
     auto this_tid = get_this_thread_id();
