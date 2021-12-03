@@ -77,7 +77,7 @@ Threading::GetNumberOfPhysicalCpus()
     int    count;
     size_t count_len = sizeof(count);
     sysctlbyname("hw.physicalcpu", &count, &count_len, nullptr, 0);
-    return static_cast<int64_t>(count);
+    return static_cast<unsigned>(count);
 #elif defined(PTL_LINUX)
     std::ifstream ifs("/proc/cpuinfo");
     if(ifs)
@@ -101,7 +101,7 @@ Threading::GetNumberOfPhysicalCpus()
                 core_ids.insert(line);
             }
         }
-        return core_ids.size();
+        return static_cast<unsigned>(core_ids.size());
     }
     return GetNumberOfCores();
 #else
