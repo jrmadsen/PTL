@@ -131,6 +131,7 @@ main(int argc, char** argv)
     _config.initializer  = _init;
     _config.finalizer    = _fini;
     _config.set_affinity = [](intmax_t i) {
+        auto            _orig  = ThreadPool::affinity_functor()(i);
         static intmax_t idx    = 0;
         static intmax_t ncores = Threading::GetNumberOfCores();
         static intmax_t ncpus  = Threading::GetNumberOfPhysicalCpus();
@@ -141,7 +142,8 @@ main(int argc, char** argv)
             idx++;
         auto     _v = (_idx - nincr) % ncores;
         AutoLock _lk{ TypeMutex<decltype(std::cout)>() };
-        printf("[ptl-minimal]> Thread %2i was pinned to CPU %2i...\n", (int) i, (int) _v);
+        printf("[ptl-minimal]> Thread %2i was pinned to CPU %2i instead of %2i...\n",
+               (int) i, (int) _v, (int) _orig);
         return _v;
     };
 
@@ -334,7 +336,9 @@ main(int argc, char** argv)
     total_timer.Stop();
     std::cout << "[ptl-minimal]> Total time: \t" << total_timer << std::endl;
 
+    tp->resize(nthreads);
     tp->destroy_threadpool();
+    tp->resize(0);
 
     std::cout << "[ptl-minimal]> Number of threads:                " << nthreads << "\n";
     std::cout << "[ptl-minimal]> Number of thread initialization:  " << ninit.load()

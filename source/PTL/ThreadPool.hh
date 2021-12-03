@@ -398,10 +398,9 @@ ThreadPool::get_task_arena()
 inline void
 ThreadPool::resize(size_type _n)
 {
-    if(_n == m_pool_size)
-        return;
     initialize_threadpool(_n);
-    m_task_queue->resize(static_cast<intmax_t>(_n));
+    if(m_task_queue)
+        m_task_queue->resize(static_cast<intmax_t>(_n));
 }
 //--------------------------------------------------------------------------------------//
 inline int
