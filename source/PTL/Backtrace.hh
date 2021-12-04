@@ -56,26 +56,6 @@
 #include "Threading.hh"
 #include "Types.hh"
 
-#if defined(__APPLE__) || defined(__MACH__)
-#    if !defined(PTL_MACOS)
-#        define PTL_MACOS
-#    endif
-#    if !defined(PTL_UNIX)
-#        define PTL_UNIX
-#    endif
-#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
-#    if !defined(PTL_LINUX)
-#        define PTL_LINUX
-#    endif
-#    if !defined(PTL_UNIX)
-#        define PTL_UNIX
-#    endif
-#elif defined(__unix__) || defined(__unix) || defined(unix)
-#    if !defined(PTL_UNIX)
-#        define PTL_UNIX
-#    endif
-#endif
-
 #if defined(PTL_UNIX)
 #    include <cxxabi.h>
 #    include <execinfo.h>

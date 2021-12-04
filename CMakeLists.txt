@@ -17,7 +17,9 @@ endif()
 # Check if project is being used directly or via add_subdirectory
 set(PTL_MASTER_PROJECT ON)
 if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(PTL_MASTER_PROJECT OFF)
+    set(PTL_MASTER_PROJECT OFF)
+else()
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
 # Version
