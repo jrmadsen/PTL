@@ -19,7 +19,7 @@ jobs:
         sudo apt-get install -y clang-format-9 cmake
     - name: clang-format
       run: |
-        cmake -B build-PTL .
+        cmake -B build-PTL -DPTL_USE_TBB=OFF .
         cmake --build build-PTL --target format-source
         rm -rf build-PTL
         if [ $(git diff | wc -l) -gt 0 ]; then
@@ -51,7 +51,7 @@ jobs:
         pip install cmake-format pyyaml
     - name: cmake format
       run: |
-        cmake -B build-PTL .
+        cmake -B build-PTL -DPTL_USE_TBB=OFF .
         cmake --build build-PTL --target format-cmake
         rm -rf build-PTL
         if [ $(git diff | wc -l) -gt 0 ]; then
