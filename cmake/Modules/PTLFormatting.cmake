@@ -24,10 +24,6 @@ if(PTL_CLANG_FORMATTER)
     file(GLOB_RECURSE sources ${_Source_DIR}/*.cc ${_Source_DIR}/*.c ${_Example_DIR}/*.cc
          ${_Example_DIR}/*.cu)
 
-    foreach(_F ${headers} ${sources})
-        message(STATUS "- ${_F}")
-    endforeach()
-
     add_custom_target(
         ${PTL_FORMAT_TARGET}-source
         COMMAND ${PTL_CLANG_FORMATTER} -i ${headers} ${sources}
