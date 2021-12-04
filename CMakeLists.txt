@@ -1,5 +1,5 @@
-################################################################################
-#   cmake settings
+# -------------------------------------------------------------------------------------- #
+# cmake settings
 #
 cmake_minimum_required(VERSION 3.8...3.20)
 if(${CMAKE_VERSION} VERSION_LESS 3.12)
@@ -28,15 +28,19 @@ string(REGEX REPLACE "(\n|\r)" "" VERSION_STRING "${VERSION_STRING}")
 string(REGEX REPLACE "[A-Za-z].*" "" VERSION_STRING "${VERSION_STRING}")
 set(PTL_VERSION "${VERSION_STRING}")
 
-################################################################################
-#   project setup
+# -------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------- #
+# project setup
 #
-project(PTL LANGUAGES C CXX VERSION ${PTL_VERSION})
+project(
+    PTL
+    LANGUAGES C CXX
+    VERSION ${PTL_VERSION})
 
 # Postprocess version info to create variables for export to Version.hh
 set(PTL_VERSION_STRING "${PTL_VERSION_MAJOR}.${PTL_VERSION_MINOR}.${PTL_VERSION_PATCH}")
 math(EXPR PTL_VERSION_CODE
-    "10000 * ${PTL_VERSION_MAJOR} + 100 * ${PTL_VERSION_MINOR} + ${PTL_VERSION_PATCH}")
+     "10000 * ${PTL_VERSION_MAJOR} + 100 * ${PTL_VERSION_MINOR} + ${PTL_VERSION_PATCH}")
 
 # Project-local CMake settings
 set(CMAKE_DIRECTORY_LABELS "PTL")
@@ -47,47 +51,51 @@ set(CMAKE_LINK_DEPENDS_NO_SHARED ON)
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules)
 include(PTLCMakeUtilities)
 
-################################################################################
+# -------------------------------------------------------------------------------------- #
 # Build/Install settings and options
 include(PTLInstallDirs)
 include(PTLBuildSettings)
 
-################################################################################
+# -------------------------------------------------------------------------------------- #
 # User options
 ptl_add_option(PTL_USE_TBB "Enable TBB" ON)
-ptl_add_option(PTL_USE_LOCKS "Enable mutex locking in task subqueues for extra safety" OFF)
+ptl_add_option(PTL_USE_LOCKS "Enable mutex locking in task subqueues for extra safety"
+               OFF)
 ptl_add_option(PTL_INSTALL_HEADERS "Install the headers" ON)
 ptl_add_option(PTL_INSTALL_CONFIG "Install the cmake configuration" ON)
 
 if(DEFINED PTL_DEVELOPER_INSTALL)
-    set(PTL_INSTALL_HEADERS ${PTL_DEVELOPER_INSTALL} CACHE BOOL "Set via PTL_DEVELOPER_INSTALL" FORCE)
-    set(PTL_INSTALL_CONFIG ${PTL_DEVELOPER_INSTALL} CACHE BOOL "Set via PTL_DEVELOPER_INSTALL" FORCE)
+    set(PTL_INSTALL_HEADERS
+        ${PTL_DEVELOPER_INSTALL}
+        CACHE BOOL "Set via PTL_DEVELOPER_INSTALL" FORCE)
+    set(PTL_INSTALL_CONFIG
+        ${PTL_DEVELOPER_INSTALL}
+        CACHE BOOL "Set via PTL_DEVELOPER_INSTALL" FORCE)
 endif()
 
-################################################################################
-# Build Dependencies
-# - Threads
+# -------------------------------------------------------------------------------------- #
+# Build Dependencies - Threads
 if(NOT WIN32)
     set(CMAKE_THREAD_PREFER_PTHREAD ON)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
 endif()
 find_package(Threads REQUIRED)
 
-# - TBB
+# * TBB
 if(PTL_USE_TBB)
     find_package(TBB 2017 REQUIRED)
 endif()
 
-################################################################################
-#   PTL Primary Build
+# -------------------------------------------------------------------------------------- #
+# PTL Primary Build
 add_subdirectory(source)
 
-################################################################################
-#   CMake/PkgConfig Support files
+# -------------------------------------------------------------------------------------- #
+# CMake/PkgConfig Support files
 include(PTLPackageConfigHelpers)
 
-################################################################################
-#   Examples build/test
+# -------------------------------------------------------------------------------------- #
+# Examples build/test
 if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples)
     ptl_add_option(PTL_BUILD_EXAMPLES "Build examples" OFF)
     if(PTL_BUILD_EXAMPLES)
@@ -96,8 +104,8 @@ if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples)
     endif()
 endif()
 
-################################################################################
-#   Reporting if master project
+# -------------------------------------------------------------------------------------- #
+# Reporting if master project
 if(PTL_MASTER_PROJECT)
     ptl_print_features()
 endif()

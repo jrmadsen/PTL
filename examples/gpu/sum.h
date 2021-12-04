@@ -132,41 +132,26 @@ init_nvtx()
 
 #endif
 
-//============================================================================//
-
-BEGIN_EXTERN_C  // begin extern "C"
-
+extern "C"
+{
     //----------------------------------------------------------------------------//
     //  global info
     //----------------------------------------------------------------------------//
+    void DLL cuda_device_query();
+    int DLL  cuda_device_count();
 
-    void DLL
-         cuda_device_query();
-int      DLL
-         cuda_device_count();
+    //----------------------------------------------------------------------------//
+    //  device-specific info
+    //----------------------------------------------------------------------------//
 
-//----------------------------------------------------------------------------//
-//  device-specific info
-//----------------------------------------------------------------------------//
-
-// this functions sets "thread_device()" value to device number
-int DLL
-    cuda_set_device(int device);
-
-// the functions below use "thread_device()" function to get device number
-int DLL
-    cuda_multi_processor_count();
-int DLL
-    cuda_max_threads_per_block();
-int DLL
-    cuda_warp_size();
-int DLL
-    cuda_shared_memory_per_block();
-
-//============================================================================//
-
-END_EXTERN_C  // end extern "C"
-
+    // this functions sets "thread_device()" value to device number
+    int DLL cuda_set_device(int device);
+    // the functions below use "thread_device()" function to get device number
+    int DLL cuda_multi_processor_count();
+    int DLL cuda_max_threads_per_block();
+    int DLL cuda_warp_size();
+    int DLL cuda_shared_memory_per_block();
+}
 //----------------------------------------------------------------------------//
 
 #endif

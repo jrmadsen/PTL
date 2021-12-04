@@ -1,5 +1,4 @@
-# Targets file for Build tree.
-# Simply forwards to per-target files if required.
+# Targets file for Build tree. Simply forwards to per-target files if required.
 if(PTL_shared_FOUND AND NOT TARGET PTL::ptl-shared)
     include("${CMAKE_CURRENT_LIST_DIR}/ptl-shared.cmake")
 endif()
