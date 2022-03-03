@@ -50,10 +50,24 @@ endif()
 # -------------------------------------------------------------------------------------- #
 ptl_add_option(BUILD_STATIC_LIBS "Build static library" ON)
 ptl_add_option(BUILD_SHARED_LIBS "Build shared library" ON)
-if((NOT BUILD_SHARED_LIBS) AND (NOT BUILD_STATIC_LIBS))
-    message(
-        FATAL_ERROR
-            "Neither BUILD_STATIC_LIBS nor BUILD_SHARED_LIBS are set. One must be ON")
+
+if(NOT "${CMAKE_PROJECT_NAME}" STREQUAL "${PROJECT_NAME}")
+    ptl_add_option(BUILD_OBJECT_LIBS "Build object library (only valid as subproject)"
+                   OFF)
+    set(PTL_EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+    set(PTL_BUILD_LIBS_ERROR_DESC
+        "BUILD_STATIC_LIBS, BUILD_SHARED_LIBS, and BUILD_OBJECT_LIBS are all OFF")
+else()
+    set(BUILD_OBJECT_LIBS OFF)
+    set(PTL_EXCLUDE_FROM_ALL)
+    set(PTL_BUILD_LIBS_ERROR_DESC
+        "Neither BUILD_STATIC_LIBS nor BUILD_SHARED_LIBS are set")
+endif()
+
+if((NOT BUILD_SHARED_LIBS)
+   AND (NOT BUILD_STATIC_LIBS)
+   AND (NOT BUILD_OBJECT_LIBS))
+    message(FATAL_ERROR "${PTL_BUILD_LIBS_ERROR_DESC}. One must be ON")
 endif()
 
 # -------------------------------------------------------------------------------------- #
