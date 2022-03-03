@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------------- #
-# # General                                        # #
+# General
 # -------------------------------------------------------------------------------------- #
 # Locate sources and headers for this project - headers are included so they will show up
 # in IDEs
@@ -8,7 +8,7 @@ file(GLOB_RECURSE ptl_headers ${CMAKE_CURRENT_LIST_DIR}/PTL/*.hh
 file(GLOB_RECURSE ptl_sources ${CMAKE_CURRENT_LIST_DIR}/*.cc)
 
 # -------------------------------------------------------------------------------------- #
-# # Config, Version                                # #
+# Config, Version
 # -------------------------------------------------------------------------------------- #
 
 configure_file(${PROJECT_SOURCE_DIR}/cmake/Templates/Config.hh.in
@@ -22,8 +22,26 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/Templates/Version.hh.in
 list(APPEND ptl_headers ${CMAKE_CURRENT_BINARY_DIR}/PTL/Version.hh)
 
 # -------------------------------------------------------------------------------------- #
-# # PTL Library                                     # #
+# PTL Library
 # -------------------------------------------------------------------------------------- #
+
+if(BUILD_OBJECT_LIBS)
+
+    ptl_build_library(
+        TYPE OBJECT
+        TARGET_NAME ptl-object
+        OUTPUT_NAME ptl
+        SOURCES ${ptl_headers} ${ptl_sources})
+
+    target_link_libraries(ptl-object PUBLIC Threads::Threads)
+    if(PTL_USE_TBB)
+        target_link_libraries(ptl-object PUBLIC TBB::tbb)
+    endif()
+
+    target_include_directories(
+        ptl-object PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
+                          $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+endif()
 
 if(BUILD_SHARED_LIBS)
 
@@ -82,7 +100,7 @@ if(BUILD_STATIC_LIBS)
 endif()
 
 # -------------------------------------------------------------------------------------- #
-# # Installation                                    # #
+# Installation
 # -------------------------------------------------------------------------------------- #
 
 if(PTL_INSTALL_CONFIG)

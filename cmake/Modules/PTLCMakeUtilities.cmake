@@ -84,15 +84,11 @@ function(ptl_build_library)
         set(LIB_OUTPUT_NAME ${LIB_TARGET_NAME})
     endif()
 
-    add_library(${LIB_TARGET_NAME} ${LIB_TYPE} ${LIB_SOURCES})
+    add_library(${LIB_TARGET_NAME} ${LIB_TYPE} ${PTL_EXCLUDE_FROM_ALL})
+
     add_library(${PROJECT_NAME}::${LIB_TARGET_NAME} ALIAS ${LIB_TARGET_NAME})
 
-    set_target_properties(
-        ${LIB_TARGET_NAME}
-        PROPERTIES OUTPUT_NAME ${LIB_OUTPUT_NAME}
-                   VERSION ${${PROJECT_NAME}_VERSION}
-                   SOVERSION ${${PROJECT_NAME}_VERSION_MAJOR}
-                   WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    target_sources(${LIB_TARGET_NAME} PRIVATE ${LIB_SOURCES})
 
     target_compile_definitions(${LIB_TARGET_NAME} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
 
@@ -106,12 +102,21 @@ function(ptl_build_library)
                     $<$<COMPILE_LANGUAGE:CXX>:${${PROJECT_NAME}_CXX_FLAGS}>)
     endif()
 
+    set_target_properties(
+        ${LIB_TARGET_NAME}
+        PROPERTIES OUTPUT_NAME ${LIB_OUTPUT_NAME}
+                   VERSION ${${PROJECT_NAME}_VERSION}
+                   SOVERSION ${${PROJECT_NAME}_VERSION_MAJOR}
+                   WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
     # Install the targets and export libraries
-    install(
-        TARGETS ${LIB_TARGET_NAME}
-        EXPORT ${PROJECT_NAME}Targets
-        COMPONENT Development
-        ARCHIVE DESTINATION ${PTL_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${PTL_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${PTL_INSTALL_BINDIR})
+    if(NOT "${LIB_TYPE}" STREQUAL "OBJECT")
+        install(
+            TARGETS ${LIB_TARGET_NAME}
+            EXPORT ${PROJECT_NAME}Targets
+            COMPONENT Development
+            ARCHIVE DESTINATION ${PTL_INSTALL_LIBDIR}
+            LIBRARY DESTINATION ${PTL_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${PTL_INSTALL_BINDIR} OPTIONAL)
+    endif()
 endfunction()
