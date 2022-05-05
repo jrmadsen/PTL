@@ -597,7 +597,10 @@ ThreadPool::destroy_threadpool()
         _global_control = nullptr;
         m_tbb_tp        = false;
         AutoLock lock(TypeMutex<decltype(std::cerr)>());
-        std::cerr << "[PTL::ThreadPool] ThreadPool [TBB] destroyed" << std::endl;
+        if(m_verbose > 0)
+        {
+            std::cerr << "[PTL::ThreadPool] ThreadPool [TBB] destroyed" << std::endl;
+        }
     }
 #endif
 
