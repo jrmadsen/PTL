@@ -673,7 +673,7 @@ ThreadPool::destroy_threadpool()
 
     auto _active = m_thread_active->load();
 
-    if(get_verbose() >= 0)
+    if(get_verbose() > 0)
     {
         if(_active == 0)
         {
