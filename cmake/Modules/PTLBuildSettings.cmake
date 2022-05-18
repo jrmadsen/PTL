@@ -129,7 +129,9 @@ if(PTL_USE_SANITIZER)
 endif()
 
 # Clang Tooling
-include(PTLFormatting)
+if(PTL_MASTER_PROJECT)
+    include(PTLFormatting)
+endif()
 
 ptl_add_option(PTL_USE_CLANG_TIDY "Enable running clang-tidy on sources" OFF)
 if(PTL_USE_CLANG_TIDY)
