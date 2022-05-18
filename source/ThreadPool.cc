@@ -255,13 +255,13 @@ ThreadPool::Config::Config(bool _init, bool _use_tbb, bool _use_affinity, int _v
 ThreadPool::ThreadPool(const Config& _cfg)
 : m_use_affinity{ _cfg.use_affinity }
 , m_tbb_tp{ _cfg.use_tbb }
-, m_pool_state{ std::make_shared<std::atomic_short>(thread_pool::state::NONINIT) }
 , m_verbose{ _cfg.verbose }
 , m_priority{ _cfg.priority }
+, m_pool_state{ std::make_shared<std::atomic_short>(thread_pool::state::NONINIT) }
 , m_task_queue{ _cfg.task_queue }
-, m_affinity_func{ _cfg.set_affinity }
 , m_init_func{ _cfg.initializer }
 , m_fini_func{ _cfg.finalizer }
+, m_affinity_func{ _cfg.set_affinity }
 {
     auto master_id = get_this_thread_id();
     if(master_id != 0 && m_verbose > 1)
