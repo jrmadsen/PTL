@@ -152,7 +152,8 @@ void
 TaskRunManager::Terminate()
 {
     m_is_initialized = false;
-    m_thread_pool->destroy_threadpool();
+    if(m_thread_pool)
+        m_thread_pool->destroy_threadpool();
     delete m_task_manager;
     delete m_thread_pool;
     m_task_manager = nullptr;
