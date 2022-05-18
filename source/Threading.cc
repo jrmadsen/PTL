@@ -35,6 +35,10 @@
 #    include <unistd.h>
 #endif
 
+#if defined(PTL_MACOS)
+#    include <sys/sysctl.h>
+#endif
+
 #if defined(PTL_LINUX)
 #    include <fstream>
 #endif
