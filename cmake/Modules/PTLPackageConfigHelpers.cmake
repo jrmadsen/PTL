@@ -51,12 +51,12 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/Templates/${PROJECT_NAME}BuildTargets
 # PTL pkg-config file install NB: The `-std=c++<EPOCH>` flag is currently exported to
 # Cflags. Not at all clear how this is supposed to be handled in pkg-config yet. This is
 # therefore a "simplest and dumbest" solution
-set(PTL_PC_INCLUDEDIR "\${prefix}/PTL_INSTALL_INCLUDEDIR}")
+set(PTL_PC_INCLUDEDIR "\${prefix}/${PTL_INSTALL_INCLUDEDIR}")
 if(IS_ABSOLUTE "${PTL_INSTALL_INCLUDEDIR}")
     set(PTL_PC_INCLUDEDIR "${PTL_INSTALL_INCLUDEDIR}")
 endif()
 
-set(PTL_PC_LIBDIR "\${prefix}/PTL_INSTALL_LIBDIR}")
+set(PTL_PC_LIBDIR "\${prefix}/${PTL_INSTALL_LIBDIR}")
 if(IS_ABSOLUTE "${PTL_INSTALL_LIBDIR}")
     set(PTL_PC_INCLUDEDIR "${PTL_INSTALL_LIBDIR}")
 endif()

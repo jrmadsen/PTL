@@ -63,7 +63,7 @@
 // Define DLL export macro for WIN32 systems for
 // importing/exporting external symbols to DLLs
 //
-#    if defined LIB_BUILD_DLL
+#    if defined PTL_BUILD_DLL
 #        define DLLEXPORT __declspec(dllexport)
 #        define DLLIMPORT __declspec(dllimport)
 #    else
