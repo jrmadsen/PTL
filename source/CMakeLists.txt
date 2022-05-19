@@ -56,6 +56,8 @@ if(BUILD_SHARED_LIBS)
         target_link_libraries(ptl-shared PUBLIC TBB::tbb)
     endif()
 
+    target_compile_definitions(ptl-shared PUBLIC PTL_BUILD_DLL)
+
     target_include_directories(
         ptl-shared
         PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
