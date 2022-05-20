@@ -96,7 +96,7 @@ Threading::GetNumberOfPhysicalCpus()
                 break;
             if(line.find("core id") != std::string::npos)
             {
-                for(std::string&& itr : { "core id", ":", " ", "\t" })
+                for(std::string itr : { "core id", ":", " ", "\t" })
                 {
                     static auto _npos = std::string::npos;
                     auto        _pos  = _npos;
