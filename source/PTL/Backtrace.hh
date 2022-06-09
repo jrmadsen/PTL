@@ -589,7 +589,7 @@ Backtrace::Enable(const signal_set_t& _signals)
     }
     _first  = false;
     int cnt = 0;
-    for(auto& itr : _signals)
+    for(const auto& itr : _signals)
     {
         if(itr < 0)
             continue;
@@ -645,7 +645,7 @@ Backtrace::Disable(signal_set_t _signals)
     }
 
     int cnt = 0;
-    for(auto& itr : _signals)
+    for(const auto& itr : _signals)
     {
         if(itr < 0)
             continue;

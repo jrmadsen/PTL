@@ -290,7 +290,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
         auto& _task_cond = task_cond();
         auto& _task_lock = task_lock();
         auto  _task      = wrap([&_task_cond, &_task_lock, &_counter, func, args...]() {
-            auto _tdata = ThreadData::GetInstance();
+            auto* _tdata = ThreadData::GetInstance();
             if(_tdata)
                 ++(_tdata->task_depth);
             func(args...);
@@ -302,7 +302,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
                 AutoLock _lk{ _task_lock };
                 _task_cond.notify_all();
             }
-        });
+              });
 
         if(m_tbb_task_group)
         {
@@ -335,7 +335,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
         auto& _task_cond = task_cond();
         auto& _task_lock = task_lock();
         auto  _task      = wrap([&_task_cond, &_task_lock, &_counter, func, args...]() {
-            auto _tdata = ThreadData::GetInstance();
+            auto* _tdata = ThreadData::GetInstance();
             if(_tdata)
                 ++(_tdata->task_depth);
             auto&& _ret   = func(args...);
@@ -348,7 +348,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
                 _task_cond.notify_all();
             }
             return std::forward<decltype(_ret)>(_ret);
-        });
+              });
 
         if(m_tbb_task_group)
         {
@@ -371,7 +371,7 @@ template <typename Up, typename Func, typename... Args>
 enable_if_t<std::is_void<Up>::value, void>
 TaskGroup<Tp, Arg, MaxDepth>::local_exec(Func func, Args... args)
 {
-    auto _tdata = ThreadData::GetInstance();
+    auto* _tdata = ThreadData::GetInstance();
     if(_tdata)
         ++(_tdata->task_depth);
     promise_type _p{};
@@ -387,7 +387,7 @@ template <typename Up, typename Func, typename... Args>
 enable_if_t<!std::is_void<Up>::value, void>
 TaskGroup<Tp, Arg, MaxDepth>::local_exec(Func func, Args... args)
 {
-    auto _tdata = ThreadData::GetInstance();
+    auto* _tdata = ThreadData::GetInstance();
     if(_tdata)
         ++(_tdata->task_depth);
     promise_type _p{};
