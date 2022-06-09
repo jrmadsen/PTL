@@ -42,7 +42,7 @@ readability-*,\
 -readability-function-cognitive-complexity,\
 -readability-redundant-access-specifiers,\
 "
-HeaderFilterRegex: 'source/[^/]*\.(hh|cc)$'
+HeaderFilterRegex: 'source/PTL/.*\.(hh|icc)$'
 CheckOptions:
   - key:             readability-braces-around-statements.ShortStatementLines
     value:           '2'
