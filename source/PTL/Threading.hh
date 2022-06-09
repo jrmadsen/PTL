@@ -77,16 +77,6 @@ using Promise = std::promise<Tp>;
 typedef std::mutex           Mutex;
 typedef std::recursive_mutex RecursiveMutex;
 
-// mutex macros
-#define MUTEX_INITIALIZER                                                                \
-    {}
-#define MUTEXINIT(mutex)                                                                 \
-    ;                                                                                    \
-    ;
-#define MUTEXDESTROY(mutex)                                                              \
-    ;                                                                                    \
-    ;
-
 // static functions: get_id(), sleep_for(...), sleep_until(...), yield(),
 namespace ThisThread
 {
@@ -101,12 +91,6 @@ template <typename Tp>
 using Future = std::future<Tp>;
 template <typename Tp>
 using SharedFuture = std::shared_future<Tp>;
-
-// Some useful types
-typedef void* ThreadFunReturnType;
-typedef void* ThreadFunArgType;
-typedef int (*thread_lock)(Mutex*);
-typedef int (*thread_unlock)(Mutex*);
 
 // Helper function for getting a unique static mutex for a specific
 // class or type
