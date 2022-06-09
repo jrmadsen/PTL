@@ -146,7 +146,7 @@ public:
     ThreadPool*& pool() { return m_pool; }
     ThreadPool*  pool() const { return m_pool; }
 
-    bool is_native_task_group() const { return (m_tbb_task_group) ? false : true; }
+    bool is_native_task_group() const { return (m_tbb_task_group) == nullptr; }
     bool is_main() const { return this_tid() == m_main_tid; }
 
     // check if any tasks are still pending

@@ -38,7 +38,7 @@ using namespace PTL;
 
 UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
 : VUserTaskQueue(nworkers)
-, m_is_clone((parent) ? true : false)
+, m_is_clone((parent) != nullptr)
 , m_thread_bin((parent) ? (ThreadPool::get_this_thread_id() % (nworkers + 1)) : 0)
 , m_insert_bin((parent) ? (ThreadPool::get_this_thread_id() % (nworkers + 1)) : 0)
 , m_hold((parent) ? parent->m_hold : new std::atomic_bool(false))
