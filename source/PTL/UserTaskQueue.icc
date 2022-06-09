@@ -57,7 +57,7 @@ public:
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);
     TaskSubQueue(const TaskSubQueue&);
-    ~TaskSubQueue();
+    ~TaskSubQueue() = default;
 
     TaskSubQueue& operator=(const TaskSubQueue&) = delete;
 
@@ -103,10 +103,6 @@ inline TaskSubQueue::TaskSubQueue(const TaskSubQueue& rhs)
 , m_available(true)
 , m_all_tasks(rhs.m_all_tasks)
 {}
-
-//======================================================================================//
-
-inline TaskSubQueue::~TaskSubQueue() {}
 
 //======================================================================================//
 
