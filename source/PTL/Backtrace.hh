@@ -72,8 +72,12 @@
 
 namespace PTL
 {
-template <typename FuncT>
-using ResultOf_t = typename std::result_of<FuncT>::type;
+template <typename FuncT, typename... ArgTypes>
+#if __cpp_lib_is_invocable >= 201703
+using ResultOf_t = std::invoke_result_t<FuncT, ArgTypes...>;
+#else
+using ResultOf_t = typename std::result_of<FuncT(ArgTypes...)>::type;
+#endif
 }
 
 // compatible OS and compiler
@@ -287,14 +291,14 @@ public:
     // to ignore initial frames (such as this function). A callback
     // can be provided to inspect and/or tweak the frame string
     template <size_t Depth, size_t Offset = 0, typename FuncT = frame_func_t>
-    static std::array<ResultOf_t<FuncT(const char*)>, Depth> GetMangled(
+    static std::array<ResultOf_t<FuncT, const char*>, Depth> GetMangled(
         FuncT&& func = FrameFunctor());
 
     // gets a demangled backtrace of "Depth" frames. The offset parameter is
     // used to ignore initial frames (such as this function). A callback
     // can be provided to inspect and/or tweak the frame string
     template <size_t Depth, size_t Offset = 0, typename FuncT = frame_func_t>
-    static std::array<ResultOf_t<FuncT(const char*)>, Depth> GetDemangled(
+    static std::array<ResultOf_t<FuncT, const char*>, Depth> GetDemangled(
         FuncT&& func = FrameFunctor());
 
 private:
@@ -348,12 +352,12 @@ Backtrace::ExitAction(int sig)
 //----------------------------------------------------------------------------//
 
 template <size_t Depth, size_t Offset, typename FuncT>
-inline std::array<ResultOf_t<FuncT(const char*)>, Depth>
+inline std::array<ResultOf_t<FuncT, const char*>, Depth>
 Backtrace::GetMangled(FuncT&& func)
 {
     static_assert((Depth - Offset) >= 1, "Error Depth - Offset should be >= 1");
 
-    using type = ResultOf_t<FuncT(const char*)>;
+    using type = ResultOf_t<FuncT, const char*>;
     // destination
     std::array<type, Depth> btrace;
     btrace.fill((std::is_pointer<type>::value) ? nullptr : type{});
@@ -383,7 +387,7 @@ Backtrace::GetMangled(FuncT&& func)
 //----------------------------------------------------------------------------//
 
 template <size_t Depth, size_t Offset, typename FuncT>
-inline std::array<ResultOf_t<FuncT(const char*)>, Depth>
+inline std::array<ResultOf_t<FuncT, const char*>, Depth>
 Backtrace::GetDemangled(FuncT&& func)
 {
     auto demangle_bt = [&](const char* cstr) {
@@ -749,20 +753,20 @@ public:
     {}
 
     template <size_t Depth, size_t Offset = 0, typename FuncT = frame_func_t>
-    static std::array<ResultOf_t<FuncT(const char*)>, Depth> GetMangled(
+    static std::array<ResultOf_t<FuncT, const char*>, Depth> GetMangled(
         FuncT&& func = FrameFunctor())
     {
-        using type = ResultOf_t<FuncT(const char*)>;
+        using type = ResultOf_t<FuncT, const char*>;
         auto ret = std::array<type, Depth>{};
         ret.fill(func(""));
         return ret;
     }
 
     template <size_t Depth, size_t Offset = 0, typename FuncT = frame_func_t>
-    static std::array<ResultOf_t<FuncT(const char*)>, Depth> GetDemangled(
+    static std::array<ResultOf_t<FuncT, const char*>, Depth> GetDemangled(
         FuncT&& func = FrameFunctor())
     {
-        using type = ResultOf_t<FuncT(const char*)>;
+        using type = ResultOf_t<FuncT, const char*>;
         auto ret = std::array<type, Depth>{};
         ret.fill(func(""));
         return ret;
