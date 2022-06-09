@@ -109,7 +109,7 @@ class Timer
     using clock_type = std::chrono::high_resolution_clock;
 
 public:
-    Timer();
+    PTL_DEFAULT_OBJECT(Timer)
 
 public:
     inline void        Start();
@@ -150,7 +150,7 @@ public:
     }
 
 private:
-    bool                                fValidTimes;
+    bool                                fValidTimes{false};
     std::chrono::time_point<clock_type> fStartRealTime, fEndRealTime;
     tms                                 fStartTimes, fEndTimes;
 };
