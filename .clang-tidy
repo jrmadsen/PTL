@@ -15,7 +15,6 @@ modernize-*,\
 -modernize-use-trailing-return-type,\
 -modernize-avoid-c-arrays,\
 -modernize-redundant-void-arg,\
--modernize-use-using,\
 -modernize-use-auto,\
 -modernize-concat-nested-namespaces,\
 -modernize-use-nodiscard,\
