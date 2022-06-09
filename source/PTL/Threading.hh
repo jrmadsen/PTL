@@ -38,9 +38,17 @@
 
 namespace PTL
 {
-// Macro to put current thread to sleep
-//
-#define THREADSLEEP(tick) std::this_thread::sleep_for(std::chrono::seconds(tick))
+// global thread types
+using Thread       = std::thread;
+using NativeThread = std::thread::native_handle_type;
+// std::thread::id does not cast to integer
+using Pid_t = std::thread::id;
+
+// Condition
+using Condition = std::condition_variable;
+
+// Thread identifier
+using ThreadId = Thread::id;
 
 // will be used in the future when migrating threading to task-based style
 template <typename Tp>
@@ -49,29 +57,6 @@ template <typename Tp>
 using SharedFuture = std::shared_future<Tp>;
 template <typename Tp>
 using Promise = std::promise<Tp>;
-
-//
-//          NOTE ON Tasking SERIAL BUILDS AND MUTEX/UNIQUE_LOCK
-//          ==================================================
-//
-// Mutex and RecursiveMutex are always C++11 std::mutex types
-// however, in serial mode, using MUTEXLOCK and MUTEXUNLOCK on these
-// types has no effect -- i.e. the mutexes are not actually locked or unlocked
-//
-// Additionally, when a Mutex or RecursiveMutex is used with AutoLock
-// and RecursiveAutoLock, respectively, these classes also suppressing
-// the locking and unlocking of the mutex. Regardless of the build type,
-// AutoLock and RecursiveAutoLock inherit from std::unique_lock<std::mutex>
-// and std::unique_lock<std::recursive_mutex>, respectively. This means
-// that in situations (such as is needed by the analysis category), the
-// AutoLock and RecursiveAutoLock can be passed to functions requesting
-// a std::unique_lock. Within these functions, since std::unique_lock
-// member functions are not virtual, they will not retain the dummy locking
-// and unlocking behavior
-// --> An example of this behavior can be found in AutoLock.hh
-//
-//  Jonathan R. Madsen (February 21, 2018)
-//
 
 // global mutex types
 using Mutex          = std::mutex;
@@ -82,15 +67,6 @@ namespace ThisThread
 {
 using namespace std::this_thread;
 }
-
-// will be used in the future when migrating threading to task-based style
-// and are currently used in unit tests
-template <typename Tp>
-using Promise = std::promise<Tp>;
-template <typename Tp>
-using Future = std::future<Tp>;
-template <typename Tp>
-using SharedFuture = std::shared_future<Tp>;
 
 // Helper function for getting a unique static mutex for a specific
 // class or type
@@ -105,20 +81,6 @@ TypeMutex(const unsigned int& _n = 0)
     static std::array<MutexTp, N> _mutex_array{};
     return _mutex_array[_n % N];
 }
-
-//======================================================================================//
-
-// global thread types
-using Thread       = std::thread;
-using NativeThread = std::thread::native_handle_type;
-// std::thread::id does not cast to integer
-using Pid_t = std::thread::id;
-
-// Condition
-using Condition = std::condition_variable;
-
-// Thread identifier
-using ThreadId = Thread::id;
 
 //======================================================================================//
 
