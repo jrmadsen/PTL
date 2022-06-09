@@ -60,10 +60,10 @@ using EnvChoiceList = std::set<EnvChoice<Tp>>;
 class EnvSettings
 {
 public:
-    typedef std::mutex                        mutex_t;
-    typedef std::string                       string_t;
-    typedef std::multimap<string_t, string_t> env_map_t;
-    typedef std::pair<string_t, string_t>     env_pair_t;
+    using mutex_t    = std::mutex;
+    using string_t   = std::string;
+    using env_map_t  = std::multimap<string_t, string_t>;
+    using env_pair_t = std::pair<string_t, string_t>;
 
 public:
     static EnvSettings* GetInstance()

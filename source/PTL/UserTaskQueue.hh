@@ -47,10 +47,10 @@ class TaskSubQueue;  // definition in UserTaskQueue.icc
 class UserTaskQueue : public VUserTaskQueue
 {
 public:
-    typedef std::shared_ptr<VTask>             task_pointer;
-    typedef std::vector<TaskSubQueue*>         TaskSubQueueContainer;
-    typedef std::default_random_engine         random_engine_t;
-    typedef std::uniform_int_distribution<int> int_dist_t;
+    using task_pointer          = std::shared_ptr<VTask>;
+    using TaskSubQueueContainer = std::vector<TaskSubQueue*>;
+    using random_engine_t       = std::default_random_engine;
+    using int_dist_t            = std::uniform_int_distribution<int>;
 
 public:
     // Constructor and Destructors

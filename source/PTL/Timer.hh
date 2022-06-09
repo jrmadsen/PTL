@@ -106,7 +106,7 @@ namespace PTL
 {
 class Timer
 {
-    typedef std::chrono::high_resolution_clock clock_type;
+    using clock_type = std::chrono::high_resolution_clock;
 
 public:
     Timer();

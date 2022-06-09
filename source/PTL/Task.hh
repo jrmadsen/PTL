@@ -48,9 +48,9 @@ template <typename RetT>
 class TaskFuture : public VTask
 {
 public:
-    typedef std::promise<RetT> promise_type;
-    typedef std::future<RetT>  future_type;
-    typedef RetT               result_type;
+    using promise_type = std::promise<RetT>;
+    using future_type  = std::future<RetT>;
+    using result_type  = RetT;
 
 public:
     // pass a free function pointer
@@ -81,12 +81,12 @@ template <typename RetT, typename... Args>
 class PackagedTask : public TaskFuture<RetT>
 {
 public:
-    typedef PackagedTask<RetT, Args...>       this_type;
-    typedef std::promise<RetT>                promise_type;
-    typedef std::future<RetT>                 future_type;
-    typedef std::packaged_task<RetT(Args...)> packaged_task_type;
-    typedef RetT                              result_type;
-    typedef std::tuple<Args...>               tuple_type;
+    using this_type          = PackagedTask<RetT, Args...>;
+    using promise_type       = std::promise<RetT>;
+    using future_type        = std::future<RetT>;
+    using packaged_task_type = std::packaged_task<RetT(Args...)>;
+    using result_type        = RetT;
+    using tuple_type         = std::tuple<Args...>;
 
 public:
     // pass a free function pointer
@@ -131,12 +131,12 @@ template <typename RetT, typename... Args>
 class Task : public TaskFuture<RetT>
 {
 public:
-    typedef Task<RetT, Args...>               this_type;
-    typedef std::promise<RetT>                promise_type;
-    typedef std::future<RetT>                 future_type;
-    typedef std::packaged_task<RetT(Args...)> packaged_task_type;
-    typedef RetT                              result_type;
-    typedef std::tuple<Args...>               tuple_type;
+    using this_type          = Task<RetT, Args...>;
+    using promise_type       = std::promise<RetT>;
+    using future_type        = std::future<RetT>;
+    using packaged_task_type = std::packaged_task<RetT(Args...)>;
+    using result_type        = RetT;
+    using tuple_type         = std::tuple<Args...>;
 
 public:
     template <typename FuncT>
@@ -184,11 +184,11 @@ template <typename RetT>
 class Task<RetT, void> : public TaskFuture<RetT>
 {
 public:
-    typedef Task<RetT>                 this_type;
-    typedef std::promise<RetT>         promise_type;
-    typedef std::future<RetT>          future_type;
-    typedef std::packaged_task<RetT()> packaged_task_type;
-    typedef RetT                       result_type;
+    using this_type          = Task<RetT>;
+    using promise_type       = std::promise<RetT>;
+    using future_type        = std::future<RetT>;
+    using packaged_task_type = std::packaged_task<RetT()>;
+    using result_type        = RetT;
 
 public:
     template <typename FuncT>
@@ -229,12 +229,12 @@ template <>
 class Task<void, void> : public TaskFuture<void>
 {
 public:
-    typedef void                       RetT;
-    typedef Task<void, void>           this_type;
-    typedef std::promise<RetT>         promise_type;
-    typedef std::future<RetT>          future_type;
-    typedef std::packaged_task<RetT()> packaged_task_type;
-    typedef RetT                       result_type;
+    using RetT               = void;
+    using this_type          = Task<void, void>;
+    using promise_type       = std::promise<RetT>;
+    using future_type        = std::future<RetT>;
+    using packaged_task_type = std::packaged_task<RetT()>;
+    using result_type        = RetT;
 
 public:
     template <typename FuncT>

@@ -262,9 +262,9 @@ public:
     //------------------------------------------------------------------------//
     // Some useful typedefs
     //------------------------------------------------------------------------//
-    typedef std::unique_lock<MutexT>           unique_lock_t;
-    typedef TemplateAutoLock<MutexT>           this_type;
-    typedef typename unique_lock_t::mutex_type mutex_type;
+    using unique_lock_t = std::unique_lock<MutexT>;
+    using this_type     = TemplateAutoLock<MutexT>;
+    using mutex_type    = typename unique_lock_t::mutex_type;
 
 public:
     //------------------------------------------------------------------------//
@@ -480,8 +480,8 @@ private:
 //
 // -------------------------------------------------------------------------- //
 
-typedef TemplateAutoLock<Mutex>          AutoLock;
-typedef TemplateAutoLock<RecursiveMutex> RecursiveAutoLock;
+using AutoLock          = TemplateAutoLock<Mutex>;
+using RecursiveAutoLock = TemplateAutoLock<RecursiveMutex>;
 
 // provide abbriviated type if another mutex type is desired to be used
 // aside from above

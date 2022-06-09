@@ -50,9 +50,9 @@ public:
     template <typename Tp>
     using container = std::list<Tp>;
 
-    typedef std::shared_ptr<VTask>    task_pointer;
-    typedef container<task_pointer>   container_type;
-    typedef container_type::size_type size_type;
+    using task_pointer   = std::shared_ptr<VTask>;
+    using container_type = container<task_pointer>;
+    using size_type      = container_type::size_type;
 
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);

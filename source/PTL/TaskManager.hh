@@ -51,8 +51,8 @@ namespace PTL
 class TaskManager
 {
 public:
-    typedef TaskManager           this_type;
-    typedef ThreadPool::size_type size_type;
+    using this_type = TaskManager;
+    using size_type = ThreadPool::size_type;
 
 public:
     // Constructor and Destructors
@@ -109,7 +109,7 @@ public:
     template <typename RetT, typename FuncT, typename... Args>
     std::shared_ptr<PackagedTask<RetT, Args...>> async(FuncT&& func, Args&&... args)
     {
-        typedef PackagedTask<RetT, Args...> task_type;
+        using task_type = PackagedTask<RetT, Args...>;
 
         if(!m_pool)
             throw std::runtime_error("Nullptr to thread-pool");
@@ -123,7 +123,7 @@ public:
     template <typename RetT, typename FuncT>
     std::shared_ptr<PackagedTask<RetT>> async(FuncT&& func)
     {
-        typedef PackagedTask<RetT> task_type;
+        using task_type = PackagedTask<RetT>;
 
         if(!m_pool)
             throw std::runtime_error("Nullptr to thread-pool");
@@ -138,7 +138,7 @@ public:
         -> std::shared_ptr<PackagedTask<decay_t<decltype(func(args...))>, Args...>>
     {
         using RetT = decay_t<decltype(func(args...))>;
-        typedef PackagedTask<RetT, Args...> task_type;
+        using task_type = PackagedTask<RetT, Args...>;
 
         if(!m_pool)
             throw std::runtime_error("Nullptr to thread-pool");

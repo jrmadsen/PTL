@@ -44,7 +44,7 @@ class TaskManager;
 class TaskRunManager
 {
 public:
-    typedef TaskRunManager* pointer;
+    using pointer = TaskRunManager*;
 
 public:
     // Parameters:

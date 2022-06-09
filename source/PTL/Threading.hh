@@ -74,8 +74,8 @@ using Promise = std::promise<Tp>;
 //
 
 // global mutex types
-typedef std::mutex           Mutex;
-typedef std::recursive_mutex RecursiveMutex;
+using Mutex          = std::mutex;
+using RecursiveMutex = std::recursive_mutex;
 
 // static functions: get_id(), sleep_for(...), sleep_until(...), yield(),
 namespace ThisThread
