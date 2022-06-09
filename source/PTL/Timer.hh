@@ -115,7 +115,7 @@ public:
     inline void        Start();
     inline void        Stop();
     inline bool        IsValid() const;
-    inline const char* GetClockTime() const;
+    static inline const char* GetClockTime();
     double             GetRealElapsed() const;
     double             GetSystemElapsed() const;
     double             GetUserElapsed() const;

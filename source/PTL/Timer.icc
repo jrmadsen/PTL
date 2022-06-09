@@ -43,7 +43,7 @@ PTL::Timer::IsValid() const
 }
 
 inline const char*
-PTL::Timer::GetClockTime() const
+PTL::Timer::GetClockTime()
 {
     time_t     rawtime;
     struct tm* timeinfo;
