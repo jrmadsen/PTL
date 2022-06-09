@@ -59,7 +59,7 @@ public:
     : VTask{ std::forward<Args>(args)... }
     {}
 
-    virtual ~TaskFuture() = default;
+    ~TaskFuture() override = default;
 
     TaskFuture(const TaskFuture&) = delete;
     TaskFuture& operator=(const TaskFuture&) = delete;
@@ -104,7 +104,7 @@ public:
     , m_args{ args... }
     {}
 
-    virtual ~PackagedTask() = default;
+    ~PackagedTask() override = default;
 
     PackagedTask(const PackagedTask&) = delete;
     PackagedTask& operator=(const PackagedTask&) = delete;
@@ -114,10 +114,10 @@ public:
 
 public:
     // execution operator
-    virtual void operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
-    virtual future_type get_future() final { return m_ptask.get_future(); }
-    virtual void        wait() final { return m_ptask.get_future().wait(); }
-    virtual RetT        get() final { return m_ptask.get_future().get(); }
+    void        operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
+    future_type get_future() final { return m_ptask.get_future(); }
+    void        wait() final { return m_ptask.get_future().wait(); }
+    RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask;
@@ -153,7 +153,7 @@ public:
     , m_args{ args... }
     {}
 
-    virtual ~Task() = default;
+    ~Task() override = default;
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
@@ -163,14 +163,14 @@ public:
 
 public:
     // execution operator
-    virtual void operator()() final
+    void operator()() final
     {
         if(m_ptask.valid())
             mpl::apply(std::move(m_ptask), std::move(m_args));
     }
-    virtual future_type get_future() final { return m_ptask.get_future(); }
-    virtual void        wait() final { return m_ptask.get_future().wait(); }
-    virtual RetT        get() final { return m_ptask.get_future().get(); }
+    future_type get_future() final { return m_ptask.get_future(); }
+    void        wait() final { return m_ptask.get_future().wait(); }
+    RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};
@@ -249,7 +249,7 @@ public:
     , m_ptask{ std::move(func) }
     {}
 
-    virtual ~Task() = default;
+    ~Task() override = default;
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
@@ -259,10 +259,10 @@ public:
 
 public:
     // execution operator
-    virtual void        operator()() final { m_ptask(); }
-    virtual future_type get_future() final { return m_ptask.get_future(); }
-    virtual void        wait() final { return m_ptask.get_future().wait(); }
-    virtual RetT        get() final { return m_ptask.get_future().get(); }
+    void        operator()() final { m_ptask(); }
+    future_type get_future() final { return m_ptask.get_future(); }
+    void        wait() final { return m_ptask.get_future().wait(); }
+    RetT        get() final { return m_ptask.get_future().get(); }
 
 private:
     packaged_task_type m_ptask{};

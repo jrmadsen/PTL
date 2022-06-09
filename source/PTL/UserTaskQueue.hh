@@ -57,39 +57,39 @@ public:
     UserTaskQueue(intmax_t nworkers = -1, UserTaskQueue* = nullptr);
     // Virtual destructors are required by abstract classes
     // so add it by default, just in case
-    virtual ~UserTaskQueue() override;
+    ~UserTaskQueue() override;
 
 public:
     // Virtual  function for getting a task from the queue
-    virtual task_pointer GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
+    task_pointer GetTask(intmax_t subq = -1, intmax_t nitr = -1) override;
     // Virtual function for inserting a task into the queue
-    virtual intmax_t InsertTask(task_pointer&&, ThreadData* = nullptr,
-                                intmax_t subq = -1) override PTL_NO_SANITIZE_THREAD;
+    intmax_t InsertTask(task_pointer&&, ThreadData* = nullptr,
+                        intmax_t subq = -1) override PTL_NO_SANITIZE_THREAD;
 
     // if executing only tasks in threads bin
     task_pointer GetThreadBinTask();
 
     // Overload this function to hold threads
-    virtual void Wait() override {}
-    virtual void resize(intmax_t) override;
+    void Wait() override {}
+    void resize(intmax_t) override;
 
-    virtual bool      empty() const override;
-    virtual size_type size() const override;
+    bool      empty() const override;
+    size_type size() const override;
 
-    virtual size_type bin_size(size_type bin) const override;
-    virtual bool      bin_empty(size_type bin) const override;
+    size_type bin_size(size_type bin) const override;
+    bool      bin_empty(size_type bin) const override;
 
     inline bool      true_empty() const override;
     inline size_type true_size() const override;
 
-    virtual void ExecuteOnAllThreads(ThreadPool* tp, function_type f) override;
+    void ExecuteOnAllThreads(ThreadPool* tp, function_type f) override;
 
-    virtual void ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
-                                          function_type f) override;
+    void ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
+                                  function_type f) override;
 
-    virtual VUserTaskQueue* clone() override;
+    VUserTaskQueue* clone() override;
 
-    virtual intmax_t GetThreadBin() const override;
+    intmax_t GetThreadBin() const override;
 
 protected:
     intmax_t GetInsertBin() const;
