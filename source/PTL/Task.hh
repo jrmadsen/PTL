@@ -64,8 +64,8 @@ public:
     TaskFuture(const TaskFuture&) = delete;
     TaskFuture& operator=(const TaskFuture&) = delete;
 
-    TaskFuture(TaskFuture&&) = default;
-    TaskFuture& operator=(TaskFuture&&) = default;
+    TaskFuture(TaskFuture&&) noexcept = default;
+    TaskFuture& operator=(TaskFuture&&) noexcept = default;
 
 public:
     // execution operator
@@ -109,8 +109,8 @@ public:
     PackagedTask(const PackagedTask&) = delete;
     PackagedTask& operator=(const PackagedTask&) = delete;
 
-    PackagedTask(PackagedTask&&) = default;
-    PackagedTask& operator=(PackagedTask&&) = default;
+    PackagedTask(PackagedTask&&) noexcept = default;
+    PackagedTask& operator=(PackagedTask&&) noexcept = default;
 
 public:
     // execution operator
@@ -158,8 +158,8 @@ public:
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&)  = default;
-    Task& operator=(Task&&) = default;
+    Task(Task&&) noexcept = default;
+    Task& operator=(Task&&) noexcept = default;
 
 public:
     // execution operator
@@ -208,8 +208,8 @@ public:
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&)  = default;
-    Task& operator=(Task&&) = default;
+    Task(Task&&) noexcept = default;
+    Task& operator=(Task&&) noexcept = default;
 
 public:
     // execution operator

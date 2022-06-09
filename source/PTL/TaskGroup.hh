@@ -112,11 +112,11 @@ public:
     // delete copy-construct
     TaskGroup(const this_type&) = delete;
     // define move-construct
-    TaskGroup(this_type&& rhs) = default;
+    TaskGroup(this_type&& rhs) noexcept = default;
     // delete copy-assign
     TaskGroup& operator=(const this_type& rhs) = delete;
     // define move-assign
-    TaskGroup& operator=(this_type&& rhs) = default;
+    TaskGroup& operator=(this_type&& rhs) noexcept = default;
 
 public:
     template <typename Up>
