@@ -67,6 +67,7 @@
 #endif
 
 #include <cfenv>
+#include <cmath>
 #include <csignal>
 #include <type_traits>
 
