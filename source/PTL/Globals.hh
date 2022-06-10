@@ -32,12 +32,6 @@
 #include <type_traits>
 #include <utility>
 
-#if !defined(PTL_FOLD_EXPRESSION)
-#    define PTL_FOLD_EXPRESSION(...)                                                     \
-        ::PTL::mpl::consume_parameters(                                                  \
-            ::std::initializer_list<int>{ (__VA_ARGS__, 0)... })
-#endif
-
 #if !defined(PTL_NO_SANITIZE_THREAD)
 // expect that sanitizer is from compiler which supports __has_attribute
 #    if defined(__has_attribute)
