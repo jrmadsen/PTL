@@ -16,33 +16,17 @@
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-//  ---------------------------------------------------------------
-//  Tasking class header
-//  Class Description:
-//  ---------------------------------------------------------------
-//  Author: Jonathan Madsen
-//  ---------------------------------------------------------------
 
 #include "PTL/AutoLock.hh"
-#include "PTL/Globals.hh"
-#include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Types.hh"
-#include "PTL/VUserTaskQueue.hh"
+#include "PTL/VTask.hh"
 
 #include <atomic>
-#include <cassert>
-#include <deque>
 #include <list>
 #include <memory>
-#include <queue>
-#include <stack>
 
 namespace PTL
 {
-class VTask;
-
-//======================================================================================//
 
 class TaskSubQueue
 {
@@ -189,5 +173,4 @@ TaskSubQueue::PopTask(bool front)
 }
 
 //======================================================================================//
-
 }  // namespace PTL
