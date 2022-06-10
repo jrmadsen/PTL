@@ -244,6 +244,7 @@ int main()
 #pragma once
 
 #include "PTL/Threading.hh"
+#include "PTL/Utility.hh"
 
 #include <chrono>
 #include <iostream>
@@ -380,11 +381,6 @@ private:
 #undef _is_recur_mutex
 #undef _is_other_mutex
 
-    // used in _lock_deferred chrono variants to avoid ununsed-variable warning
-    template <typename Tp>
-    void suppress_unused_variable(const Tp&)
-    {}
-
     //========================================================================//
     // NOTE on _lock_deferred(...) variants:
     //      a system_error in lock means that the mutex is unavailable
@@ -467,7 +463,7 @@ private:
              << "being called after the statics were destroyed. \n\t--> "
              << "Exception: [code: " << e.code() << "] caught: " << e.what() << std::endl;
 #else
-        suppress_unused_variable(e);
+        ConsumeParameters(e);
 #endif
     }
 };
