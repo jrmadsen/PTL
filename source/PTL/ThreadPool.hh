@@ -67,6 +67,19 @@
 
 namespace PTL
 {
+
+namespace thread_pool
+{
+namespace state
+{
+static const short STARTED = 0;
+static const short PARTIAL = 1;
+static const short STOPPED = 2;
+static const short NONINIT = 3;
+
+}  // namespace state
+}  // namespace thread_pool
+
 class ThreadPool
 {
 public:
