@@ -24,20 +24,13 @@
 
 #include "PTL/Timer.hh"
 
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
-#include <string>
 
 using namespace PTL;
 
-#if defined(IRIX6_2)
-#    if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED == 1)
-#        define __vfork vfork
-#    endif
-#endif
-
-#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
+#    include <unistd.h>
+#else
 #    include <sys/types.h>
 #    include <windows.h>
 
@@ -58,8 +51,8 @@ sysconf(int a)
 static clock_t
 filetime2msec(FILETIME* t)
 {
-    return (clock_t)((((float) t->dwHighDateTime) * 429496.7296) +
-                     (((float) t->dwLowDateTime) * .0001));
+    return (clock_t) ((((float) t->dwHighDateTime) * 429496.7296) +
+                      (((float) t->dwLowDateTime) * .0001));
 }
 
 //======================================================================================//

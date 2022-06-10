@@ -29,14 +29,12 @@
 
 #include "PTL/Globals.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Types.hh"
 
-#include <cstddef>
+#include <atomic>
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <set>
-#include <tuple>
-#include <type_traits>
-#include <utility>
 
 namespace PTL
 {

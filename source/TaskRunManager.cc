@@ -18,19 +18,15 @@
 //
 // ---------------------------------------------------------------
 //  Tasking class implementation
-
 #include "PTL/TaskRunManager.hh"
-#include "PTL/AutoLock.hh"
-#include "PTL/Task.hh"
-#include "PTL/TaskGroup.hh"
+
+#include "PTL/Config.hh"
 #include "PTL/TaskManager.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
 #include "PTL/Utility.hh"
 
-#include <cstdlib>
-#include <cstring>
-#include <iterator>
+#include <iostream>
 
 using namespace PTL;
 

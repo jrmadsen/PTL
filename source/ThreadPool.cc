@@ -29,14 +29,16 @@
 // ---------------------------------------------------------------
 
 #include "PTL/ThreadPool.hh"
-#include "PTL/Globals.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/Utility.hh"
 #include "PTL/VUserTaskQueue.hh"
 
-#include <cstdlib>
+#include <cassert>
+#include <mutex>
+#include <new>
+#include <stdexcept>
 #include <thread>
 
 using namespace PTL;

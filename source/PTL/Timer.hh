@@ -71,12 +71,11 @@
 
 #include <chrono>
 #include <iomanip>
-#include <ostream>
 #include <sstream>
 
 #if !(defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64))
 #    include <sys/times.h>
-#    include <unistd.h>
+#    include <time.h>
 #else
 #    include <ctime>
 #    define _SC_CLK_TCK 1

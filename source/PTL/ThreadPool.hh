@@ -31,6 +31,7 @@
 #pragma once
 
 #include "PTL/AutoLock.hh"
+#include "PTL/Config.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
 #include "PTL/Types.hh"
@@ -45,24 +46,26 @@
 #        define TBB_PREVIEW_GLOBAL_CONTROL 1
 #    endif
 #    include <tbb/global_control.h>
-#    include <tbb/tbb.h>
+#    include <tbb/task_arena.h>
+#    include <tbb/task_group.h>
 #endif
 
-// C
+#include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
-// C++
-#include <atomic>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
-#include <queue>
+#include <mutex> // IWYU pragma: keep
 #include <set>
-#include <stack>
 #include <thread>
+#include <type_traits> // IWYU pragma: keep
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace PTL

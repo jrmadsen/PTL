@@ -30,17 +30,16 @@
 
 #pragma once
 
-#include "Globals.hh"
-#include "VTask.hh"
+#include "PTL/Globals.hh"
+#include "PTL/VTask.hh"
 
 #include <cstdint>
-#include <functional>
-#include <stdexcept>
+#include <future>
+#include <tuple>
+#include <utility>
 
 namespace PTL
 {
-class ThreadPool;
-
 //======================================================================================//
 
 /// \brief The task class is supplied to thread_pool.
@@ -61,10 +60,10 @@ public:
 
     ~TaskFuture() override = default;
 
-    TaskFuture(const TaskFuture&) = delete;
+    TaskFuture(const TaskFuture&)            = delete;
     TaskFuture& operator=(const TaskFuture&) = delete;
 
-    TaskFuture(TaskFuture&&) noexcept = default;
+    TaskFuture(TaskFuture&&) noexcept            = default;
     TaskFuture& operator=(TaskFuture&&) noexcept = default;
 
 public:
@@ -106,10 +105,10 @@ public:
 
     ~PackagedTask() override = default;
 
-    PackagedTask(const PackagedTask&) = delete;
+    PackagedTask(const PackagedTask&)            = delete;
     PackagedTask& operator=(const PackagedTask&) = delete;
 
-    PackagedTask(PackagedTask&&) noexcept = default;
+    PackagedTask(PackagedTask&&) noexcept            = default;
     PackagedTask& operator=(PackagedTask&&) noexcept = default;
 
 public:
@@ -155,10 +154,10 @@ public:
 
     ~Task() override = default;
 
-    Task(const Task&) = delete;
+    Task(const Task&)            = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&) noexcept = default;
+    Task(Task&&) noexcept            = default;
     Task& operator=(Task&&) noexcept = default;
 
 public:
@@ -205,10 +204,10 @@ public:
 
     virtual ~Task() = default;
 
-    Task(const Task&) = delete;
+    Task(const Task&)            = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&) noexcept = default;
+    Task(Task&&) noexcept            = default;
     Task& operator=(Task&&) noexcept = default;
 
 public:
@@ -251,10 +250,10 @@ public:
 
     ~Task() override = default;
 
-    Task(const Task&) = delete;
+    Task(const Task&)            = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&)  = default;
+    Task(Task&&)            = default;
     Task& operator=(Task&&) = default;
 
 public:

@@ -17,13 +17,18 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#include "PTL/AutoLock.hh"
-#include "PTL/Threading.hh"
+#include "PTL/Config.hh" // IWYU pragma: keep
+#include "PTL/Globals.hh"
 #include "PTL/VTask.hh"
+#if defined(PTL_USE_LOCKS)
+#    include "PTL/AutoLock.hh"
+#endif
 
 #include <atomic>
+#include <cassert>
 #include <list>
 #include <memory>
+#include <utility>
 
 namespace PTL
 {

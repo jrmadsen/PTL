@@ -29,9 +29,6 @@
 
 #pragma once
 
-#include "PTL/Globals.hh"
-#include "PTL/Threading.hh"
-
 #include <cstddef>
 #include <cstdint>
 #include <functional>

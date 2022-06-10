@@ -28,21 +28,17 @@
 #include "PTL/Globals.hh"
 #include "PTL/TaskSubQueue.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Types.hh"
+#include "PTL/VTask.hh"
 #include "PTL/VUserTaskQueue.hh"
 
 #include <atomic>
-#include <deque>
-#include <list>
+#include <cstdint>
 #include <memory>
-#include <queue>
 #include <random>
-#include <set>
-#include <stack>
+#include <vector>
 
 namespace PTL
 {
-class VTask;
 
 class UserTaskQueue : public VUserTaskQueue
 {

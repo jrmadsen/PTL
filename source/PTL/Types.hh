@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include "PTL/Config.hh"
-
 #if defined(__APPLE__) || defined(__MACH__)
 #    if !defined(PTL_MACOS)
 #        define PTL_MACOS 1

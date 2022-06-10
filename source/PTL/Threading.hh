@@ -25,16 +25,11 @@
 
 #pragma once
 
-#include "PTL/Globals.hh"
-#include "PTL/Types.hh"
-
 #include <array>
-#include <chrono>
-#include <condition_variable>
+#include <cstddef>
 #include <future>
 #include <mutex>
 #include <thread>
-#include <vector>
 
 namespace PTL
 {

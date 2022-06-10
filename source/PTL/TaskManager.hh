@@ -31,18 +31,15 @@
 #pragma once
 
 #include "PTL/Globals.hh"
-#include "PTL/TBBTaskGroup.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <iomanip>
+#include <iostream>
+#include <memory>
 #include <stdexcept>
+#include <thread>
+#include <utility>
 
 namespace PTL
 {

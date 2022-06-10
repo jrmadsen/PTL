@@ -24,13 +24,22 @@
 //  ---------------------------------------------------------------
 
 #include "PTL/UserTaskQueue.hh"
-#include "PTL/Task.hh"
+
+#include "PTL/AutoLock.hh"
 #include "PTL/TaskGroup.hh"
+#include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Utility.hh"
 
 #include <cassert>
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <map>
 #include <stdexcept>
+#include <system_error>
+#include <thread>
+#include <utility>
 
 using namespace PTL;
 
