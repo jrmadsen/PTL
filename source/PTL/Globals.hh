@@ -19,14 +19,6 @@
 
 #pragma once
 
-#ifndef FALSE
-#    define FALSE 0
-#endif
-
-#ifndef TRUE
-#    define TRUE 1
-#endif
-
 #include <algorithm>  // Retrieve definitions of min/max
 
 // Include base types
@@ -73,13 +65,6 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 // for pre-C++14 tuple expansion to arguments
 namespace mpl
 {
-//--------------------------------------------------------------------------------------//
-
-template <typename... Args>
-void
-consume_parameters(Args&&...)
-{}
-
 //--------------------------------------------------------------------------------------//
 
 namespace impl
@@ -167,7 +152,7 @@ apply(FnT&& _func, TupleT _args, impl::index_sequence<Idx...>)
 #if defined(__GNUC__) && (__GNUC__ < 6)
     if(sizeof...(Idx) == 0)
     {
-        consume_parameters(_args);
+        ConsumeParameters(_args);
     }
 #endif
     return std::forward<FnT>(_func)(std::get<Idx>(std::move(_args))...);

@@ -42,7 +42,7 @@ namespace PTL
 //
 template <typename... Args>
 void
-ConsumeParameters(Args...)
+ConsumeParameters(Args&&...)
 {}
 
 //--------------------------------------------------------------------------------------//
