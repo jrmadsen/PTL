@@ -479,9 +479,4 @@ private:
 using AutoLock          = TemplateAutoLock<Mutex>;
 using RecursiveAutoLock = TemplateAutoLock<RecursiveMutex>;
 
-// provide abbriviated type if another mutex type is desired to be used
-// aside from above
-template <typename Tp>
-using TAutoLock = TemplateAutoLock<Tp>;
-
 }  // namespace PTL
