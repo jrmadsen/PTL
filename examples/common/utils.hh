@@ -110,7 +110,7 @@ static int16_t rng_range = 2;
 // hence why I am using it here
 
 #if defined(USE_TBB_TASKS)
-#include "PTL/TBBTaskGroup.hh"
+#    include "PTL/TBBTaskGroup.hh"
 const bool                                    useTBB = true;
 typedef TBBTaskGroup<Array_t, const int64_t&> TaskGroup_t;
 typedef tbb::task_group                       VoidGroup_t;

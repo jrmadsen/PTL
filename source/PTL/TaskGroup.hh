@@ -44,9 +44,9 @@
 #include "PTL/VUserTaskQueue.hh"
 
 #include <atomic>
-#include <cstdio>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -549,7 +549,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
                 AutoLock _lk{ _task_lock };
                 _task_cond.notify_all();
             }
-              });
+        });
 
         if(m_tbb_task_group)
         {
@@ -595,7 +595,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
                 _task_cond.notify_all();
             }
             return std::forward<decltype(_ret)>(_ret);
-              });
+        });
 
         if(m_tbb_task_group)
         {

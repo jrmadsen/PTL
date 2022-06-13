@@ -174,7 +174,7 @@ public:
     GpuData(this_type&&)      = default;
 
     this_type& operator=(const this_type&) = delete;
-    this_type& operator=(this_type&&) = default;
+    this_type& operator=(this_type&&)      = default;
 
 public:
     // access functions

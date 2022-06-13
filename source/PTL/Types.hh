@@ -84,11 +84,10 @@
 
 #if !defined(PTL_DEFAULT_OBJECT)
 #    define PTL_DEFAULT_OBJECT(NAME)                                                     \
-        NAME()            = default;                                                     \
-        ~NAME()           = default;                                                     \
-        NAME(const NAME&) = default;                                                     \
-        NAME(NAME&&)      = default;                                                     \
+        NAME()                       = default;                                          \
+        ~NAME()                      = default;                                          \
+        NAME(const NAME&)            = default;                                          \
+        NAME(NAME&&)                 = default;                                          \
         NAME& operator=(const NAME&) = default;                                          \
-        NAME& operator=(NAME&&) = default;
+        NAME& operator=(NAME&&)      = default;
 #endif
-

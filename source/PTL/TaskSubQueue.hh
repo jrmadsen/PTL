@@ -17,7 +17,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#include "PTL/Config.hh" // IWYU pragma: keep
+#include "PTL/Config.hh"  // IWYU pragma: keep
 #include "PTL/Globals.hh"
 #include "PTL/VTask.hh"
 #if defined(PTL_USE_LOCKS)

@@ -29,7 +29,7 @@
 #include <map>
 #include <mutex>
 #include <set>
-#include <sstream> // IWYU pragma: keep
+#include <sstream>  // IWYU pragma: keep
 #include <string>
 #include <tuple>
 #include <utility>
@@ -371,7 +371,7 @@ struct ScopeDestructor
     {}
 
     // delete copy operations
-    ScopeDestructor(const ScopeDestructor&) = delete;
+    ScopeDestructor(const ScopeDestructor&)            = delete;
     ScopeDestructor& operator=(const ScopeDestructor&) = delete;
 
     // allow move operations

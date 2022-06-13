@@ -79,7 +79,7 @@ using ResultOf_t = std::invoke_result_t<FuncT, ArgTypes...>;
 #else
 using ResultOf_t = typename std::result_of<FuncT(ArgTypes...)>::type;
 #endif
-}
+}  // namespace PTL
 
 // compatible OS and compiler
 #if defined(PTL_UNIX) &&                                                                 \
@@ -225,39 +225,39 @@ public:
         std::map<int, sigaction_t> previous     = {};
         std::vector<exit_action_t> exit_actions = {};
         const id_list_t            identifiers  = {
-            id_entry_t("SIGHUP", SIGHUP, "terminal line hangup"),
-            id_entry_t("SIGINT", SIGINT, "interrupt program"),
-            id_entry_t("SIGQUIT", SIGQUIT, "quit program"),
-            id_entry_t("SIGILL", SIGILL, "illegal instruction"),
-            id_entry_t("SIGTRAP", SIGTRAP, "trace trap"),
-            id_entry_t("SIGABRT", SIGABRT, "abort program (formerly SIGIOT)"),
-            id_entry_t("SIGEMT", SIGEMT, "emulate instruction executed"),
-            id_entry_t("SIGFPE", SIGFPE, "floating-point exception"),
-            id_entry_t("SIGKILL", SIGKILL, "kill program"),
-            id_entry_t("SIGBUS", SIGBUS, "bus error"),
-            id_entry_t("SIGSEGV", SIGSEGV, "segmentation violation"),
-            id_entry_t("SIGSYS", SIGSYS, "non-existent system call invoked"),
-            id_entry_t("SIGPIPE", SIGPIPE, "write on a pipe with no reader"),
-            id_entry_t("SIGALRM", SIGALRM, "real-time timer expired"),
-            id_entry_t("SIGTERM", SIGTERM, "software termination signal"),
-            id_entry_t("SIGURG", SIGURG, "urgent condition present on socket"),
-            id_entry_t("SIGSTOP", SIGSTOP, "stop (cannot be caught or ignored)"),
-            id_entry_t("SIGTSTP", SIGTSTP, "stop signal generated from keyboard"),
-            id_entry_t("SIGCONT", SIGCONT, "continue after stop"),
-            id_entry_t("SIGCHLD", SIGCHLD, "child status has changed"),
-            id_entry_t("SIGTTIN", SIGTTIN,
-                       "background read attempted from control terminal"),
-            id_entry_t("SIGTTOU", SIGTTOU,
-                       "background write attempted to control terminal"),
-            id_entry_t("SIGIO ", SIGIO, "I/O is possible on a descriptor"),
-            id_entry_t("SIGXCPU", SIGXCPU, "cpu time limit exceeded"),
-            id_entry_t("SIGXFSZ", SIGXFSZ, "file size limit exceeded"),
-            id_entry_t("SIGVTALRM", SIGVTALRM, "virtual time alarm"),
-            id_entry_t("SIGPROF", SIGPROF, "profiling timer alarm"),
-            id_entry_t("SIGWINCH", SIGWINCH, "Window size change"),
-            id_entry_t("SIGINFO", SIGINFO, "status request from keyboard"),
-            id_entry_t("SIGUSR1", SIGUSR1, "User defined signal 1"),
-            id_entry_t("SIGUSR2", SIGUSR2, "User defined signal 2")
+                        id_entry_t("SIGHUP", SIGHUP, "terminal line hangup"),
+                        id_entry_t("SIGINT", SIGINT, "interrupt program"),
+                        id_entry_t("SIGQUIT", SIGQUIT, "quit program"),
+                        id_entry_t("SIGILL", SIGILL, "illegal instruction"),
+                        id_entry_t("SIGTRAP", SIGTRAP, "trace trap"),
+                        id_entry_t("SIGABRT", SIGABRT, "abort program (formerly SIGIOT)"),
+                        id_entry_t("SIGEMT", SIGEMT, "emulate instruction executed"),
+                        id_entry_t("SIGFPE", SIGFPE, "floating-point exception"),
+                        id_entry_t("SIGKILL", SIGKILL, "kill program"),
+                        id_entry_t("SIGBUS", SIGBUS, "bus error"),
+                        id_entry_t("SIGSEGV", SIGSEGV, "segmentation violation"),
+                        id_entry_t("SIGSYS", SIGSYS, "non-existent system call invoked"),
+                        id_entry_t("SIGPIPE", SIGPIPE, "write on a pipe with no reader"),
+                        id_entry_t("SIGALRM", SIGALRM, "real-time timer expired"),
+                        id_entry_t("SIGTERM", SIGTERM, "software termination signal"),
+                        id_entry_t("SIGURG", SIGURG, "urgent condition present on socket"),
+                        id_entry_t("SIGSTOP", SIGSTOP, "stop (cannot be caught or ignored)"),
+                        id_entry_t("SIGTSTP", SIGTSTP, "stop signal generated from keyboard"),
+                        id_entry_t("SIGCONT", SIGCONT, "continue after stop"),
+                        id_entry_t("SIGCHLD", SIGCHLD, "child status has changed"),
+                        id_entry_t("SIGTTIN", SIGTTIN,
+                                   "background read attempted from control terminal"),
+                        id_entry_t("SIGTTOU", SIGTTOU,
+                                   "background write attempted to control terminal"),
+                        id_entry_t("SIGIO ", SIGIO, "I/O is possible on a descriptor"),
+                        id_entry_t("SIGXCPU", SIGXCPU, "cpu time limit exceeded"),
+                        id_entry_t("SIGXFSZ", SIGXFSZ, "file size limit exceeded"),
+                        id_entry_t("SIGVTALRM", SIGVTALRM, "virtual time alarm"),
+                        id_entry_t("SIGPROF", SIGPROF, "profiling timer alarm"),
+                        id_entry_t("SIGWINCH", SIGWINCH, "Window size change"),
+                        id_entry_t("SIGINFO", SIGINFO, "status request from keyboard"),
+                        id_entry_t("SIGUSR1", SIGUSR1, "User defined signal 1"),
+                        id_entry_t("SIGUSR2", SIGUSR2, "User defined signal 2")
         };
     };
 
@@ -720,33 +720,33 @@ public:
     struct fake_sigaction
     {};
 
-    using siginfo_t = fake_siginfo;
-    using sigaction_t = fake_sigaction;
+    using siginfo_t     = fake_siginfo;
+    using sigaction_t   = fake_sigaction;
     using exit_action_t = std::function<void(int)>;
-    using frame_func_t = std::function<std::string(const char*)>;
-    using signal_set_t = std::set<int>;
+    using frame_func_t  = std::function<std::string(const char*)>;
+    using signal_set_t  = std::set<int>;
 
 public:
     struct actions
     {
         using id_entry_t = std::tuple<std::string, int, std::string>;
-        using id_list_t = std::vector<id_entry_t>;
+        using id_list_t  = std::vector<id_entry_t>;
 
-        std::map<int, bool> is_active = {};
-        std::map<int, sigaction_t> current = {};
-        std::map<int, sigaction_t> previous = {};
+        std::map<int, bool>        is_active    = {};
+        std::map<int, sigaction_t> current      = {};
+        std::map<int, sigaction_t> previous     = {};
         std::vector<exit_action_t> exit_actions = {};
-        const id_list_t identifiers = {};
+        const id_list_t            identifiers  = {};
     };
 
 public:
-    static void Handler(int, siginfo_t*, void*) {}
-    static void Message(int, siginfo_t*, std::ostream&) {}
-    static void ExitAction(int) {}
-    static int Enable(const std::string&) { return 0; }
-    static int Enable(const signal_set_t& = DefaultSignals()) { return 0; }
-    static int Disable(signal_set_t = {}) { return 0; }
-    static int GetSignal(const std::string&) { return -1; }
+    static void        Handler(int, siginfo_t*, void*) {}
+    static void        Message(int, siginfo_t*, std::ostream&) {}
+    static void        ExitAction(int) {}
+    static int         Enable(const std::string&) { return 0; }
+    static int         Enable(const signal_set_t& = DefaultSignals()) { return 0; }
+    static int         Disable(signal_set_t = {}) { return 0; }
+    static int         GetSignal(const std::string&) { return -1; }
     static std::string Description(int) { return std::string{}; }
 
     template <typename FuncT>
@@ -758,7 +758,7 @@ public:
         FuncT&& func = FrameFunctor())
     {
         using type = ResultOf_t<FuncT, const char*>;
-        auto ret = std::array<type, Depth>{};
+        auto ret   = std::array<type, Depth>{};
         ret.fill(func(""));
         return ret;
     }
@@ -768,7 +768,7 @@ public:
         FuncT&& func = FrameFunctor())
     {
         using type = ResultOf_t<FuncT, const char*>;
-        auto ret = std::array<type, Depth>{};
+        auto ret   = std::array<type, Depth>{};
         ret.fill(func(""));
         return ret;
     }

@@ -60,10 +60,10 @@ public:
     Singleton(pointer);
     ~Singleton();
 
-    Singleton(const Singleton&) = delete;
-    Singleton(Singleton&&)      = delete;
+    Singleton(const Singleton&)            = delete;
+    Singleton(Singleton&&)                 = delete;
     Singleton& operator=(const Singleton&) = delete;
-    Singleton& operator=(Singleton&&) = delete;
+    Singleton& operator=(Singleton&&)      = delete;
 
 public:
     // public static functions
@@ -162,12 +162,12 @@ private:
         pointer     m_master_instance = nullptr;
         list_t      m_children        = {};
 
-        persistent_data()                       = default;
-        ~persistent_data()                      = default;
-        persistent_data(const persistent_data&) = delete;
-        persistent_data(persistent_data&&)      = delete;
+        persistent_data()                                  = default;
+        ~persistent_data()                                 = default;
+        persistent_data(const persistent_data&)            = delete;
+        persistent_data(persistent_data&&)                 = delete;
         persistent_data& operator=(const persistent_data&) = delete;
-        persistent_data& operator=(persistent_data&&) = delete;
+        persistent_data& operator=(persistent_data&&)      = delete;
 
         persistent_data(pointer _master, std::thread::id _tid)
         : m_master_thread(_tid)
