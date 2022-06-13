@@ -124,11 +124,13 @@ public:
     // delete copy-construct
     TaskGroup(const this_type&) = delete;
     // define move-construct
-    TaskGroup(this_type&& rhs) noexcept = default;
+    // NOLINTNEXTLINE(performance-noexcept-move-constructor)
+    TaskGroup(this_type&& rhs) = default;
     // delete copy-assign
     TaskGroup& operator=(const this_type& rhs) = delete;
     // define move-assign
-    TaskGroup& operator=(this_type&& rhs) noexcept = default;
+    // NOLINTNEXTLINE(performance-noexcept-move-constructor)
+    TaskGroup& operator=(this_type&& rhs) = default;
 
 public:
     template <typename Up>
