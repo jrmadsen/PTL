@@ -32,7 +32,6 @@
 
 namespace PTL
 {
-
 class TaskSubQueue
 {
 public:

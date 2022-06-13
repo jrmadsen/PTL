@@ -371,7 +371,7 @@ struct ScopeDestructor
     {}
 
     // delete copy operations
-    ScopeDestructor(const ScopeDestructor&)            = delete;
+    ScopeDestructor(const ScopeDestructor&) = delete;
     ScopeDestructor& operator=(const ScopeDestructor&) = delete;
 
     // allow move operations

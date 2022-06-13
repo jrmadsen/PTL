@@ -39,7 +39,6 @@
 
 namespace PTL
 {
-
 class UserTaskQueue : public VUserTaskQueue
 {
 public:

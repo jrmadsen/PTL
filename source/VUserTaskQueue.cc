@@ -42,7 +42,7 @@ VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)
     {
         TaskRunManager* rm = TaskRunManager::GetMasterRunManager();
         m_workers          = (rm) ? rm->GetNumberOfThreads() + 1  // number of threads + 1
-                                  : (2 * std::thread::hardware_concurrency()) + 1;
+                         : (2 * std::thread::hardware_concurrency()) + 1;
         // hyperthreads + 1
     }
 }

@@ -56,10 +56,10 @@ public:
     explicit TaskManager(ThreadPool*, bool _manage_pool = true);
     virtual ~TaskManager();
 
-    TaskManager(const TaskManager&)            = delete;
-    TaskManager(TaskManager&&)                 = default;
+    TaskManager(const TaskManager&) = delete;
+    TaskManager(TaskManager&&)      = default;
     TaskManager& operator=(const TaskManager&) = delete;
-    TaskManager& operator=(TaskManager&&)      = default;
+    TaskManager& operator=(TaskManager&&) = default;
 
 public:
     /// get the singleton pointer

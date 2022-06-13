@@ -497,9 +497,9 @@ reduce(float* _in, float* _out, int size);
 //======================================================================================//
 
 DLL int32_t*
-cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
-            const int nx, const int ny, cudaStream_t stream = 0,
-            const int eInterp = GetNppInterpolationMode());
+    cuda_rotate(const int32_t* src, const float theta_rad, const float theta_deg,
+                const int nx, const int ny, cudaStream_t stream = 0,
+                const int eInterp = GetNppInterpolationMode());
 
 //--------------------------------------------------------------------------------------//
 

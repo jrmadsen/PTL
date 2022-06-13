@@ -70,7 +70,6 @@
 
 namespace PTL
 {
-
 namespace thread_pool
 {
 namespace state
@@ -167,10 +166,10 @@ public:
                affinity_func_t                = affinity_functor(),
                VUserTaskQueue* task_queue     = nullptr);
     virtual ~ThreadPool();
-    ThreadPool(const ThreadPool&)            = delete;
-    ThreadPool(ThreadPool&&)                 = default;
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool&&)      = default;
     ThreadPool& operator=(const ThreadPool&) = delete;
-    ThreadPool& operator=(ThreadPool&&)      = default;
+    ThreadPool& operator=(ThreadPool&&) = default;
 
 public:
     // Public functions
@@ -397,10 +396,10 @@ ThreadPool::get_task_arena()
     // create a task arena
     if(!m_tbb_task_arena)
     {
-        auto _sz         = (tbb_global_control())
-                               ? tbb_global_control()->active_value(
-                                     tbb::global_control::max_allowed_parallelism)
-                               : size();
+        auto _sz = (tbb_global_control())
+                       ? tbb_global_control()->active_value(
+                             tbb::global_control::max_allowed_parallelism)
+                       : size();
         m_tbb_task_arena = new tbb_task_arena_t(::tbb::task_arena::attach{});
         m_tbb_task_arena->initialize(_sz, 1);
     }

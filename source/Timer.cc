@@ -51,8 +51,8 @@ sysconf(int a)
 static clock_t
 filetime2msec(FILETIME* t)
 {
-    return (clock_t) ((((float) t->dwHighDateTime) * 429496.7296) +
-                      (((float) t->dwLowDateTime) * .0001));
+    return (clock_t)((((float) t->dwHighDateTime) * 429496.7296) +
+                     (((float) t->dwLowDateTime) * .0001));
 }
 
 //======================================================================================//

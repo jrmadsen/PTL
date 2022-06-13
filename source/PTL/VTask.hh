@@ -55,10 +55,10 @@ public:
     VTask()          = default;
     virtual ~VTask() = default;
 
-    VTask(const VTask&)            = delete;
+    VTask(const VTask&) = delete;
     VTask& operator=(const VTask&) = delete;
 
-    VTask(VTask&&)            = default;
+    VTask(VTask&&) = default;
     VTask& operator=(VTask&&) = default;
 
 public:
