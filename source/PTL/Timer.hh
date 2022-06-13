@@ -162,7 +162,7 @@ Timer::GetClockTime()
     return asctime(timeinfo);
 }
 
-std::ostream&
+inline std::ostream&
 operator<<(std::ostream& os, const Timer& t)
 {
     // so fixed doesn't propagate
