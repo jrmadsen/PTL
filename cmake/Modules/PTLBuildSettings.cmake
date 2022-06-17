@@ -119,8 +119,13 @@ endif()
 # https://discourse.cmake.org/t/best-practice-for-multi-config-build-options/2049
 ptl_add_option(PTL_USE_SANITIZER "Enable -fsanitize=<type>" OFF)
 if(PTL_USE_SANITIZER)
+    set(__ptl_sanitizer_type_default "thread")
+    if(PTL_SANITIZER_TYPE)
+        set(__ptl_sanitizer_type_default "${PTL_SANITIZER_TYPE}")
+    endif()
+
     set(PTL_SANITIZER_TYPE
-        "thread"
+        "${__ptl_sanitizer_type_default}"
         CACHE STRING "Sanitizer type (-fsanitize=<type>)")
     set_property(CACHE PTL_SANITIZER_TYPE PROPERTY STRINGS "thread" "address" "undefined")
     ptl_message_on_change(PTL_SANITIZER_TYPE "Building PTL with sanitizer type")
