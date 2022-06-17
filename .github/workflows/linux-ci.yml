@@ -46,17 +46,40 @@ jobs:
             standard: '17'
             os-release: '18.04'
         exclude:
+          # Ubuntu 18.04 (Bionic)
           - os-release: '18.04'
-            compiler: [ 'gcc-11', 'gcc-12' ]
+            compiler: 'gcc-11'
+          - os-release: '18.04'
+            compiler: 'gcc-12'
+          # Ubuntu 20.04 (Focal)
           - os-release: '20.04'
             compiler: 'gcc-6'
+          - os-release: '20.04'
+            compiler: 'gcc-7'
+          - os-release: '20.04'
+            compiler: 'clang-7'
+          - os-release: '20.04'
+            compiler: 'clang-8'
+          # Ubuntu 22.04 (Jammy)
           - os-release: '22.04'
-            compiler: [ 'gcc-6', 'gcc-7', 'gcc-8', 'gcc-10', 'clang-7', 'clang-8', 'clang-10' ]
+            compiler: 'gcc-6'
+          - os-release: '22.04'
+            compiler: 'gcc-7'
+          - os-release: '22.04'
+            compiler: 'gcc-8'
+          - os-release: '22.04'
+            compiler: 'gcc-9'
+          - os-release: '22.04'
+            compiler: 'gcc-10'
+          - os-release: '22.04'
+            compiler: 'clang-7'
+          - os-release: '22.04'
+            compiler: 'clang-8'
         build_type: ['Release']
         build_libs: ['shared static']
         compiler: ['gcc-6', 'gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'gcc-11', 'gcc-12', 'clang-7', 'clang-8', 'clang-10', 'clang-11', 'clang-12']
         extra_args: ['--num-tasks=256 --tbb']
-        standard: ['11', '14', '17']
+        standard: ['11', '17']
         os-release: ['18.04', '20.04', '22.04']
 
     steps:
