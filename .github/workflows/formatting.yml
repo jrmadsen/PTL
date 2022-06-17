@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [ master, develop ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   cxx-formatting:
     runs-on: ubuntu-20.04

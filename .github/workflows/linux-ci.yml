@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master, main, develop ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   BUILD_TYPE: Release
   ASAN_OPTIONS: "detect_leaks=0"
