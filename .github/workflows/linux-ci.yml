@@ -61,6 +61,8 @@ jobs:
           - os-release: '20.04'
             compiler: 'gcc-7'
           - os-release: '20.04'
+            compiler: 'gcc-12'
+          - os-release: '20.04'
             compiler: 'clang-7'
           - os-release: '20.04'
             compiler: 'clang-8'
