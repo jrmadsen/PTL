@@ -12,7 +12,7 @@ env:
 
 jobs:
   ci:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-${{ matrix.os-release }}
     strategy:
       matrix:
         include:
@@ -22,18 +22,21 @@ jobs:
             extra_args: '--coverage --tbb --num-tasks=64'
             extra_packages: 'clang-tidy'
             standard: '11'
+            os-release: '18.04'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
             extra_args: '--num-tasks=256 --sanitizer --sanitizer-type=leak --static-analysis'
             extra_packages: 'clang-tidy-12'
             standard: '11'
+            os-release: '18.04'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
             extra_args: '--num-tasks=256 --tbb --sanitizer --sanitizer-type=address --static-analysis'
             extra_packages: 'clang-tidy-12'
             standard: '14'
+            os-release: '18.04'
           - build_type: 'RelWithDebInfo'
             build_libs: 'shared'
             compiler: 'clang-12'
@@ -41,11 +44,20 @@ jobs:
             extra_cmake: '-DPTL_USE_LOCKS=ON'
             extra_packages: 'clang-tidy-12'
             standard: '17'
+            os-release: '18.04'
+        exclude:
+          - os-release: '18.04'
+            compiler: [ 'gcc-11', 'gcc-12' ]
+          - os-release: '20.04'
+            compiler: 'gcc-6'
+          - os-release: '22.04'
+            compiler: [ 'gcc-6', 'gcc-7', 'gcc-8', 'gcc-10', 'clang-7', 'clang-8', 'clang-10' ]
         build_type: ['Release']
         build_libs: ['shared static']
-        compiler: ['gcc-6', 'gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'clang-7', 'clang-8', 'clang-10', 'clang-11']
+        compiler: ['gcc-6', 'gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'gcc-11', 'gcc-12', 'clang-7', 'clang-8', 'clang-10', 'clang-11', 'clang-12']
         extra_args: ['--num-tasks=256 --tbb']
-        standard: ['11']
+        standard: ['11', '14', '17']
+        os-release: ['18.04', '20.04', '22.04']
 
     steps:
     - uses: actions/checkout@v2
