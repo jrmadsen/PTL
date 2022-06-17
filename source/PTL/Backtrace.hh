@@ -69,6 +69,7 @@
 #include <cfenv>
 #include <cmath>
 #include <csignal>
+#include <cstring>
 #include <type_traits>
 
 namespace PTL
@@ -451,7 +452,7 @@ Backtrace::Message(int sig, siginfo_t* sinfo, std::ostream& os)
     // overflowing the signal stack
 
     // ignore future signals of this type
-    sigignore(sig);
+    signal(sig, SIG_IGN);
 
     os << "\n### CAUGHT SIGNAL: " << sig << " ### ";
     if(sinfo)
@@ -562,9 +563,8 @@ Backtrace::Handler(int sig, siginfo_t* sinfo, void*)
     }
 
     // ignore any termination signals
-    sigignore(SIGKILL);
-    sigignore(SIGTERM);
-    sigignore(SIGABRT);
+    for(auto itr : { SIGKILL, SIGTERM, SIGABRT })
+        signal(itr, SIG_IGN);
     abort();
 }
 
