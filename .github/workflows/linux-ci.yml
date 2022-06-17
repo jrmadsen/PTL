@@ -81,6 +81,10 @@ jobs:
             compiler: 'clang-8'
           - os-release: '22.04'
             compiler: 'clang-10'
+          - os-release: '22.04'
+            compiler: 'clang-11'
+          - os-release: '22.04'
+            compiler: 'clang-12'
         build_type: ['Release']
         build_libs: ['shared static']
         compiler: ['gcc-6', 'gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'gcc-11', 'gcc-12', 'clang-7', 'clang-8', 'clang-10', 'clang-11', 'clang-12']
@@ -145,17 +149,9 @@ jobs:
     - name: Configure Repos
       if: matrix.os-release == '22.04'
       run:
-        DISTRIB_CODENAME=$(cat /etc/lsb-release | grep DISTRIB_CODENAME | awk -F '=' '{print $NF}') &&
         sudo apt-get update &&
         sudo apt-get install -y software-properties-common wget curl &&
-        sudo add-apt-repository -u -y ppa:ubuntu-toolchain-r/test &&
-        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add - &&
-        echo "deb http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-11 main" >> llvm-toolchain.list &&
-        echo "deb-src http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-11 main" >> llvm-toolchain.list &&
-        echo "deb http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-12 main" >> llvm-toolchain.list &&
-        echo "deb-src http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-12 main" >> llvm-toolchain.list &&
-        cat llvm-toolchain.list &&
-        sudo mv llvm-toolchain.list /etc/apt/sources.list.d/
+        sudo add-apt-repository -u -y ppa:ubuntu-toolchain-r/test
 
     - name: Install Repos
       run:
