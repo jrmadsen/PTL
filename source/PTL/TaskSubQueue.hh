@@ -16,48 +16,36 @@
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-//  ---------------------------------------------------------------
-//  Tasking class header
-//  Class Description:
-//  ---------------------------------------------------------------
-//  Author: Jonathan Madsen
-//  ---------------------------------------------------------------
 
-#include "PTL/AutoLock.hh"
+#include "PTL/Config.hh"  // IWYU pragma: keep
 #include "PTL/Globals.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-#include "PTL/Types.hh"
-#include "PTL/VUserTaskQueue.hh"
+#include "PTL/VTask.hh"
+#if defined(PTL_USE_LOCKS)
+#    include "PTL/AutoLock.hh"
+#endif
 
 #include <atomic>
 #include <cassert>
-#include <deque>
 #include <list>
 #include <memory>
-#include <queue>
-#include <stack>
+#include <utility>
 
 namespace PTL
 {
-class VTask;
-
-//======================================================================================//
-
 class TaskSubQueue
 {
 public:
     template <typename Tp>
     using container = std::list<Tp>;
 
-    typedef std::shared_ptr<VTask>    task_pointer;
-    typedef container<task_pointer>   container_type;
-    typedef container_type::size_type size_type;
+    using task_pointer   = std::shared_ptr<VTask>;
+    using container_type = container<task_pointer>;
+    using size_type      = container_type::size_type;
 
 public:
     TaskSubQueue(std::atomic_uintmax_t* _ntasks);
     TaskSubQueue(const TaskSubQueue&);
-    ~TaskSubQueue();
+    ~TaskSubQueue() = default;
 
     TaskSubQueue& operator=(const TaskSubQueue&) = delete;
 
@@ -103,10 +91,6 @@ inline TaskSubQueue::TaskSubQueue(const TaskSubQueue& rhs)
 , m_available(true)
 , m_all_tasks(rhs.m_all_tasks)
 {}
-
-//======================================================================================//
-
-inline TaskSubQueue::~TaskSubQueue() {}
 
 //======================================================================================//
 
@@ -193,5 +177,4 @@ TaskSubQueue::PopTask(bool front)
 }
 
 //======================================================================================//
-
 }  // namespace PTL

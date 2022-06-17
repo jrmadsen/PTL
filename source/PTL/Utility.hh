@@ -21,9 +21,7 @@
 
 #pragma once
 
-#include "PTL/Types.hh"
-
-#include <chrono>
+#include <cctype>
 #include <cstdlib>
 #include <functional>
 #include <iomanip>
@@ -31,9 +29,10 @@
 #include <map>
 #include <mutex>
 #include <set>
-#include <sstream>
+#include <sstream>  // IWYU pragma: keep
 #include <string>
 #include <tuple>
+#include <utility>
 
 namespace PTL
 {
@@ -42,7 +41,7 @@ namespace PTL
 //
 template <typename... Args>
 void
-ConsumeParameters(Args...)
+ConsumeParameters(Args&&...)
 {}
 
 //--------------------------------------------------------------------------------------//
@@ -60,10 +59,10 @@ using EnvChoiceList = std::set<EnvChoice<Tp>>;
 class EnvSettings
 {
 public:
-    typedef std::mutex                        mutex_t;
-    typedef std::string                       string_t;
-    typedef std::multimap<string_t, string_t> env_map_t;
-    typedef std::pair<string_t, string_t>     env_pair_t;
+    using mutex_t    = std::mutex;
+    using string_t   = std::string;
+    using env_map_t  = std::multimap<string_t, string_t>;
+    using env_pair_t = std::pair<string_t, string_t>;
 
 public:
     static EnvSettings* GetInstance()

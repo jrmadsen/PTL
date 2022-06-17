@@ -15,7 +15,6 @@ modernize-*,\
 -modernize-use-trailing-return-type,\
 -modernize-avoid-c-arrays,\
 -modernize-redundant-void-arg,\
--modernize-use-using,\
 -modernize-use-auto,\
 -modernize-concat-nested-namespaces,\
 -modernize-use-nodiscard,\
@@ -42,7 +41,7 @@ readability-*,\
 -readability-function-cognitive-complexity,\
 -readability-redundant-access-specifiers,\
 "
-HeaderFilterRegex: 'source/[^/]*\.(hh|cc)$'
+HeaderFilterRegex: 'source/PTL/.*\.(hh|icc)$'
 CheckOptions:
   - key:             readability-braces-around-statements.ShortStatementLines
     value:           '2'

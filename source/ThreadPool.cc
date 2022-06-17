@@ -29,14 +29,16 @@
 // ---------------------------------------------------------------
 
 #include "PTL/ThreadPool.hh"
-#include "PTL/Globals.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/Utility.hh"
 #include "PTL/VUserTaskQueue.hh"
 
-#include <cstdlib>
+#include <cassert>
+#include <mutex>
+#include <new>
+#include <stdexcept>
 #include <thread>
 
 using namespace PTL;
@@ -159,7 +161,7 @@ ThreadPool::set_use_tbb(bool enable)
 #if defined(PTL_USE_TBB)
     f_use_tbb() = enable;
 #else
-    ConsumeParameters<bool>(enable);
+    ConsumeParameters(enable);
 #endif
 }
 
@@ -171,7 +173,7 @@ ThreadPool::set_default_use_cpu_affinity(bool enable)
 #if defined(PTL_USE_TBB)
     f_use_cpu_affinity() = enable;
 #else
-    ConsumeParameters<bool>(enable);
+    ConsumeParameters(enable);
 #endif
 }
 
