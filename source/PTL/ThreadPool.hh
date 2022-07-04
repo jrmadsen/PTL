@@ -259,7 +259,7 @@ public:
     bool is_initialized() const;
     int  get_active_threads_count() const
     {
-        return (m_thread_awake) ? m_thread_awake->load() : 0;
+        return m_thread_awake->load();
     }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = std::move(f); }
@@ -303,8 +303,8 @@ private:
     ThreadId         m_main_tid          = ThisThread::get_id();
     atomic_bool_type m_alive_flag        = std::make_shared<std::atomic_bool>(false);
     pool_state_type  m_pool_state        = std::make_shared<std::atomic_short>(0);
-    atomic_int_type  m_thread_awake      = std::make_shared<std::atomic_uintmax_t>();
-    atomic_int_type  m_thread_active     = std::make_shared<std::atomic_uintmax_t>();
+    atomic_int_type  m_thread_awake      = std::make_shared<std::atomic_uintmax_t>(0);
+    atomic_int_type  m_thread_active     = std::make_shared<std::atomic_uintmax_t>(0);
 
     // locks
     lock_t m_task_lock = std::make_shared<Mutex>();
@@ -343,7 +343,7 @@ inline void
 ThreadPool::notify()
 {
     // wake up one thread that is waiting for a task to be available
-    if(m_thread_awake && m_thread_awake->load() < m_pool_size)
+    if(m_thread_awake->load() < m_pool_size)
     {
         AutoLock l(*m_task_lock);
         m_task_cond->notify_one();
@@ -365,7 +365,7 @@ ThreadPool::notify(size_type ntasks)
         return;
 
     // wake up as many threads that tasks just added
-    if(m_thread_awake && m_thread_awake->load() < m_pool_size)
+    if(m_thread_awake->load() < m_pool_size)
     {
         AutoLock l(*m_task_lock);
         if(ntasks < this->size())

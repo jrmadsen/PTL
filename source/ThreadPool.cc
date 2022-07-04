@@ -338,8 +338,7 @@ ThreadPool::is_initialized() const
 void
 ThreadPool::record_entry()
 {
-    if(m_thread_active)
-        ++(*m_thread_active);
+    ++(*m_thread_active);
 }
 
 //======================================================================================//
@@ -347,8 +346,7 @@ ThreadPool::record_entry()
 void
 ThreadPool::record_exit()
 {
-    if(m_thread_active)
-        --(*m_thread_active);
+    --(*m_thread_active);
 }
 
 //======================================================================================//
@@ -876,7 +874,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 
             if(_task_queue->true_size() == 0)
             {
-                if(m_thread_awake && m_thread_awake->load() > 0)
+                if(m_thread_awake->load() > 0)
                     --(*m_thread_awake);
 
                 // lock before sleeping on condition
@@ -896,7 +894,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
                     _task_lock.unlock();
 
                 // notify that is awake
-                if(m_thread_awake && m_thread_awake->load() < m_pool_size)
+                if(m_thread_awake->load() < m_pool_size)
                     ++(*m_thread_awake);
             }
             else
