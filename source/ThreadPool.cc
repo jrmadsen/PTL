@@ -322,7 +322,7 @@ ThreadPool::~ThreadPool()
         delete m_task_queue;
 
     delete m_tbb_task_arena;
-    delete m_tbb_task_group; 
+    delete m_tbb_task_group;
 }
 
 //======================================================================================//

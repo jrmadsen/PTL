@@ -257,10 +257,7 @@ public:
     void notify_all();
     void notify(size_type);
     bool is_initialized() const;
-    int  get_active_threads_count() const
-    {
-        return m_thread_awake->load();
-    }
+    int  get_active_threads_count() const { return m_thread_awake->load(); }
 
     void set_affinity(affinity_func_t f) { m_affinity_func = std::move(f); }
     void set_affinity(intmax_t i, Thread&) const;
