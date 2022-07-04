@@ -54,7 +54,7 @@ public:
 public:
     // Constructor and Destructors
     explicit TaskManager(ThreadPool*, bool _manage_pool = true);
-    virtual ~TaskManager();
+    virtual ~TaskManager() noexcept(false);
 
     TaskManager(const TaskManager&) = delete;
     TaskManager(TaskManager&&)      = default;
@@ -265,7 +265,7 @@ inline PTL::TaskManager::TaskManager(ThreadPool* _pool, bool _manage_pool)
 
 //--------------------------------------------------------------------------------------//
 
-inline PTL::TaskManager::~TaskManager()
+inline PTL::TaskManager::~TaskManager() noexcept(false)
 {
     finalize();
     if(fgInstance() == this)
