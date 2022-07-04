@@ -316,6 +316,13 @@ ThreadPool::~ThreadPool()
             itr.join();
         m_threads.clear();
     }
+
+    // delete owned resources
+    if(m_delete_task_queue)
+        delete m_task_queue;
+
+    delete m_tbb_task_arena;
+    delete m_tbb_task_group; 
 }
 
 //======================================================================================//
