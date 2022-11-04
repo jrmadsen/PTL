@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "PTL/Globals.hh"
+#include "PTL/Macros.hh"
 #include "PTL/TaskSubQueue.hh"
 #include "PTL/Threading.hh"
 #include "PTL/VTask.hh"

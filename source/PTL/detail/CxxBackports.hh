@@ -19,45 +19,25 @@
 
 #pragma once
 
-#include <algorithm>  // Retrieve definitions of min/max
-
-#include "PTL/Types.hh"
 #include "PTL/ConsumeParameters.hh"
 
-#include <initializer_list>
+#include <cstddef>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
-#if !defined(PTL_NO_SANITIZE_THREAD)
-// expect that sanitizer is from compiler which supports __has_attribute
-#    if defined(__has_attribute)
-#        if __has_attribute(no_sanitize)
-#            define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
-#        else
-#            define PTL_NO_SANITIZE_THREAD
-#        endif
-#    elif defined(__clang__) || defined(__GNUC__)
-#        define PTL_NO_SANITIZE_THREAD __attribute__((no_sanitize("thread")))
-#    else
-// otherwise, make blank
-#        define PTL_NO_SANITIZE_THREAD
-#    endif
-#endif
+/// Backports of C++ language features for use with C++11 compilers
 
 namespace PTL
 {
+// Convenience wrappers
 template <typename T>
 using decay_t = typename std::decay<T>::type;
 
 template <bool B, typename T = void>
 using enable_if_t = typename std::enable_if<B, T>::type;
 
-// for pre-C++14 tuple expansion to arguments
-namespace mpl
-{
-//--------------------------------------------------------------------------------------//
-
+/// Provision of tuple expansion to arguments
 namespace impl
 {
 //--------------------------------------------------------------------------------------//
@@ -127,13 +107,6 @@ using index_sequence = integer_sequence<size_t, Idx...>;
 template <size_t NumT>
 using make_index_sequence = make_integer_sequence<size_t, NumT>;
 
-/// Alias template index_sequence_for
-template <typename... Types>
-using index_sequence_for = make_index_sequence<sizeof...(Types)>;
-
-template <size_t Idx, typename Tup>
-using index_type_t = decay_t<decltype(std::get<Idx>(std::declval<Tup>()))>;
-
 template <typename FnT, typename TupleT, size_t... Idx>
 static inline auto
 apply(FnT&& _func, TupleT _args, impl::index_sequence<Idx...>)
@@ -155,30 +128,14 @@ apply(FnT&& _func, TupleT _args, impl::index_sequence<Idx...>)
 
 //--------------------------------------------------------------------------------------//
 
-/// Alias template index_sequence
-template <size_t... Idx>
-using index_sequence = impl::integer_sequence<size_t, Idx...>;
-
-/// Alias template make_index_sequence
-template <size_t NumT>
-using make_index_sequence = impl::make_integer_sequence<size_t, NumT>;
-
-/// Alias template index_sequence_for
-template <typename... Types>
-using index_sequence_for = impl::make_index_sequence<sizeof...(Types)>;
-
 template <typename FnT, typename TupleT>
 static inline void
 apply(FnT&& _func, TupleT&& _args)
 {
-    using tuple_type = typename std::decay<TupleT>::type;
+    using tuple_type = decay_t<TupleT>;
     constexpr auto N = std::tuple_size<tuple_type>::value;
     impl::apply(std::forward<FnT>(_func), std::forward<TupleT>(_args),
                 impl::make_index_sequence<N>{});
 }
 
-//--------------------------------------------------------------------------------------//
-
-}  // namespace mpl
-
-}  // namespace PTL
+};  // namespace PTL

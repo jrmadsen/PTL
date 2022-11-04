@@ -34,7 +34,7 @@
 #include "PTL/AutoLock.hh"
 #include "PTL/Config.hh"
 #include "PTL/GetEnv.hh"
-#include "PTL/Globals.hh"
+#include "PTL/Macros.hh"
 #include "PTL/JoinFunction.hh"
 #include "PTL/ScopeDestructor.hh"
 #include "PTL/Task.hh"
@@ -43,6 +43,7 @@
 #include "PTL/Threading.hh"
 #include "PTL/VTask.hh"
 #include "PTL/VUserTaskQueue.hh"
+#include "PTL/detail/CxxBackports.hh"
 
 #include <atomic>
 #include <chrono>

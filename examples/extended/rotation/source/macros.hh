@@ -157,7 +157,7 @@
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Types.hh"
+#include "PTL/Macros.hh"
 
 using namespace PTL;
 

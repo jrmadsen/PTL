@@ -34,7 +34,7 @@
 #include "PTL/Config.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Types.hh"
+#include "PTL/Macros.hh"
 #include "PTL/VTask.hh"
 #include "PTL/VUserTaskQueue.hh"
 
@@ -529,7 +529,7 @@ ThreadPool::execute_on_all_threads(FuncT&& _func)
         // size of the thread-pool
         size_t _sz = size();
         // number of cores
-        size_t _ncore = Threading::GetNumberOfCores();
+        size_t _ncore = GetNumberOfCores();
         // maximum depth for recursion
         size_t _dmax = std::max<size_t>(_ncore, 8);
         // how many threads we need to initialize
@@ -641,7 +641,7 @@ ThreadPool::execute_on_specific_threads(const std::set<std::thread::id>& _tids,
         // executed the _exec function above
         std::atomic<size_t> _total_exec{ 0 };
         // number of cores
-        size_t _ncore = Threading::GetNumberOfCores();
+        size_t _ncore = GetNumberOfCores();
         // maximum depth for recursion
         size_t _dmax = std::max<size_t>(_ncore, 8);
         // how many threads we need to initialize

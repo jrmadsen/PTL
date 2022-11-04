@@ -83,7 +83,7 @@ int
 main(int argc, char** argv)
 {
     rng.seed(std::random_device{}());
-    Threading::SetThreadId(0);
+    SetThreadId(0);
     Backtrace::Enable();
 
     auto hwthreads = std::thread::hardware_concurrency();
@@ -109,12 +109,12 @@ main(int argc, char** argv)
         rng.seed(std::random_device{}());
         ++ninit;
         AutoLock _lk{ TypeMutex<decltype(std::cout)>() };
-        printf("[ptl-minimal]> Thread %2i started\n", Threading::GetThreadId());
+        printf("[ptl-minimal]> Thread %2i started\n", GetThreadId());
     };
     auto _fini = [&nfini]() {
         ++nfini;
         AutoLock _lk{ TypeMutex<decltype(std::cout)>() };
-        printf("[ptl-minimal]> Thread %2i finished\n", Threading::GetThreadId());
+        printf("[ptl-minimal]> Thread %2i finished\n", GetThreadId());
     };
 
     PTL::ThreadPool::Config _config{};
@@ -127,8 +127,8 @@ main(int argc, char** argv)
     _config.set_affinity = [](intmax_t i) {
         auto            _orig  = ThreadPool::affinity_functor()(i);
         static intmax_t idx    = 0;
-        static intmax_t ncores = Threading::GetNumberOfCores();
-        static intmax_t ncpus  = Threading::GetNumberOfPhysicalCpus();
+        static intmax_t ncores = GetNumberOfCores();
+        static intmax_t ncpus  = GetNumberOfPhysicalCpus();
         static intmax_t nincr  = std::max<intmax_t>(ncores / ncpus, 1);
         auto            _idx   = idx + nincr;
         idx += nincr;
@@ -174,7 +174,7 @@ main(int argc, char** argv)
     tp->execute_on_all_threads([&tids, &_all_exec]() {
         ++_all_exec;
         std::stringstream ss;
-        ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::Threading::GetThreadId()
+        ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::GetThreadId()
            << " executed\n";
         AutoLock lk{ TypeMutex<decltype(std::cout)>() };
         std::cout << ss.str();
@@ -208,7 +208,7 @@ main(int argc, char** argv)
     tp->execute_on_specific_threads(tids, [&_specific_exec]() {
         ++_specific_exec;
         std::stringstream ss;
-        ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::Threading::GetThreadId()
+        ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::GetThreadId()
            << " executed [specific]\n";
         AutoLock lk{ TypeMutex<decltype(std::cout)>() };
         std::cout << ss.str();
@@ -239,7 +239,7 @@ main(int argc, char** argv)
         auto join = [](long& lhs, long rhs) {
             std::stringstream ss;
             ss << "[ptl-minimal]> Thread " << std::setw(2)
-               << PTL::Threading::GetThreadId() << " adding " << rhs << " to " << lhs
+               << PTL::GetThreadId() << " adding " << rhs << " to " << lhs
                << std::endl;
             {
                 AutoLock lk{ TypeMutex<decltype(std::cout)>() };
@@ -255,7 +255,7 @@ main(int argc, char** argv)
             auto              e = random_entry(v);
             std::stringstream ss;
             ss << "[ptl-minimal][" << std::setw(4) << n << "]> Random entry from thread "
-               << std::setw(2) << PTL::Threading::GetThreadId()
+               << std::setw(2) << PTL::GetThreadId()
                << " was : " << std::setw(8) << std::setprecision(6) << std::fixed << e
                << std::endl;
             AutoLock lk{ TypeMutex<decltype(std::cout)>() };

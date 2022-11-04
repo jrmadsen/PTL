@@ -27,10 +27,11 @@
 
 #include "PTL/VUserTaskQueue.hh"
 #include "PTL/TaskRunManager.hh"
-#include <cstdint>         // for intmax_t
-#include <thread>          // for thread
+#include <cstdint>  // for intmax_t
+#include <thread>   // for thread
 
-using namespace PTL;
+namespace PTL
+{
 
 //======================================================================================//
 
@@ -41,9 +42,11 @@ VUserTaskQueue::VUserTaskQueue(intmax_t nworkers)
     {
         TaskRunManager* rm = TaskRunManager::GetMasterRunManager();
         m_workers          = (rm) ? rm->GetNumberOfThreads() + 1  // number of threads + 1
-                         : (2 * std::thread::hardware_concurrency()) + 1;
+                                  : (2 * std::thread::hardware_concurrency()) + 1;
         // hyperthreads + 1
     }
 }
 
 //======================================================================================//
+
+}  // namespace PTL

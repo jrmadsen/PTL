@@ -28,9 +28,9 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
+#include "PTL/ThreadPool.hh"
 #include "PTL/GetEnv.hh"
 #include "PTL/ScopeDestructor.hh"
-#include "PTL/ThreadPool.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
 #include "PTL/UserTaskQueue.hh"
@@ -42,18 +42,19 @@
 #include <stdexcept>
 #include <thread>
 
-using namespace PTL;
-
 //======================================================================================//
 
 namespace
 {
-ThreadData*&
+PTL::ThreadData*&
 thread_data()
 {
-    return ThreadData::GetInstance();
+    return PTL::ThreadData::GetInstance();
 }
 }  // namespace
+
+namespace PTL
+{
 
 //======================================================================================//
 
@@ -130,7 +131,7 @@ ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
         if(_idx < 0)
             _idx = f_thread_ids().size();
         f_thread_ids()[std::this_thread::get_id()] = _idx;
-        Threading::SetThreadId(_idx);
+        SetThreadId(_idx);
         _data->emplace_back(_thr_data);
     }
     thread_data() = _thr_data.get();
@@ -230,7 +231,7 @@ ThreadPool::add_thread_id(ThreadId _tid)
     {
         auto _idx            = f_thread_ids().size();
         f_thread_ids()[_tid] = _idx;
-        Threading::SetThreadId(_idx);
+        SetThreadId(_idx);
     }
     return f_thread_ids().at(_tid);
 }
@@ -365,7 +366,7 @@ ThreadPool::set_affinity(intmax_t i, Thread& _thread) const
             std::cerr << "[PTL::ThreadPool] Setting pin affinity for thread "
                       << get_thread_id(_thread.get_id()) << " to " << _pin << std::endl;
         }
-        Threading::SetPinAffinity(_pin, native_thread);
+        SetPinAffinity(_pin, native_thread);
     } catch(std::runtime_error& e)
     {
         std::cerr << "[PTL::ThreadPool] Error setting pin affinity: " << e.what()
@@ -388,7 +389,7 @@ ThreadPool::set_priority(int _prio, Thread& _thread) const
                       << get_thread_id(_thread.get_id()) << " priority to " << _prio
                       << std::endl;
         }
-        Threading::SetThreadPriority(_prio, native_thread);
+        SetThreadPriority(_prio, native_thread);
     } catch(std::runtime_error& e)
     {
         AutoLock lock(TypeMutex<decltype(std::cerr)>());
@@ -934,3 +935,5 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 }
 
 //======================================================================================//
+
+}  // namespace PTL

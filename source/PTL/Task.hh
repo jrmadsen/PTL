@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "PTL/Globals.hh"
+#include "PTL/detail/CxxBackports.hh"
 #include "PTL/VTask.hh"
 
 #include <cstdint>
@@ -60,10 +60,10 @@ public:
 
     ~TaskFuture() override = default;
 
-    TaskFuture(const TaskFuture&) = delete;
+    TaskFuture(const TaskFuture&)            = delete;
     TaskFuture& operator=(const TaskFuture&) = delete;
 
-    TaskFuture(TaskFuture&&) noexcept = default;
+    TaskFuture(TaskFuture&&) noexcept            = default;
     TaskFuture& operator=(TaskFuture&&) noexcept = default;
 
 public:
@@ -105,15 +105,15 @@ public:
 
     ~PackagedTask() override = default;
 
-    PackagedTask(const PackagedTask&) = delete;
+    PackagedTask(const PackagedTask&)            = delete;
     PackagedTask& operator=(const PackagedTask&) = delete;
 
-    PackagedTask(PackagedTask&&) noexcept = default;
+    PackagedTask(PackagedTask&&) noexcept            = default;
     PackagedTask& operator=(PackagedTask&&) noexcept = default;
 
 public:
     // execution operator
-    void        operator()() final { mpl::apply(std::move(m_ptask), std::move(m_args)); }
+    void        operator()() final { apply(std::move(m_ptask), std::move(m_args)); }
     future_type get_future() final { return m_ptask.get_future(); }
     void        wait() final { return m_ptask.get_future().wait(); }
     RetT        get() final { return m_ptask.get_future().get(); }
@@ -154,10 +154,10 @@ public:
 
     ~Task() override = default;
 
-    Task(const Task&) = delete;
+    Task(const Task&)            = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&) noexcept = default;
+    Task(Task&&) noexcept            = default;
     Task& operator=(Task&&) noexcept = default;
 
 public:
@@ -165,7 +165,7 @@ public:
     void operator()() final
     {
         if(m_ptask.valid())
-            mpl::apply(std::move(m_ptask), std::move(m_args));
+            apply(std::move(m_ptask), std::move(m_args));
     }
     future_type get_future() final { return m_ptask.get_future(); }
     void        wait() final { return m_ptask.get_future().wait(); }
@@ -204,10 +204,10 @@ public:
 
     virtual ~Task() = default;
 
-    Task(const Task&) = delete;
+    Task(const Task&)            = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&) noexcept = default;
+    Task(Task&&) noexcept            = default;
     Task& operator=(Task&&) noexcept = default;
 
 public:
@@ -250,10 +250,10 @@ public:
 
     ~Task() override = default;
 
-    Task(const Task&) = delete;
+    Task(const Task&)            = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&&)  = default;
+    Task(Task&&)            = default;
     Task& operator=(Task&&) = default;
 
 public:

@@ -67,8 +67,6 @@
 
 #pragma once
 
-#include "PTL/Types.hh"
-
 #include <chrono>
 #include <iomanip>
 #include <sstream>
@@ -105,9 +103,6 @@ namespace PTL
 {
 class Timer
 {
-public:
-    PTL_DEFAULT_OBJECT(Timer)
-
 public:
     void   Start();
     void   Stop();
