@@ -16,7 +16,6 @@
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-// Global utility functions
 //
 
 #pragma once
@@ -36,14 +35,6 @@
 
 namespace PTL
 {
-//--------------------------------------------------------------------------------------//
-// use this function to get rid of "unused parameter" warnings
-//
-template <typename... Args>
-void
-ConsumeParameters(Args&&...)
-{}
-
 //--------------------------------------------------------------------------------------//
 // a non-string environment option with a string identifier
 template <typename Tp>
@@ -360,43 +351,5 @@ PrintEnv(std::ostream& os = std::cout)
 {
     os << (*EnvSettings::GetInstance());
 }
-
-//--------------------------------------------------------------------------------------//
-
-struct ScopeDestructor
-{
-    template <typename FuncT>
-    ScopeDestructor(FuncT&& _func)
-    : m_functor(std::forward<FuncT>(_func))
-    {}
-
-    // delete copy operations
-    ScopeDestructor(const ScopeDestructor&) = delete;
-    ScopeDestructor& operator=(const ScopeDestructor&) = delete;
-
-    // allow move operations
-    ScopeDestructor(ScopeDestructor&& rhs) noexcept
-    : m_functor(std::move(rhs.m_functor))
-    {
-        rhs.m_functor = []() {};
-    }
-
-    ScopeDestructor& operator=(ScopeDestructor&& rhs) noexcept
-    {
-        if(this != &rhs)
-        {
-            m_functor     = std::move(rhs.m_functor);
-            rhs.m_functor = []() {};
-        }
-        return *this;
-    }
-
-    ~ScopeDestructor() { m_functor(); }
-
-private:
-    std::function<void()> m_functor = []() {};
-};
-
-//--------------------------------------------------------------------------------------//
 
 }  // namespace PTL

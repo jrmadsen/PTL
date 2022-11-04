@@ -67,7 +67,6 @@ END_EXTERN_C
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Utility.hh"
 
 #if defined(PTL_USE_CUDA)
 #    include <cuda.h>

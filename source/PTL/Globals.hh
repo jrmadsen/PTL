@@ -21,11 +21,8 @@
 
 #include <algorithm>  // Retrieve definitions of min/max
 
-// Include base types
 #include "PTL/Types.hh"
-
-// Global utility functions
-#include "PTL/Utility.hh"
+#include "PTL/ConsumeParameters.hh"
 
 #include <initializer_list>
 #include <tuple>

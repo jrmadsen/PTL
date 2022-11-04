@@ -22,9 +22,9 @@
 // Threading.cc
 //
 
+#include "PTL/ConsumeParameters.hh"
 #include "PTL/Threading.hh"
 #include "PTL/Types.hh"
-#include "PTL/Utility.hh"
 
 #if defined(PTL_WINDOWS)
 #    include <Windows.h>

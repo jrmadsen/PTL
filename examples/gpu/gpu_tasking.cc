@@ -121,11 +121,9 @@ execute_gpu_iterations(uint64_t num_iter, TaskGroup_t* task_group, uint64_t n)
 //============================================================================//
 
 int
-main(int argc, char** argv)
+main()
 {
     _pause_collection;  // for VTune
-
-    ConsumeParameters(argc, argv);
 
     auto hwthreads        = std::thread::hardware_concurrency();
     auto default_fib      = 42;

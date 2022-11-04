@@ -244,7 +244,7 @@ int main()
 #pragma once
 
 #include "PTL/Threading.hh"
-#include "PTL/Utility.hh"
+#include "PTL/ConsumeParameters.hh"
 
 #include <chrono>
 #include <iostream>

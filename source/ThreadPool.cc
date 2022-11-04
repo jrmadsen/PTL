@@ -28,11 +28,12 @@
 // Author: Jonathan Madsen (Feb 13th 2018)
 // ---------------------------------------------------------------
 
+#include "PTL/GetEnv.hh"
+#include "PTL/ScopeDestructor.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
 #include "PTL/UserTaskQueue.hh"
-#include "PTL/Utility.hh"
 #include "PTL/VUserTaskQueue.hh"
 
 #include <cassert>

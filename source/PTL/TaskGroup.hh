@@ -33,13 +33,14 @@
 
 #include "PTL/AutoLock.hh"
 #include "PTL/Config.hh"
+#include "PTL/GetEnv.hh"
 #include "PTL/Globals.hh"
 #include "PTL/JoinFunction.hh"
+#include "PTL/ScopeDestructor.hh"
 #include "PTL/Task.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Utility.hh"
 #include "PTL/VTask.hh"
 #include "PTL/VUserTaskQueue.hh"
 
@@ -52,6 +53,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <stdexcept>
 #include <thread>
 #include <type_traits>

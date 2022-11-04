@@ -92,13 +92,9 @@ execute_iterations(int64_t num_iter, TaskGroup_t* task_group, int64_t n,
 //============================================================================//
 
 int
-main(int argc, char** argv)
+main(int, char** argv)
 {
     _pause_collection;  // VTune
-    //_heap_profiler_start(get_gperf_filename(argv[0], "heap").c_str());  //
-    // gperf
-
-    ConsumeParameters(argc, argv);
 
     auto hwthreads        = std::thread::hardware_concurrency();
     auto default_fib      = 20;

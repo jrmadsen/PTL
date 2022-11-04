@@ -29,7 +29,6 @@
 #include "PTL/TaskGroup.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
-#include "PTL/Utility.hh"
 
 #include <cassert>
 #include <chrono>

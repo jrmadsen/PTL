@@ -82,7 +82,6 @@ random_entry(const std::vector<Tp>& v)
 int
 main(int argc, char** argv)
 {
-    ConsumeParameters(argc, argv);
     rng.seed(std::random_device{}());
     Threading::SetThreadId(0);
     Backtrace::Enable();

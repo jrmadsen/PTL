@@ -27,7 +27,7 @@
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Utility.hh"
+#include "PTL/GetEnv.hh"
 
 #include "Backtrace.hh"
 #include "Timer.hh"

@@ -19,16 +19,13 @@
 
 #pragma once
 
-#include "PTL/AutoLock.hh"
-#include "PTL/Globals.hh"
-#include "PTL/Task.hh"
-#include "PTL/TaskGroup.hh"
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
-#include "PTL/ThreadData.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-#include "PTL/Types.hh"
-#include "PTL/UserTaskQueue.hh"
-#include "PTL/VTask.hh"
-#include "PTL/VUserTaskQueue.hh"
+namespace PTL
+{
+//--------------------------------------------------------------------------------------//
+// use this function to get rid of "unused parameter" warnings
+//
+template <typename... Args>
+void
+ConsumeParameters(Args&&...)
+{}
+}  // namespace PTL
