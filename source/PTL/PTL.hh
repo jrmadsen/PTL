@@ -21,7 +21,6 @@
 
 #include "PTL/AutoLock.hh"
 #include "PTL/Globals.hh"
-#include "PTL/TBBTaskGroup.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"

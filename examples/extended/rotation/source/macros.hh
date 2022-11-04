@@ -150,7 +150,6 @@
 #include <vector>
 
 #include "PTL/AutoLock.hh"
-#include "PTL/TBBTaskGroup.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"
