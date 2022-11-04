@@ -22,7 +22,7 @@
 // Implementation
 // 29.04.97 G.Cosmo Added timings for Windows systems
 
-#include "PTL/Timer.hh"
+#include "Timer.hh"
 
 #include <stdexcept>
 

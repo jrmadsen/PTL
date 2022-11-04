@@ -53,8 +53,7 @@
 #ifndef PTL_Backtrace_hh
 #define PTL_Backtrace_hh 1
 
-#include "Threading.hh"
-#include "Types.hh"
+#include "PTL/Types.hh"
 
 #if defined(PTL_UNIX)
 #    include <cxxabi.h>
@@ -199,9 +198,6 @@ Demangle()
 #    include <string>
 #    include <tuple>
 #    include <vector>
-
-// PTL header
-#    include "Threading.hh"
 
 //----------------------------------------------------------------------------//
 

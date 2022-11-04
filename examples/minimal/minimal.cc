@@ -23,6 +23,8 @@
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
 
+#include "common/utils.hh"
+
 #include <chrono>
 #include <condition_variable>
 #include <iostream>
@@ -47,13 +49,6 @@ inline void
 do_sleep(long n)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(n));
-}
-
-// this function consumes an unknown number of cpu resources
-inline long
-fibonacci(long n)
-{
-    return (n < 2) ? n : (fibonacci(n - 1) + fibonacci(n - 2));
 }
 
 // this function consumes approximately "t" milliseconds of cpu time
