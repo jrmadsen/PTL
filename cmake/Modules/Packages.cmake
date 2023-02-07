@@ -28,7 +28,7 @@ endif()
 # ##############################################################################
 include(CheckAtomic)
 if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-  list(APPEND EXTERNAL_PRIVATE_LIBRARIES "atomic")
+    list(APPEND PRIVATE_EXTERNAL_LIBRARIES "atomic")
 endif()
 
 ################################################################################
