@@ -53,7 +53,7 @@ function(check_working_cxx_atomics64 varname)
 endfunction()
 
 # Check for (non-64-bit) atomic operations.
-if(MSVC)
+if(MSVC OR APPLE)
   set(HAVE_CXX_ATOMICS_WITHOUT_LIB True)
 elseif(LLVM_COMPILER_IS_GCC_COMPATIBLE)
   # First check if atomics work without the library.
@@ -74,7 +74,7 @@ elseif(LLVM_COMPILER_IS_GCC_COMPATIBLE)
 endif()
 
 # Check for 64 bit atomic operations.
-if(MSVC)
+if(MSVC OR APPLE)
   set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
 elseif(LLVM_COMPILER_IS_GCC_COMPATIBLE)
   # First check if atomics work without the library.
