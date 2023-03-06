@@ -136,11 +136,6 @@ public:
 
     struct Config
     {
-        PTL_DEFAULT_OBJECT(Config)
-
-        Config(bool, bool, bool, int, int, size_type, VUserTaskQueue*, affinity_func_t,
-               initialize_func_t, finalize_func_t);
-
         bool              init         = true;
         bool              use_tbb      = f_use_tbb();
         bool              use_affinity = f_use_cpu_affinity();
@@ -156,16 +151,7 @@ public:
 public:
     // Constructor and Destructors
     explicit ThreadPool(const Config&);
-    ThreadPool(const size_type& pool_size, VUserTaskQueue* task_queue = nullptr,
-               bool _use_affinity = f_use_cpu_affinity(),
-               affinity_func_t    = affinity_functor(),
-               initialize_func_t  = initialization_functor(),
-               finalize_func_t    = finalization_functor());
-    ThreadPool(const size_type& pool_size, initialize_func_t, finalize_func_t,
-               bool             _use_affinity = f_use_cpu_affinity(),
-               affinity_func_t                = affinity_functor(),
-               VUserTaskQueue* task_queue     = nullptr);
-    virtual ~ThreadPool();
+    ~ThreadPool();
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool(ThreadPool&&)      = default;
     ThreadPool& operator=(const ThreadPool&) = delete;
@@ -276,12 +262,12 @@ public:
     static uintmax_t              get_this_thread_id();
     static uintmax_t              add_thread_id(ThreadId = ThisThread::get_id());
 
-protected:
+private:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
     int  insert(task_pointer&&, int = -1);
     int  run_on_this(task_pointer&&);
 
-protected:
+private:
     // called in THREAD INIT
     static void start_thread(ThreadPool*, thread_data_t*, intmax_t = -1);
 

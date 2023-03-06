@@ -109,7 +109,10 @@ TaskRunManager::Initialize(uint64_t n)
     {
         if(m_verbose > 0)
             std::cout << "TaskRunManager :: Creating thread pool..." << std::endl;
-        m_thread_pool = new ThreadPool(m_workers, m_task_queue);
+        ThreadPool::Config cfg;
+        cfg.pool_size = m_workers;
+        cfg.task_queue = m_task_queue;
+        m_thread_pool = new ThreadPool(cfg);
         if(m_verbose > 0)
             std::cout << "TaskRunManager :: Creating task manager..." << std::endl;
         m_task_manager = new TaskManager(m_thread_pool);

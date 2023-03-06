@@ -238,24 +238,6 @@ ThreadPool::add_thread_id(ThreadId _tid)
 
 //======================================================================================//
 
-ThreadPool::Config::Config(bool _init, bool _use_tbb, bool _use_affinity, int _verbose,
-                           int _prio, size_type _size, VUserTaskQueue* _task_queue,
-                           affinity_func_t _affinity_func, initialize_func_t _init_func,
-                           finalize_func_t _fini_func)
-: init{ _init }
-, use_tbb{ _use_tbb }
-, use_affinity{ _use_affinity }
-, verbose{ _verbose }
-, priority{ _prio }
-, pool_size{ _size }
-, task_queue{ _task_queue }
-, set_affinity{ std::move(_affinity_func) }
-, initializer{ std::move(_init_func) }
-, finalizer{ std::move(_fini_func) }
-{}
-
-//======================================================================================//
-
 ThreadPool::ThreadPool(const Config& _cfg)
 : m_use_affinity{ _cfg.use_affinity }
 , m_tbb_tp{ _cfg.use_tbb }
@@ -280,25 +262,6 @@ ThreadPool::ThreadPool(const Config& _cfg)
     if(_cfg.init)
         this->initialize_threadpool(_cfg.pool_size);
 }
-
-ThreadPool::ThreadPool(const size_type& _pool_size, VUserTaskQueue* _task_queue,
-                       bool _use_affinity, affinity_func_t _affinity_func,
-                       initialize_func_t _init_func, finalize_func_t _fini_func)
-: ThreadPool{ Config{ true, f_use_tbb(), _use_affinity, f_verbose(), f_thread_priority(),
-                      _pool_size, _task_queue, std::move(_affinity_func),
-                      std::move(_init_func), std::move(_fini_func) } }
-{}
-
-ThreadPool::ThreadPool(const size_type& pool_size, initialize_func_t _init_func,
-                       finalize_func_t _fini_func, bool _use_affinity,
-                       affinity_func_t _affinity_func, VUserTaskQueue* task_queue)
-: ThreadPool{ pool_size,
-              task_queue,
-              _use_affinity,
-              std::move(_affinity_func),
-              std::move(_init_func),
-              std::move(_fini_func) }
-{}
 
 //======================================================================================//
 
