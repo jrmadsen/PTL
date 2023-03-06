@@ -78,15 +78,8 @@ TaskRunManager::TaskRunManager(bool useTBB)
     if(!GetPrivateMasterRunManager())
         GetPrivateMasterRunManager() = this;
 
-#if defined(PTL_USE_TBB)
-    auto _useTBB = GetEnv<bool>("PTL_FORCE_TBB", GetEnv<bool>("FORCE_TBB", useTBB));
-    if(_useTBB)
-        useTBB = true;
-#endif
-
     // handle TBB
     ThreadPool::set_use_tbb(useTBB);
-    m_workers = GetEnv<uint64_t>("PTL_NUM_THREADS", m_workers);
 }
 
 //======================================================================================//
@@ -107,43 +100,19 @@ TaskRunManager::Initialize(uint64_t n)
     // create threadpool if needed + task manager
     if(!m_thread_pool)
     {
-        if(m_verbose > 0)
-            std::cout << "TaskRunManager :: Creating thread pool..." << std::endl;
         ThreadPool::Config cfg;
         cfg.pool_size = m_workers;
         cfg.task_queue = m_task_queue;
         m_thread_pool = new ThreadPool(cfg);
-        if(m_verbose > 0)
-            std::cout << "TaskRunManager :: Creating task manager..." << std::endl;
         m_task_manager = new TaskManager(m_thread_pool);
     }
     // or resize
     else if(m_workers != m_thread_pool->size())
     {
-        if(m_verbose > 0)
-        {
-            std::cout << "TaskRunManager :: Resizing thread pool from "
-                      << m_thread_pool->size() << " to " << m_workers << " threads ..."
-                      << std::endl;
-        }
-        m_thread_pool->resize(m_workers);
-    }
-
-    // create the joiners
-    if(ThreadPool::using_tbb())
-    {
-        if(m_verbose > 0)
-            std::cout << "TaskRunManager :: Using TBB..." << std::endl;
-    }
-    else
-    {
-        if(m_verbose > 0)
-            std::cout << "TaskRunManager :: Using ThreadPool..." << std::endl;
+       m_thread_pool->resize(m_workers);
     }
 
     m_is_initialized = true;
-    if(m_verbose > 0)
-        std::cout << "TaskRunManager :: initialized..." << std::endl;
 }
 
 //======================================================================================//

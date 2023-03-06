@@ -61,26 +61,6 @@ UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)
         for(intmax_t i = 0; i < nworkers + 1; ++i)
             m_subqueues->emplace_back(new TaskSubQueue(m_ntasks));
     }
-
-#if defined(DEBUG)
-    if(GetEnv<int>("PTL_VERBOSE", 0) > 3)
-    {
-        RecursiveAutoLock l(TypeMutex<decltype(std::cout), RecursiveMutex>());
-        std::stringstream ss;
-        ss << ThreadPool::get_this_thread_id() << "> " << ThisThread::get_id() << " ["
-           << __FUNCTION__ << ":" << __LINE__ << "] "
-           << "this = " << this << ", "
-           << "clone = " << std::boolalpha << m_is_clone << ", "
-           << "thread = " << m_thread_bin << ", "
-           << "insert = " << m_insert_bin << ", "
-           << "hold = " << m_hold->load() << " @ " << m_hold << ", "
-           << "tasks = " << m_ntasks->load() << " @ " << m_ntasks << ", "
-           << "subqueue = " << m_subqueues << ", "
-           << "size = " << true_size() << ", "
-           << "empty = " << true_empty();
-        std::cout << ss.str() << std::endl;
-    }
-#endif
 }
 
 //======================================================================================//
