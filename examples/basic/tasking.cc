@@ -111,8 +111,6 @@ main()
     cutoff_tasks = GetEnv<int>("CUTOFF_TASKS", cutoff_tasks);
     cutoff_value = GetEnv<long>("CUTOFF_VALUE", cutoff_value);
 
-    PrintEnv();
-
     Timer total_timer;
     total_timer.Start();
 

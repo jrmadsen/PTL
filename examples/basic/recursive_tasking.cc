@@ -134,8 +134,6 @@ main(int, char** argv)
     cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
     cutoff_tasks = GetEnv<int>("CUTOFF_TASKS", cutoff_tasks);
 
-    PrintEnv();
-
     Timer total_timer;
     total_timer.Start();
 

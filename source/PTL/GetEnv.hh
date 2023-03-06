@@ -47,93 +47,6 @@ using EnvChoiceList = std::set<EnvChoice<Tp>>;
 
 //--------------------------------------------------------------------------------------//
 
-class EnvSettings
-{
-public:
-    using mutex_t    = std::mutex;
-    using string_t   = std::string;
-    using env_map_t  = std::multimap<string_t, string_t>;
-    using env_pair_t = std::pair<string_t, string_t>;
-
-public:
-    static EnvSettings* GetInstance()
-    {
-        static EnvSettings* _instance = new EnvSettings();
-        return _instance;
-    }
-
-public:
-    template <typename Tp>
-    void insert(const std::string& env_id, Tp val)
-    {
-        std::stringstream ss;
-        ss << std::boolalpha << val;
-        m_mutex.lock();
-        if(m_env.find(env_id) != m_env.end())
-        {
-            for(const auto& itr : m_env)
-                if(itr.first == env_id && itr.second == ss.str())
-                {
-                    m_mutex.unlock();
-                    return;
-                }
-        }
-        m_env.insert(env_pair_t(env_id, ss.str()));
-        m_mutex.unlock();
-    }
-
-    template <typename Tp>
-    void insert(const std::string& env_id, EnvChoice<Tp> choice)
-    {
-        Tp&          val      = std::get<0>(choice);
-        std::string& str_val  = std::get<1>(choice);
-        std::string& descript = std::get<2>(choice);
-
-        std::stringstream ss, ss_long;
-        ss << std::boolalpha << val;
-        ss_long << std::boolalpha << std::setw(8) << std::left << val << " # (\""
-                << str_val << "\") " << descript;
-        m_mutex.lock();
-        if(m_env.find(env_id) != m_env.end())
-        {
-            for(const auto& itr : m_env)
-                if(itr.first == env_id && itr.second == ss.str())
-                {
-                    m_mutex.unlock();
-                    return;
-                }
-        }
-        m_env.insert(env_pair_t(env_id, ss_long.str()));
-        m_mutex.unlock();
-    }
-
-    const env_map_t& get() const { return m_env; }
-    mutex_t&         mutex() const { return m_mutex; }
-
-    friend std::ostream& operator<<(std::ostream& os, const EnvSettings& env)
-    {
-        std::stringstream filler;
-        filler.fill('#');
-        filler << std::setw(90) << "";
-        std::stringstream ss;
-        ss << filler.str() << "\n# Environment settings:\n";
-        env.mutex().lock();
-        for(const auto& itr : env.get())
-        {
-            ss << "# " << std::setw(35) << std::right << itr.first << "\t = \t"
-               << std::left << itr.second << "\n";
-        }
-        env.mutex().unlock();
-        ss << filler.str();
-        os << ss.str() << std::endl;
-        return os;
-    }
-
-private:
-    env_map_t       m_env;
-    mutable mutex_t m_mutex;
-};
-
 //--------------------------------------------------------------------------------------//
 //  use this function to get an environment variable setting +
 //  a default if not defined, e.g.
@@ -152,12 +65,8 @@ GetEnv(const std::string& env_id, Tp _default = Tp())
         std::istringstream iss(str_var);
         Tp                 var = Tp();
         iss >> var;
-        // record value defined by environment
-        EnvSettings::GetInstance()->insert<Tp>(env_id, var);
         return var;
     }
-    // record default value
-    EnvSettings::GetInstance()->insert<Tp>(env_id, _default);
 
     // return default if not specified in environment
     return _default;
@@ -184,12 +93,8 @@ GetEnv(const std::string& env_id, bool _default)
             if(var == "off" || var == "false")
                 val = false;
         }
-        // record value defined by environment
-        EnvSettings::GetInstance()->insert<bool>(env_id, val);
         return val;
     }
-    // record default value
-    EnvSettings::GetInstance()->insert<bool>(env_id, false);
 
     // return default if not specified in environment
     return _default;
@@ -211,12 +116,8 @@ GetEnv(const std::string& env_id, Tp _default, const std::string& msg)
         iss >> var;
         std::cout << "Environment variable \"" << env_id << "\" enabled with "
                   << "value == " << var << ". " << msg << std::endl;
-        // record value defined by environment
-        EnvSettings::GetInstance()->insert<Tp>(env_id, var);
         return var;
     }
-    // record default value
-    EnvSettings::GetInstance()->insert<Tp>(env_id, _default);
 
     // return default if not specified in environment
     return _default;
@@ -253,8 +154,6 @@ GetEnv(const std::string& env_id, const EnvChoiceList<Tp>& _choices, Tp _default
         {
             if(asupper(std::get<1>(itr)) == upp_var)
             {
-                // record value defined by environment
-                EnvSettings::GetInstance()->insert(env_id, itr);
                 return std::get<0>(itr);
             }
         }
@@ -265,8 +164,6 @@ GetEnv(const std::string& env_id, const EnvChoiceList<Tp>& _choices, Tp _default
         {
             if(var == std::get<0>(itr))
             {
-                // record value defined by environment
-                EnvSettings::GetInstance()->insert(env_id, itr);
                 return var;
             }
         }
@@ -291,9 +188,6 @@ GetEnv(const std::string& env_id, const EnvChoiceList<Tp>& _choices, Tp _default
             _desc = std::get<2>(itr);
             break;
         }
-
-    // record default value
-    EnvSettings::GetInstance()->insert(env_id, EnvChoice<Tp>(_default, _name, _desc));
 
     // return default if not specified in environment
     return _default;
@@ -345,11 +239,4 @@ GetChoice(const EnvChoiceList<Tp>& _choices, const std::string& str_var)
 }
 
 //--------------------------------------------------------------------------------------//
-
-inline void
-PrintEnv(std::ostream& os = std::cout)
-{
-    os << (*EnvSettings::GetInstance());
-}
-
 }  // namespace PTL
