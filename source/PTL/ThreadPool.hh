@@ -286,7 +286,8 @@ protected:
 
 protected:
     // called in THREAD INIT
-    static void start_thread(ThreadPool*, thread_data_t*, intmax_t = -1);
+    static void start_thread(ThreadPool*, thread_data_t*, intmax_t = -1,
+                             std::shared_ptr<std::promise<void>> = {});
 
     void record_entry();
     void record_exit();
