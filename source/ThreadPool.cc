@@ -37,6 +37,7 @@
 #include "PTL/VUserTaskQueue.hh"
 
 #include <cassert>
+#include <chrono>
 #include <mutex>
 #include <new>
 #include <stdexcept>
@@ -78,8 +79,13 @@ ThreadPool::f_default_pool_size()
 // static member function that calls the member function we want the thread to
 // run
 void
-ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
+ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx,
+                         // NOLINTNEXTLINE(performance-unnecessary-value-param)
+                         std::shared_ptr<std::promise<void>> _ready)
 {
+    if(_ready)
+        _ready->set_value();
+
     if(tp->get_verbose() > 0)
     {
         AutoLock lock(TypeMutex<decltype(std::cerr)>());
@@ -403,14 +409,17 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     }
 
     auto this_tid = get_this_thread_id();
+    auto _ready   = std::vector<std::shared_ptr<std::promise<void>>>{};
     for(size_type i = m_pool_size; i < proposed_size; ++i)
     {
         // add the threads
         try
         {
+            // promise notifying that thread has started
+            auto _ready_v = _ready.emplace_back(std::make_shared<std::promise<void>>());
             // create thread
-            Thread thr{ ThreadPool::start_thread, this, &m_thread_data,
-                        this_tid + i + 1 };
+            auto thr = Thread{ ThreadPool::start_thread, this, &m_thread_data,
+                               this_tid + i + 1, _ready_v };
             // only reaches here if successful creation of thread
             ++m_pool_size;
             // store thread
@@ -436,6 +445,11 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             continue;
         }
     }
+
+    // wait up to one second total
+    for(auto& itr : _ready)
+        itr->get_future().wait_for(std::chrono::seconds{ 1 } / _ready.size());
+
     //------------------------------------------------------------------------//
 
     AutoLock _task_lock(*m_task_lock);
