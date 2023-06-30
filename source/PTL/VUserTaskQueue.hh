@@ -28,7 +28,7 @@
 #pragma once
 
 #include "PTL/Macros.hh"
-#include "PTL/Threading.hh"
+#include "PTL/Types.hh"
 
 #include <atomic>
 #include <cstdint>

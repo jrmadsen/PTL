@@ -20,13 +20,8 @@
 //  Tasking class implementation
 #include "PTL/TaskRunManager.hh"
 
-#include "PTL/Config.hh"
-#include "PTL/GetEnv.hh"
 #include "PTL/TaskManager.hh"
 #include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-
-#include <iostream>
 
 namespace PTL
 {

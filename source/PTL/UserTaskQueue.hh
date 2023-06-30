@@ -27,8 +27,7 @@
 
 #include "PTL/Macros.hh"
 #include "PTL/TaskSubQueue.hh"
-#include "PTL/Threading.hh"
-#include "PTL/VTask.hh"
+#include "PTL/Types.hh"
 #include "PTL/VUserTaskQueue.hh"
 
 #include <atomic>
@@ -39,6 +38,10 @@
 
 namespace PTL
 {
+class ThreadData;
+class ThreadPool;
+class VTask;
+
 class UserTaskQueue : public VUserTaskQueue
 {
 public:

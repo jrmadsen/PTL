@@ -26,7 +26,6 @@
 #pragma once
 
 #include "PTL/ThreadPool.hh"
-#include "PTL/VUserTaskQueue.hh"
 
 #include <cstddef>
 #include <cstdint>
@@ -35,6 +34,7 @@
 namespace PTL
 {
 class TaskManager;
+class VUserTaskQueue;
 
 //======================================================================================//
 

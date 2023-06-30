@@ -26,6 +26,7 @@
 #include "PTL/UserTaskQueue.hh"
 
 #include "PTL/AutoLock.hh"
+#include "PTL/ScopeDestructor.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
@@ -36,7 +37,6 @@
 #include <iostream>
 #include <map>
 #include <stdexcept>
-#include <system_error>
 #include <thread>
 #include <utility>
 

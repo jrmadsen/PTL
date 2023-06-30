@@ -34,12 +34,11 @@
 #include "PTL/AutoLock.hh"
 #include "PTL/Config.hh"
 #include "PTL/JoinFunction.hh"
-#include "PTL/Macros.hh"
 #include "PTL/ScopeDestructor.hh"
 #include "PTL/Task.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
+#include "PTL/Types.hh"
 #include "PTL/VTask.hh"
 #include "PTL/VUserTaskQueue.hh"
 #include "PTL/detail/CxxBackports.hh"
@@ -53,7 +52,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <sstream>
+#include <sstream>  // IWYU pragma: keep
 #include <stdexcept>
 #include <thread>
 #include <type_traits>
@@ -61,7 +60,7 @@
 #include <vector>
 
 #if defined(PTL_USE_TBB)
-#    include <tbb/task_group.h>
+#    include <tbb/task_group.h>  // IWYU pragma: keep
 #endif
 
 namespace PTL

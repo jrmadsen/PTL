@@ -40,6 +40,9 @@
 #    include <set>
 #endif
 
+#include <cstddef>
+#include <thread>
+
 //======================================================================================//
 
 namespace
