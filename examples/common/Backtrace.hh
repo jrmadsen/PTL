@@ -503,8 +503,7 @@ Backtrace::Message(int sig, siginfo_t* sinfo, std::ostream& os)
 
     auto bt = GetMangled<256, 3>([](const char* _s) { return _s; });
     char prefix[64];
-    snprintf(prefix, 64, "[PID=%i, TID=%i]", (int) getpid(),
-             (int) GetThreadId());
+    snprintf(prefix, 64, "[PID=%i, TID=%i]", (int) getpid(), (int) GetThreadId());
     size_t sz = 0;
     for(auto& itr : bt)
     {

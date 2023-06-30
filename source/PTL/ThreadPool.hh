@@ -32,9 +32,9 @@
 
 #include "PTL/AutoLock.hh"
 #include "PTL/Config.hh"
+#include "PTL/Macros.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Macros.hh"
 #include "PTL/VTask.hh"
 #include "PTL/VUserTaskQueue.hh"
 

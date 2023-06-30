@@ -238,9 +238,8 @@ main(int argc, char** argv)
                         (fibonacci(nfib + 2) * npart) + (fibonacci(nfib + 3) * npart);
         auto join = [](long& lhs, long rhs) {
             std::stringstream ss;
-            ss << "[ptl-minimal]> Thread " << std::setw(2)
-               << PTL::GetThreadId() << " adding " << rhs << " to " << lhs
-               << std::endl;
+            ss << "[ptl-minimal]> Thread " << std::setw(2) << PTL::GetThreadId()
+               << " adding " << rhs << " to " << lhs << std::endl;
             {
                 AutoLock lk{ TypeMutex<decltype(std::cout)>() };
                 std::cout << ss.str();
@@ -255,9 +254,8 @@ main(int argc, char** argv)
             auto              e = random_entry(v);
             std::stringstream ss;
             ss << "[ptl-minimal][" << std::setw(4) << n << "]> Random entry from thread "
-               << std::setw(2) << PTL::GetThreadId()
-               << " was : " << std::setw(8) << std::setprecision(6) << std::fixed << e
-               << std::endl;
+               << std::setw(2) << PTL::GetThreadId() << " was : " << std::setw(8)
+               << std::setprecision(6) << std::fixed << e << std::endl;
             AutoLock lk{ TypeMutex<decltype(std::cout)>() };
             std::cout << ss.str();
         };

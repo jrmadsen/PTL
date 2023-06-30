@@ -33,8 +33,8 @@
 
 #include "PTL/AutoLock.hh"
 #include "PTL/Config.hh"
-#include "PTL/Macros.hh"
 #include "PTL/JoinFunction.hh"
+#include "PTL/Macros.hh"
 #include "PTL/ScopeDestructor.hh"
 #include "PTL/Task.hh"
 #include "PTL/ThreadData.hh"
@@ -733,6 +733,6 @@ TaskGroup<Tp, Arg, MaxDepth>::internal_update()
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
-int TaskGroup<Tp, Arg, MaxDepth>::f_verbose = 0; 
+int TaskGroup<Tp, Arg, MaxDepth>::f_verbose = 0;
 
 }  // namespace PTL

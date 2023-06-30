@@ -243,8 +243,8 @@ int main()
 
 #pragma once
 
-#include "PTL/Types.hh"
 #include "PTL/ConsumeParameters.hh"
+#include "PTL/Types.hh"
 
 #include <chrono>
 #include <iostream>

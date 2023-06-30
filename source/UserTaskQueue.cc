@@ -42,7 +42,6 @@
 
 namespace PTL
 {
-
 //======================================================================================//
 
 UserTaskQueue::UserTaskQueue(intmax_t nworkers, UserTaskQueue* parent)

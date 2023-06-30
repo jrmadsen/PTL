@@ -30,7 +30,6 @@
 
 namespace PTL
 {
-
 //======================================================================================//
 
 TaskRunManager::pointer&
@@ -101,15 +100,15 @@ TaskRunManager::Initialize(uint64_t n)
     if(!m_thread_pool)
     {
         ThreadPool::Config cfg;
-        cfg.pool_size = m_workers;
+        cfg.pool_size  = m_workers;
         cfg.task_queue = m_task_queue;
-        m_thread_pool = new ThreadPool(cfg);
+        m_thread_pool  = new ThreadPool(cfg);
         m_task_manager = new TaskManager(m_thread_pool);
     }
     // or resize
     else if(m_workers != m_thread_pool->size())
     {
-       m_thread_pool->resize(m_workers);
+        m_thread_pool->resize(m_workers);
     }
 
     m_is_initialized = true;

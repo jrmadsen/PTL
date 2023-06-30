@@ -22,12 +22,12 @@
 //
 //============================================================================//
 
+#include "PTL/GetEnv.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
 #include "PTL/Threading.hh"
-#include "PTL/GetEnv.hh"
 
 #include "Backtrace.hh"
 #include "Timer.hh"
