@@ -36,8 +36,8 @@
 #endif
 
 #if defined(PTL_LINUX)
-#    include <set>
 #    include <fstream>
+#    include <set>
 #endif
 
 //======================================================================================//
