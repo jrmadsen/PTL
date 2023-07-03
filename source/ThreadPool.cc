@@ -93,15 +93,6 @@ ThreadPool::f_thread_priority()
 
 //======================================================================================//
 
-int&
-ThreadPool::f_verbose()
-{
-    static int _v = GetEnv<int>("PTL_VERBOSE", 0);
-    return _v;
-}
-
-//======================================================================================//
-
 ThreadPool::size_type&
 ThreadPool::f_default_pool_size()
 {

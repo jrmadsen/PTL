@@ -139,7 +139,7 @@ public:
         bool              init         = true;
         bool              use_tbb      = f_use_tbb();
         bool              use_affinity = f_use_cpu_affinity();
-        int               verbose      = f_verbose();
+        int               verbose      = 0;
         int               priority     = f_thread_priority();
         size_type         pool_size    = f_default_pool_size();
         VUserTaskQueue*   task_queue   = nullptr;
@@ -187,8 +187,6 @@ public:
     static void set_default_use_cpu_affinity(bool _v);
     /// set the default scheduling priority of threads in thread-pool
     static void set_default_scheduling_priority(int _v) { f_thread_priority() = _v; }
-    /// set the default verbosity
-    static void set_default_verbose(int _v) { f_verbose() = _v; }
     /// set the default pool size
     static void set_default_size(size_type _v) { f_default_pool_size() = _v; }
 
@@ -198,8 +196,6 @@ public:
     static bool get_default_use_cpu_affinity() { return f_use_cpu_affinity(); }
     /// get the default scheduling priority of threads in thread-pool
     static int get_default_scheduling_priority() { return f_thread_priority(); }
-    /// get the default verbosity
-    static int get_default_verbose() { return f_verbose(); }
     /// get the default pool size
     static size_type get_default_size() { return f_default_pool_size(); }
 
@@ -280,7 +276,7 @@ private:
     bool             m_use_affinity      = false;
     bool             m_tbb_tp            = false;
     bool             m_delete_task_queue = false;
-    int              m_verbose           = f_verbose();
+    int              m_verbose           = 0;
     int              m_priority          = f_thread_priority();
     size_type        m_pool_size         = 0;
     ThreadId         m_main_tid          = ThisThread::get_id();
@@ -316,7 +312,6 @@ private:
     static bool&            f_use_tbb();
     static bool&            f_use_cpu_affinity();
     static int&             f_thread_priority();
-    static int&             f_verbose();
     static size_type&       f_default_pool_size();
     static thread_id_map_t& f_thread_ids();
 };
