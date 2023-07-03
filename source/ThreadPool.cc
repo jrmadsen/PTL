@@ -66,15 +66,6 @@ ThreadPool::f_thread_ids()
 
 //======================================================================================//
 
-bool&
-ThreadPool::f_use_tbb()
-{
-    static bool _v = GetEnv<bool>("PTL_USE_TBB", false);
-    return _v;
-}
-
-//======================================================================================//
-
 ThreadPool::size_type&
 ThreadPool::f_default_pool_size()
 {
@@ -117,26 +108,6 @@ ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
         std::cerr << "[PTL::ThreadPool] Thread " << _idx << " terminating..."
                   << std::endl;
     }
-}
-
-//======================================================================================//
-// static member function that checks enabling of tbb library
-bool
-ThreadPool::using_tbb()
-{
-    return f_use_tbb();
-}
-
-//======================================================================================//
-// static member function that initialized tbb library
-void
-ThreadPool::set_use_tbb(bool enable)
-{
-#if defined(PTL_USE_TBB)
-    f_use_tbb() = enable;
-#else
-    ConsumeParameters(enable);
-#endif
 }
 
 //======================================================================================//

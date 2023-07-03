@@ -68,12 +68,10 @@ TaskRunManager::GetInstance(bool useTBB)
 
 TaskRunManager::TaskRunManager(bool useTBB)
 : m_workers(std::thread::hardware_concurrency())
+, m_use_tbb(useTBB)
 {
     if(!GetPrivateMasterRunManager())
         GetPrivateMasterRunManager() = this;
-
-    // handle TBB
-    ThreadPool::set_use_tbb(useTBB);
 }
 
 //======================================================================================//
@@ -97,6 +95,7 @@ TaskRunManager::Initialize(uint64_t n)
         ThreadPool::Config cfg;
         cfg.pool_size  = m_workers;
         cfg.task_queue = m_task_queue;
+        cfg.use_tbb    = m_use_tbb;
         m_thread_pool  = new ThreadPool(cfg);
         m_task_manager = new TaskManager(m_thread_pool);
     }

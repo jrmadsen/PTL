@@ -82,6 +82,7 @@ protected:
     // Barriers: synch points between master and workers
     bool            m_is_initialized = false;
     uint64_t        m_workers        = 0;
+    bool            m_use_tbb        = false;
     VUserTaskQueue* m_task_queue     = nullptr;
     ThreadPool*     m_thread_pool    = nullptr;
     TaskManager*    m_task_manager   = nullptr;

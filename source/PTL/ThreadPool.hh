@@ -137,7 +137,7 @@ public:
     struct Config
     {
         bool              init         = true;
-        bool              use_tbb      = f_use_tbb();
+        bool              use_tbb      = false;
         bool              use_affinity = false;
         int               verbose      = 0;
         int               priority     = 0;
@@ -176,18 +176,9 @@ public:
     bool is_tbb_threadpool() const { return m_tbb_tp; }
 
 public:
-    // Public functions related to TBB
-    static bool using_tbb();
-    // enable using TBB if available - semi-deprecated
-    static void set_use_tbb(bool _v);
-
-    /// set the default use of tbb
-    static void set_default_use_tbb(bool _v) { set_use_tbb(_v); }
     /// set the default pool size
     static void set_default_size(size_type _v) { f_default_pool_size() = _v; }
 
-    /// get the default use of tbb
-    static bool get_default_use_tbb() { return f_use_tbb(); }
     /// get the default pool size
     static size_type get_default_size() { return f_default_pool_size(); }
 
@@ -301,7 +292,6 @@ private:
     affinity_func_t   m_affinity_func = affinity_functor();
 
 private:
-    static bool&            f_use_tbb();
     static size_type&       f_default_pool_size();
     static thread_id_map_t& f_thread_ids();
 };
