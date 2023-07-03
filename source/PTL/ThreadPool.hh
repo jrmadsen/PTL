@@ -138,7 +138,7 @@ public:
     {
         bool              init         = true;
         bool              use_tbb      = f_use_tbb();
-        bool              use_affinity = f_use_cpu_affinity();
+        bool              use_affinity = false;
         int               verbose      = 0;
         int               priority     = 0;
         size_type         pool_size    = f_default_pool_size();
@@ -183,15 +183,11 @@ public:
 
     /// set the default use of tbb
     static void set_default_use_tbb(bool _v) { set_use_tbb(_v); }
-    /// set the default use of cpu affinity
-    static void set_default_use_cpu_affinity(bool _v);
     /// set the default pool size
     static void set_default_size(size_type _v) { f_default_pool_size() = _v; }
 
     /// get the default use of tbb
     static bool get_default_use_tbb() { return f_use_tbb(); }
-    /// get the default use of cpu affinity
-    static bool get_default_use_cpu_affinity() { return f_use_cpu_affinity(); }
     /// get the default pool size
     static size_type get_default_size() { return f_default_pool_size(); }
 
@@ -306,7 +302,6 @@ private:
 
 private:
     static bool&            f_use_tbb();
-    static bool&            f_use_cpu_affinity();
     static size_type&       f_default_pool_size();
     static thread_id_map_t& f_thread_ids();
 };

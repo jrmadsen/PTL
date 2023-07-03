@@ -75,15 +75,6 @@ ThreadPool::f_use_tbb()
 
 //======================================================================================//
 
-bool&
-ThreadPool::f_use_cpu_affinity()
-{
-    static bool _v = GetEnv<bool>("PTL_CPU_AFFINITY", false);
-    return _v;
-}
-
-//======================================================================================//
-
 ThreadPool::size_type&
 ThreadPool::f_default_pool_size()
 {
@@ -143,18 +134,6 @@ ThreadPool::set_use_tbb(bool enable)
 {
 #if defined(PTL_USE_TBB)
     f_use_tbb() = enable;
-#else
-    ConsumeParameters(enable);
-#endif
-}
-
-//======================================================================================//
-// static member function that initialized tbb library
-void
-ThreadPool::set_default_use_cpu_affinity(bool enable)
-{
-#if defined(PTL_USE_TBB)
-    f_use_cpu_affinity() = enable;
 #else
     ConsumeParameters(enable);
 #endif
