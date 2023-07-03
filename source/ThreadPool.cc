@@ -84,15 +84,6 @@ ThreadPool::f_use_cpu_affinity()
 
 //======================================================================================//
 
-int&
-ThreadPool::f_thread_priority()
-{
-    static int _v = GetEnv<int>("PTL_THREAD_PRIORITY", 0);
-    return _v;
-}
-
-//======================================================================================//
-
 ThreadPool::size_type&
 ThreadPool::f_default_pool_size()
 {

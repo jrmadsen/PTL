@@ -140,7 +140,7 @@ public:
         bool              use_tbb      = f_use_tbb();
         bool              use_affinity = f_use_cpu_affinity();
         int               verbose      = 0;
-        int               priority     = f_thread_priority();
+        int               priority     = 0;
         size_type         pool_size    = f_default_pool_size();
         VUserTaskQueue*   task_queue   = nullptr;
         affinity_func_t   set_affinity = affinity_functor();
@@ -185,8 +185,6 @@ public:
     static void set_default_use_tbb(bool _v) { set_use_tbb(_v); }
     /// set the default use of cpu affinity
     static void set_default_use_cpu_affinity(bool _v);
-    /// set the default scheduling priority of threads in thread-pool
-    static void set_default_scheduling_priority(int _v) { f_thread_priority() = _v; }
     /// set the default pool size
     static void set_default_size(size_type _v) { f_default_pool_size() = _v; }
 
@@ -194,8 +192,6 @@ public:
     static bool get_default_use_tbb() { return f_use_tbb(); }
     /// get the default use of cpu affinity
     static bool get_default_use_cpu_affinity() { return f_use_cpu_affinity(); }
-    /// get the default scheduling priority of threads in thread-pool
-    static int get_default_scheduling_priority() { return f_thread_priority(); }
     /// get the default pool size
     static size_type get_default_size() { return f_default_pool_size(); }
 
@@ -277,7 +273,7 @@ private:
     bool             m_tbb_tp            = false;
     bool             m_delete_task_queue = false;
     int              m_verbose           = 0;
-    int              m_priority          = f_thread_priority();
+    int              m_priority          = 0;
     size_type        m_pool_size         = 0;
     ThreadId         m_main_tid          = ThisThread::get_id();
     atomic_bool_type m_alive_flag        = std::make_shared<std::atomic_bool>(false);
@@ -311,7 +307,6 @@ private:
 private:
     static bool&            f_use_tbb();
     static bool&            f_use_cpu_affinity();
-    static int&             f_thread_priority();
     static size_type&       f_default_pool_size();
     static thread_id_map_t& f_thread_ids();
 };
