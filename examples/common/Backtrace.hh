@@ -53,8 +53,7 @@
 #ifndef PTL_Backtrace_hh
 #define PTL_Backtrace_hh 1
 
-#include "Threading.hh"
-#include "Types.hh"
+#include "PTL/Macros.hh"
 
 #if defined(PTL_UNIX)
 #    include <cxxabi.h>
@@ -199,9 +198,6 @@ Demangle()
 #    include <string>
 #    include <tuple>
 #    include <vector>
-
-// PTL header
-#    include "Threading.hh"
 
 //----------------------------------------------------------------------------//
 
@@ -507,8 +503,7 @@ Backtrace::Message(int sig, siginfo_t* sinfo, std::ostream& os)
 
     auto bt = GetMangled<256, 3>([](const char* _s) { return _s; });
     char prefix[64];
-    snprintf(prefix, 64, "[PID=%i, TID=%i]", (int) getpid(),
-             (int) Threading::GetThreadId());
+    snprintf(prefix, 64, "[PID=%i, TID=%i]", (int) getpid(), (int) GetThreadId());
     size_t sz = 0;
     for(auto& itr : bt)
     {

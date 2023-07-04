@@ -4,7 +4,7 @@
 # Locate sources and headers for this project - headers are included so they will show up
 # in IDEs
 file(GLOB_RECURSE ptl_headers ${CMAKE_CURRENT_LIST_DIR}/PTL/*.hh
-     ${CMAKE_CURRENT_LIST_DIR}/PTL/*.icc)
+     ${CMAKE_CURRENT_LIST_DIR}/PTL/detail/*.hh)
 file(GLOB_RECURSE ptl_sources ${CMAKE_CURRENT_LIST_DIR}/*.cc)
 
 # -------------------------------------------------------------------------------------- #
@@ -115,9 +115,11 @@ if(PTL_INSTALL_CONFIG)
 endif()
 
 if(PTL_INSTALL_HEADERS)
-    # headers
+    # headers - must use directory form due to nested structure
     install(
-        FILES ${ptl_headers}
-        DESTINATION ${PTL_INSTALL_INCLUDEDIR}/PTL
-        COMPONENT Development)
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/PTL ${CMAKE_CURRENT_BINARY_DIR}/PTL
+        DESTINATION ${PTL_INSTALL_INCLUDEDIR}
+        COMPONENT Development
+        FILES_MATCHING
+        PATTERN "*.hh")
 endif()

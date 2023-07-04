@@ -108,7 +108,6 @@ def configure():
                 "/usr/.*",
                 ".*external/.*",
                 ".*examples/.*",
-                ".*/Backtrace.hh",
             ]
         ),
     )

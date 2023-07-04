@@ -16,25 +16,16 @@
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-// ---------------------------------------------------------------
-// Tasking class header file
-//
-// Class Description:
-//
-// This file wraps a TBB task_group into a TaskGroup
-//
-// ---------------------------------------------------------------
-// Author: Jonathan Madsen (Jun 21st 2018)
-// ---------------------------------------------------------------
 
 #pragma once
 
-#include "PTL/TaskGroup.hh"
-
 namespace PTL
 {
-// in new version, TaskGroup handles TBB
-template <typename Tp, typename Arg = Tp>
-using TBBTaskGroup = TaskGroup<Tp, Arg>;
-
+//--------------------------------------------------------------------------------------//
+// use this function to get rid of "unused parameter" warnings
+//
+template <typename... Args>
+void
+ConsumeParameters(Args&&...)
+{}
 }  // namespace PTL

@@ -22,13 +22,15 @@
 //
 //============================================================================//
 
+#include "PTL/GetEnv.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"
 #include "PTL/TaskRunManager.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Timer.hh"
-#include "PTL/Utility.hh"
+
+#include "Backtrace.hh"
+#include "Timer.hh"
 
 using namespace PTL;
 
@@ -110,17 +112,15 @@ static int16_t rng_range = 2;
 // hence why I am using it here
 
 #if defined(USE_TBB_TASKS)
-#    include "PTL/TBBTaskGroup.hh"
-const bool                                    useTBB = true;
-typedef TBBTaskGroup<Array_t, const int64_t&> TaskGroup_t;
-typedef tbb::task_group                       VoidGroup_t;
-typedef TBBTaskGroup<long>                    LongGroup_t;
+const bool              useTBB = true;
+typedef tbb::task_group VoidGroup_t;
 #else
-const bool                                 useTBB = false;
-typedef TaskGroup<Array_t, const int64_t&> TaskGroup_t;
-typedef TaskGroup<void, void, 10>          VoidGroup_t;
-typedef TaskGroup<long>                    LongGroup_t;
+const bool                        useTBB = false;
+typedef TaskGroup<void, void, 10> VoidGroup_t;
 #endif
+
+typedef TaskGroup<Array_t, const int64_t&> TaskGroup_t;
+typedef TaskGroup<long>                    LongGroup_t;
 
 //============================================================================//
 

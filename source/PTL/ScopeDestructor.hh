@@ -19,15 +19,43 @@
 
 #pragma once
 
-#include "PTL/AutoLock.hh"
-#include "PTL/Task.hh"
-#include "PTL/TaskGroup.hh"
-#include "PTL/TaskManager.hh"
-#include "PTL/TaskRunManager.hh"
-#include "PTL/ThreadData.hh"
-#include "PTL/ThreadPool.hh"
-#include "PTL/Threading.hh"
-#include "PTL/Types.hh"
-#include "PTL/UserTaskQueue.hh"
-#include "PTL/VTask.hh"
-#include "PTL/VUserTaskQueue.hh"
+#include <functional>
+#include <utility>
+
+namespace PTL
+{
+struct ScopeDestructor
+{
+    template <typename FuncT>
+    ScopeDestructor(FuncT&& _func)
+    : m_functor(std::forward<FuncT>(_func))
+    {}
+
+    // delete copy operations
+    ScopeDestructor(const ScopeDestructor&) = delete;
+    ScopeDestructor& operator=(const ScopeDestructor&) = delete;
+
+    // allow move operations
+    ScopeDestructor(ScopeDestructor&& rhs) noexcept
+    : m_functor(std::move(rhs.m_functor))
+    {
+        rhs.m_functor = []() {};
+    }
+
+    ScopeDestructor& operator=(ScopeDestructor&& rhs) noexcept
+    {
+        if(this != &rhs)
+        {
+            m_functor     = std::move(rhs.m_functor);
+            rhs.m_functor = []() {};
+        }
+        return *this;
+    }
+
+    ~ScopeDestructor() { m_functor(); }
+
+private:
+    std::function<void()> m_functor = []() {};
+};
+
+}  // namespace PTL

@@ -92,13 +92,9 @@ execute_iterations(int64_t num_iter, TaskGroup_t* task_group, int64_t n,
 //============================================================================//
 
 int
-main(int argc, char** argv)
+main(int, char** argv)
 {
     _pause_collection;  // VTune
-    //_heap_profiler_start(get_gperf_filename(argv[0], "heap").c_str());  //
-    // gperf
-
-    ConsumeParameters(argc, argv);
 
     auto hwthreads        = std::thread::hardware_concurrency();
     auto default_fib      = 20;
@@ -120,25 +116,18 @@ main(int argc, char** argv)
     setenv("NUM_TASKS", std::to_string(default_ntasks).c_str(), 0);
     setenv("NUM_TASK_GROUPS", std::to_string(default_tg).c_str(), 0);
 
-    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range + 6,
-                                            "Setting RNG range to +/- this value");
-    unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads,
-                                           "Getting the number of threads");
-    int64_t  nfib       = GetEnv<int64_t>("FIBONACCI", default_fib,
-                                   "Setting the centerpoint of fib work distribution");
-    int64_t  grainsize  = GetEnv<int64_t>(
-        "GRAINSIZE", numThreads, "Dividing number of task into grain of this size");
-    int64_t num_iter = numThreads * numThreads;
-    int64_t num_groups =
-        GetEnv<int64_t>("NUM_TASK_GROUPS", 4, "Setting the number of task groups");
+    rng_range           = GetEnv<decltype(rng_range)>("RNG_RANGE", rng_range + 6);
+    unsigned numThreads = GetEnv<unsigned>("NUM_THREADS", default_nthreads);
+    int64_t  nfib       = GetEnv<int64_t>("FIBONACCI", default_fib);
+    int64_t  grainsize  = GetEnv<int64_t>("GRAINSIZE", numThreads);
+    int64_t  num_iter   = numThreads * numThreads;
+    int64_t  num_groups = GetEnv<int64_t>("NUM_TASK_GROUPS", 4);
 
     cutoff_value = GetEnv<long>("CUTOFF_VALUE", cutoff_value);
     cutoff_high  = GetEnv<int>("CUTOFF_HIGH", cutoff_value);
     cutoff_low   = GetEnv<int>("CUTOFF_LOW", cutoff_low);
     cutoff_incr  = GetEnv<int>("CUTOFF_INCR", cutoff_incr);
     cutoff_tasks = GetEnv<int>("CUTOFF_TASKS", cutoff_tasks);
-
-    PrintEnv();
 
     Timer total_timer;
     total_timer.Start();

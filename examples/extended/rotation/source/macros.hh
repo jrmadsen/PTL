@@ -150,7 +150,7 @@
 #include <vector>
 
 #include "PTL/AutoLock.hh"
-#include "PTL/TBBTaskGroup.hh"
+#include "PTL/Macros.hh"
 #include "PTL/Task.hh"
 #include "PTL/TaskGroup.hh"
 #include "PTL/TaskManager.hh"
@@ -158,8 +158,6 @@
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
 #include "PTL/Threading.hh"
-#include "PTL/Types.hh"
-#include "PTL/Utility.hh"
 
 using namespace PTL;
 
