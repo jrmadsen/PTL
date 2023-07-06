@@ -66,42 +66,6 @@ ThreadPool::f_thread_ids()
 
 //======================================================================================//
 
-bool&
-ThreadPool::f_use_tbb()
-{
-    static bool _v = GetEnv<bool>("PTL_USE_TBB", false);
-    return _v;
-}
-
-//======================================================================================//
-
-bool&
-ThreadPool::f_use_cpu_affinity()
-{
-    static bool _v = GetEnv<bool>("PTL_CPU_AFFINITY", false);
-    return _v;
-}
-
-//======================================================================================//
-
-int&
-ThreadPool::f_thread_priority()
-{
-    static int _v = GetEnv<int>("PTL_THREAD_PRIORITY", 0);
-    return _v;
-}
-
-//======================================================================================//
-
-int&
-ThreadPool::f_verbose()
-{
-    static int _v = GetEnv<int>("PTL_VERBOSE", 0);
-    return _v;
-}
-
-//======================================================================================//
-
 ThreadPool::size_type&
 ThreadPool::f_default_pool_size()
 {
@@ -144,38 +108,6 @@ ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
         std::cerr << "[PTL::ThreadPool] Thread " << _idx << " terminating..."
                   << std::endl;
     }
-}
-
-//======================================================================================//
-// static member function that checks enabling of tbb library
-bool
-ThreadPool::using_tbb()
-{
-    return f_use_tbb();
-}
-
-//======================================================================================//
-// static member function that initialized tbb library
-void
-ThreadPool::set_use_tbb(bool enable)
-{
-#if defined(PTL_USE_TBB)
-    f_use_tbb() = enable;
-#else
-    ConsumeParameters(enable);
-#endif
-}
-
-//======================================================================================//
-// static member function that initialized tbb library
-void
-ThreadPool::set_default_use_cpu_affinity(bool enable)
-{
-#if defined(PTL_USE_TBB)
-    f_use_cpu_affinity() = enable;
-#else
-    ConsumeParameters(enable);
-#endif
 }
 
 //======================================================================================//
@@ -731,9 +663,6 @@ ThreadPool::get_valid_queue(task_queue_t*& _queue) const
 void
 ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
-    // how long the thread waits on condition variable
-    // static int wait_time = GetEnv<int>("PTL_POOL_WAIT_TIME", 5);
-
     ++(*m_thread_awake);
 
     // initialization function
