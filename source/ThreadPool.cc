@@ -663,9 +663,6 @@ ThreadPool::get_valid_queue(task_queue_t*& _queue) const
 void
 ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
 {
-    // how long the thread waits on condition variable
-    // static int wait_time = GetEnv<int>("PTL_POOL_WAIT_TIME", 5);
-
     ++(*m_thread_awake);
 
     // initialization function
