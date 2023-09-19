@@ -542,15 +542,25 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
             auto* _tdata = ThreadData::GetInstance();
             if(_tdata)
                 ++(_tdata->task_depth);
-            func(args...);
-            auto _count = --(_counter);
-            if(_tdata)
-                --(_tdata->task_depth);
-            if(_count < 1)
+
+            auto dtor_func = [&]() {
+                auto _count = --(_counter);
+                if(_tdata)
+                    --(_tdata->task_depth);
+                if(_count < 1)
+                {
+                    AutoLock _lk{ _task_lock };
+                    _task_cond.notify_all();
+                }
+            };
+            struct dtor_impl
             {
-                AutoLock _lk{ _task_lock };
-                _task_cond.notify_all();
-            }
+                ~dtor_impl() { m_func(); }
+
+                decltype(dtor_func) m_func = {};
+            } d{ dtor_func };
+
+            func(args...);
         });
 
         if(m_tbb_task_group)
@@ -587,15 +597,25 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
             auto* _tdata = ThreadData::GetInstance();
             if(_tdata)
                 ++(_tdata->task_depth);
-            auto&& _ret   = func(args...);
-            auto   _count = --(_counter);
-            if(_tdata)
-                --(_tdata->task_depth);
-            if(_count < 1)
+
+            auto dtor_func = [&]() {
+                auto _count = --(_counter);
+                if(_tdata)
+                    --(_tdata->task_depth);
+                if(_count < 1)
+                {
+                    AutoLock _lk{ _task_lock };
+                    _task_cond.notify_all();
+                }
+            };
+            struct dtor_impl
             {
-                AutoLock _lk{ _task_lock };
-                _task_cond.notify_all();
-            }
+                ~dtor_impl() { m_func(); }
+
+                decltype(dtor_func) m_func = {};
+            } d{ dtor_func };
+
+            auto&& _ret   = func(args...);
             return std::forward<decltype(_ret)>(_ret);
         });
 
@@ -625,10 +645,20 @@ TaskGroup<Tp, Arg, MaxDepth>::local_exec(Func func, Args... args)
         ++(_tdata->task_depth);
     promise_type _p{};
     m_future_list.emplace_back(_p.get_future());
+
+    auto dtor_func = [&]() {
+        _p.set_value();
+        if(_tdata)
+            --(_tdata->task_depth);
+    };
+    struct dtor_impl
+    {
+        ~dtor_impl() { m_func(); }
+
+        decltype(dtor_func) m_func = {};
+    } d{ dtor_func };
+
     func(args...);
-    _p.set_value();
-    if(_tdata)
-        --(_tdata->task_depth);
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
