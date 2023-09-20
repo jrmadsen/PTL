@@ -51,7 +51,9 @@ ThreadData::update()
     if(!thread_pool)
         return;
     current_queue = thread_pool->get_queue();
-    queue_stack.push_back(current_queue);
+    if(!std::any_of(queue_stack.begin(), queue_stack.end(),
+                    [this](auto v) { return v == current_queue; }))
+        queue_stack.emplace_back(current_queue);
 }
 
 //======================================================================================//

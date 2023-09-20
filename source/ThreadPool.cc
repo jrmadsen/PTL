@@ -193,7 +193,13 @@ ThreadPool::ThreadPool(const Config& _cfg)
         std::cerr << "[PTL::ThreadPool] ThreadPool created on worker thread" << std::endl;
     }
 
-    thread_data() = new ThreadData(this);
+    if(!thread_data())
+        thread_data() = new ThreadData(this);
+
+    static thread_local ScopeDestructor _cleanup_thread_data{ []() {
+        delete thread_data();
+        thread_data() = nullptr;
+    } };
 
     // initialize after get_this_thread_id so master is zero
     if(_cfg.init)
@@ -221,7 +227,9 @@ ThreadPool::~ThreadPool()
 
     // delete owned resources
     if(m_delete_task_queue)
+    {
         delete m_task_queue;
+    }
 
     delete m_tbb_task_arena;
     delete m_tbb_task_group;
