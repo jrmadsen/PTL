@@ -172,6 +172,7 @@ public:
 
     task_queue_t*  get_queue() const { return m_task_queue; }
     task_queue_t*& get_valid_queue(task_queue_t*&) const;
+    task_queue_t*& get_valid_queue(task_queue_t*&, bool*) const;
 
     bool is_tbb_threadpool() const { return m_tbb_tp; }
 
@@ -401,7 +402,8 @@ ThreadPool::insert(task_pointer&& task, int bin)
     static thread_local ThreadData* _data = ThreadData::GetInstance();
 
     // pass the task to the queue
-    auto ibin = get_valid_queue(m_task_queue)->InsertTask(std::move(task), _data, bin);
+    auto ibin = get_valid_queue(m_task_queue, &m_delete_task_queue)
+                    ->InsertTask(std::move(task), _data, bin);
     notify();
     return ibin;
 }
@@ -437,7 +439,7 @@ ThreadPool::add_tasks(ListT& c)
         else
         {
             //++(m_task_queue);
-            get_valid_queue(m_task_queue)->InsertTask(itr);
+            get_valid_queue(m_task_queue, &m_delete_task_queue)->InsertTask(itr);
         }
     }
     c.clear();

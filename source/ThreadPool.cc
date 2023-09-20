@@ -668,10 +668,23 @@ ThreadPool::stop_thread()
 ThreadPool::task_queue_t*&
 ThreadPool::get_valid_queue(task_queue_t*& _queue) const
 {
+    return get_valid_queue(_queue, nullptr);
+}
+
+//======================================================================================//
+
+ThreadPool::task_queue_t*&
+ThreadPool::get_valid_queue(task_queue_t*& _queue, bool* _delete_task_queue) const
+{
     if(!_queue)
+    {
+        if(_delete_task_queue)
+            *(_delete_task_queue) = true;
         _queue = new UserTaskQueue{ static_cast<intmax_t>(m_pool_size) };
+    }
     return _queue;
 }
+
 //======================================================================================//
 
 void
