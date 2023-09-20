@@ -280,7 +280,7 @@ public:
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
-        _lock_deferred();
+        lock_deferred();
     }
 
     // Tries to lock the associated mutex by calling
@@ -293,7 +293,7 @@ public:
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
-        _lock_deferred(_timeout_duration);
+        lock_deferred(_timeout_duration);
     }
 
     // Tries to lock the associated mutex by calling
@@ -306,7 +306,7 @@ public:
     : unique_lock_t(_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
-        _lock_deferred(_timeout_time);
+        lock_deferred(_timeout_time);
     }
 
     // Does not lock the associated mutex.
@@ -334,7 +334,7 @@ public:
     : unique_lock_t(*_mutex, std::defer_lock)
     {
         // call termination-safe locking. if serial, this call has no effect
-        _lock_deferred();
+        lock_deferred();
     }
 
     TemplateAutoLock(mutex_type* _mutex, std::defer_lock_t _lock) noexcept
@@ -382,7 +382,7 @@ private:
 #undef _is_other_mutex
 
     //========================================================================//
-    // NOTE on _lock_deferred(...) variants:
+    // NOTE on lock_deferred(...) variants:
     //      a system_error in lock means that the mutex is unavailable
     //      we want to throw the error that comes from locking an unavailable
     //      mutex so that we know there is a memory leak
@@ -401,11 +401,12 @@ private:
 
     //========================================================================//
     // standard locking
-    inline void _lock_deferred()
+    inline void lock_deferred()
     {
         try
         {
-            this->unique_lock_t::lock();
+            if(!this->unique_lock_t::owns_lock())
+                this->unique_lock_t::lock();
         } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
@@ -418,11 +419,12 @@ private:
     // _timeout_duration has elapsed or the lock is acquired, whichever comes
     // first. May block for longer than _timeout_duration.
     template <typename Rep, typename Period>
-    void _lock_deferred(const std::chrono::duration<Rep, Period>& _timeout_duration)
+    void lock_deferred(const std::chrono::duration<Rep, Period>& _timeout_duration)
     {
         try
         {
-            this->unique_lock_t::try_lock_for(_timeout_duration);
+            if(!this->unique_lock_t::owns_lock())
+                this->unique_lock_t::try_lock_for(_timeout_duration);
         } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
@@ -435,11 +437,12 @@ private:
     // been reached or the lock is acquired, whichever comes first. May block
     // for longer than until _timeout_time has been reached.
     template <typename Clock, typename Duration>
-    void _lock_deferred(const std::chrono::time_point<Clock, Duration>& _timeout_time)
+    void lock_deferred(const std::chrono::time_point<Clock, Duration>& _timeout_time)
     {
         try
         {
-            this->unique_lock_t::try_lock_until(_timeout_time);
+            if(!this->unique_lock_t::owns_lock())
+                this->unique_lock_t::try_lock_until(_timeout_time);
         } catch(std::system_error& e)
         {
             PrintLockErrorMessage(e);
