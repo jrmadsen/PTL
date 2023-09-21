@@ -26,7 +26,7 @@
 
 #include <atomic>
 #include <cassert>
-#include <list>
+#include <deque>
 #include <memory>
 #include <utility>
 
@@ -36,7 +36,7 @@ class TaskSubQueue
 {
 public:
     template <typename Tp>
-    using container = std::list<Tp>;
+    using container = std::deque<Tp>;
 
     using task_pointer   = std::shared_ptr<VTask>;
     using container_type = container<task_pointer>;
