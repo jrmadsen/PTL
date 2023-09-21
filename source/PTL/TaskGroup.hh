@@ -544,8 +544,8 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
             if(_tdata)
                 ++(_tdata->task_depth);
 
-            auto dtor_func = [&]() {
-                auto _count = --(_counter);
+            ScopeDestructor dtor{ [&_counter, &_tdata, &_task_lock, &_task_cond]() {
+                auto        _count = --(_counter);
                 if(_tdata)
                     --(_tdata->task_depth);
                 if(_count < 1)
@@ -553,13 +553,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
                     AutoLock _lk{ _task_lock };
                     _task_cond.notify_all();
                 }
-            };
-            struct dtor_impl
-            {
-                ~dtor_impl() { m_func(); }
-
-                decltype(dtor_func) m_func = {};
-            } d{ dtor_func };
+            } };
 
             func(args...);
         });
@@ -599,8 +593,8 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
             if(_tdata)
                 ++(_tdata->task_depth);
 
-            auto dtor_func = [&]() {
-                auto _count = --(_counter);
+            ScopeDestructor dtor{ [&_counter, &_tdata, &_task_lock, &_task_cond]() {
+                auto        _count = --(_counter);
                 if(_tdata)
                     --(_tdata->task_depth);
                 if(_count < 1)
@@ -608,13 +602,7 @@ TaskGroup<Tp, Arg, MaxDepth>::exec(Func func, Args... args)
                     AutoLock _lk{ _task_lock };
                     _task_cond.notify_all();
                 }
-            };
-            struct dtor_impl
-            {
-                ~dtor_impl() { m_func(); }
-
-                decltype(dtor_func) m_func = {};
-            } d{ dtor_func };
+            } };
 
             auto&& _ret = func(args...);
             return std::forward<decltype(_ret)>(_ret);
@@ -647,17 +635,11 @@ TaskGroup<Tp, Arg, MaxDepth>::local_exec(Func func, Args... args)
     promise_type _p{};
     m_future_list.emplace_back(_p.get_future());
 
-    auto dtor_func = [&]() {
+    ScopeDestructor dtor{ [&_p, &_tdata]() {
         _p.set_value();
         if(_tdata)
             --(_tdata->task_depth);
-    };
-    struct dtor_impl
-    {
-        ~dtor_impl() { m_func(); }
-
-        decltype(dtor_func) m_func = {};
-    } d{ dtor_func };
+    } };
 
     func(args...);
 }
