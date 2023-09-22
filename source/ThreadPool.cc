@@ -56,13 +56,28 @@ thread_data()
 
 namespace PTL
 {
+namespace
+{
+ThreadPool::thread_id_map_t*&
+thread_id_map()
+{
+    static auto* _v = new ThreadPool::thread_id_map_t{};
+    return _v;
+}
+
+auto ptl_init_thread_id_map = (thread_id_map(), std::atexit([]() {
+                                   delete thread_id_map();
+                                   thread_id_map() = nullptr;
+                               }),
+                               true);
+}  // namespace
+
 //======================================================================================//
 
 ThreadPool::thread_id_map_t&
 ThreadPool::f_thread_ids()
 {
-    static auto _v = thread_id_map_t{};
-    return _v;
+    return *thread_id_map();
 }
 
 //======================================================================================//
@@ -171,6 +186,22 @@ ThreadPool::add_thread_id(ThreadId _tid)
         SetThreadId(_idx);
     }
     return f_thread_ids().at(_tid);
+}
+
+//======================================================================================//
+
+bool
+ThreadPool::remove_thread_id(ThreadId _tid)
+{
+    AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
+    if(!lock.owns_lock())
+        lock.lock();
+    if(auto itr = f_thread_ids().find(_tid); itr != f_thread_ids().end())
+    {
+        f_thread_ids().erase(itr);
+        return true;
+    }
+    return false;
 }
 
 //======================================================================================//
@@ -572,8 +603,7 @@ ThreadPool::destroy_threadpool()
 
         //--------------------------------------------------------------------//
         // erase thread from thread ID list
-        if(f_thread_ids().find(_tid) != f_thread_ids().end())
-            f_thread_ids().erase(f_thread_ids().find(_tid));
+        remove_thread_id(_tid);
 
         //--------------------------------------------------------------------//
         // it's joined

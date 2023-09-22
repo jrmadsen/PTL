@@ -241,6 +241,7 @@ public:
     static uintmax_t              get_thread_id(ThreadId);
     static uintmax_t              get_this_thread_id();
     static uintmax_t              add_thread_id(ThreadId = ThisThread::get_id());
+    static bool                   remove_thread_id(ThreadId = ThisThread::get_id());
 
 private:
     void execute_thread(VUserTaskQueue*);  // function thread sits in
