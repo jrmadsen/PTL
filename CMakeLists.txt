@@ -86,7 +86,7 @@ if(PTL_USE_TBB)
     find_package(TBB 2017 REQUIRED)
 endif()
 
-# Check if compiler provides std::atomic without a library
+# Check if compiler provides std::atomic as a library
 include(CheckAtomic)
 if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
     set(PTL_LINK_ATOMIC TRUE)
