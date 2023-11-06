@@ -14,91 +14,58 @@ std:atomic.
 Since 5.75.0.
 #]=======================================================================]
 
+include(CMakePushCheckState)
 include(CheckCXXSourceCompiles)
 include(CheckLibraryExists)
+
+cmake_push_check_state()
 
 # Sometimes linking against libatomic is required for atomic ops, if the platform doesn't
 # support lock-free atomics.
 
-function(check_working_cxx_atomics varname)
-    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
-    check_cxx_source_compiles(
-        "
-        #include <atomic>
-        std::atomic<int> x;
-        std::atomic<short> y;
-        std::atomic<char> z;
-        int main() {
-            ++z;
-            ++y;
-            return ++x;
-        }
-        "
-        ${varname})
-    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
-endfunction()
+# 64-bit target test code
+if (CMAKE_SIZE_OF_VOID_P EQUAL 8) 
+    set(ATOMIC_CODE_64 "
+    std::atomic<uint64_t> x(0);
+    uint64_t i = x.load(std::memory_order_relaxed);
+    ")
+endif() 
 
-function(check_working_cxx_atomics64 varname)
-    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-    set(CMAKE_REQUIRED_FLAGS "-std=c++11 ${CMAKE_REQUIRED_FLAGS}")
-    check_cxx_source_compiles(
-        "
-        #include <atomic>
-        #include <cstdint>
-        std::atomic<uint64_t> x (0);
-        int main() {
-            uint64_t i = x.load(std::memory_order_relaxed);
-            return 0;
-        }
-        "
-        ${varname})
-    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
-endfunction()
+# Test code
+string(CONFIGURE [[
+    #include <atomic>
+    #include <cstdint>
+    int main() {
+        std::atomic<int> a;
+        std::atomic<short> b;
+        std::atomic<char> c;
+        ++c;
+        ++b;
+        ++a;
+        @ATOMIC_CODE_64@
+        return a;
+    }
+]] ATOMIC_CODE @ONLY)
 
-# Check for (non-64-bit) atomic operations.
-if(MSVC OR APPLE) # apple do not need latomic link
-    set(HAVE_CXX_ATOMICS_WITHOUT_LIB True)
-elseif(LLVM_COMPILER_IS_GCC_COMPATIBLE)
-    # First check if atomics work without the library.
-    check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITHOUT_LIB)
-    # If not, check if the library exists, and atomics work with it.
-    if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB)
-        check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
-        if(HAVE_LIBATOMIC)
-            list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-            check_working_cxx_atomics(HAVE_CXX_ATOMICS_WITH_LIB)
-            if(NOT HAVE_CXX_ATOMICS_WITH_LIB)
-                message(FATAL_ERROR "Host compiler must support std::atomic!")
-            endif()
-        else()
-            message(
-                FATAL_ERROR
-                    "Host compiler appears to require libatomic, but cannot find it.")
-        endif()
-    endif()
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+check_cxx_source_compiles("${ATOMIC_CODE}" CXX_ATOMIC_NO_LINK)
+
+set(ATOMIC_FOUND ${CXX_ATOMIC_NO_LINK})
+
+if(NOT CXX_ATOMIC_NO_LINK)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} atomic)
+  check_cxx_source_compiles("${ATOMIC_CODE}" CXX_ATOMIC_WITH_LINK)
+  set(ATOMIC_FOUND ${CXX_ATOMIC_WITH_LINK})
 endif()
 
-# Check for 64 bit atomic operations.
-if(MSVC OR APPLE) # apple do not need latomic link
-    set(HAVE_CXX_ATOMICS64_WITHOUT_LIB True)
-elseif(LLVM_COMPILER_IS_GCC_COMPATIBLE)
-    # First check if atomics work without the library.
-    check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-    # If not, check if the library exists, and atomics work with it.
-    if(NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-        check_library_exists(atomic __atomic_load_8 "" HAVE_CXX_LIBATOMICS64)
-        if(HAVE_CXX_LIBATOMICS64)
-            list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
-            check_working_cxx_atomics64(HAVE_CXX_ATOMICS64_WITH_LIB)
-            if(NOT HAVE_CXX_ATOMICS64_WITH_LIB)
-                message(FATAL_ERROR "Host compiler must support 64-bit std::atomic!")
-            endif()
-        else()
-            message(
-                FATAL_ERROR
-                    "Host compiler appears to require libatomic for 64-bit operations, but cannot find it."
-                )
-        endif()
-    endif()
+cmake_pop_check_state()
+
+if(ATOMIC_FOUND)
+  if(CXX_ATOMIC_NO_LINK)
+    message(VERBOSE "Found std::atomic with no linking")
+  elseif(CXX_ATOMIC_WITH_LINK)
+    message(VERBOSE "Found std::atomic with linking")
+  endif()
+else()
+  message(WARNING "std::atomic not found with compilation checks")
 endif()

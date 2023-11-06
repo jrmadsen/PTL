@@ -87,10 +87,8 @@ if(PTL_USE_TBB)
 endif()
 
 # Check if compiler provides std::atomic as a library
+# Sets CXX_ATOMIC_WITH_LINK to TRUE if so
 include(CheckAtomic)
-if(NOT HAVE_CXX_ATOMICS_WITHOUT_LIB OR NOT HAVE_CXX_ATOMICS64_WITHOUT_LIB)
-    set(PTL_LINK_ATOMIC TRUE)
-endif()
 
 # -------------------------------------------------------------------------------------- #
 # PTL Primary Build
