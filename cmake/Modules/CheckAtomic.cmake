@@ -16,7 +16,6 @@ Since 5.75.0.
 
 include(CMakePushCheckState)
 include(CheckCXXSourceCompiles)
-include(CheckLibraryExists)
 
 cmake_push_check_state()
 
