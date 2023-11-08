@@ -37,6 +37,9 @@ if(BUILD_OBJECT_LIBS)
     if(PTL_USE_TBB)
         target_link_libraries(ptl-object PUBLIC TBB::tbb)
     endif()
+    if(CXX_ATOMIC_WITH_LINK)
+        target_link_libraries(ptl-object PUBLIC atomic)
+    endif()
 
     target_include_directories(
         ptl-object PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
@@ -54,6 +57,9 @@ if(BUILD_SHARED_LIBS)
     target_link_libraries(ptl-shared PUBLIC Threads::Threads)
     if(PTL_USE_TBB)
         target_link_libraries(ptl-shared PUBLIC TBB::tbb)
+    endif()
+    if(CXX_ATOMIC_WITH_LINK)
+        target_link_libraries(ptl-shared PUBLIC atomic)
     endif()
 
     target_compile_definitions(ptl-shared PUBLIC PTL_BUILD_DLL)
@@ -87,6 +93,9 @@ if(BUILD_STATIC_LIBS)
     target_link_libraries(ptl-static PUBLIC Threads::Threads)
     if(PTL_USE_TBB)
         target_link_libraries(ptl-static PUBLIC TBB::tbb)
+    endif()
+    if(CXX_ATOMIC_WITH_LINK)
+        target_link_libraries(ptl-static PUBLIC atomic)
     endif()
 
     target_include_directories(

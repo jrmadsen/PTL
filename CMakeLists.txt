@@ -86,6 +86,10 @@ if(PTL_USE_TBB)
     find_package(TBB 2017 REQUIRED)
 endif()
 
+# Check if compiler provides std::atomic as a library
+# Sets CXX_ATOMIC_WITH_LINK to TRUE if so
+include(CheckAtomic)
+
 # -------------------------------------------------------------------------------------- #
 # PTL Primary Build
 add_subdirectory(source)
