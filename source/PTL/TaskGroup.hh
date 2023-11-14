@@ -332,8 +332,12 @@ TaskGroup<Tp, Arg, MaxDepth>::operator+=(std::shared_ptr<Up>&& _task)
 {
     // thread-safe increment of tasks in task group
     operator++();
+    // guard adding the task
+    m_task_lock.lock();
     // copy the shared pointer to abstract instance
     m_task_list.push_back(_task);
+    // release guard
+    m_task_lock.unlock();
     // return the derived instance
     return std::move(_task);
 }
@@ -483,10 +487,6 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
     intmax_t ntask = this->task_count().load();
     if(ntask > 0)
     {
-        std::stringstream ss;
-        ss << "\nWarning! Join operation issue! " << ntask << " tasks still "
-           << "are running!" << std::endl;
-        std::cerr << ss.str();
         this->wait();
     }
 }
@@ -741,6 +741,8 @@ TaskGroup<Tp, Arg, MaxDepth>::internal_update()
     {
         m_tbb_task_group = new tbb_task_group_t{};
     }
+
+    m_task_list.reserve(32);
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
