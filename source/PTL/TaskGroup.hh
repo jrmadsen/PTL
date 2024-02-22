@@ -176,8 +176,10 @@ public:
 
     void reserve(size_t _n)
     {
+        m_task_lock.lock();
         m_task_list.reserve(_n);
         m_future_list.reserve(_n);
+        m_task_lock.unlock();
     }
 
 public:
@@ -330,12 +332,12 @@ template <typename Up>
 std::shared_ptr<Up>
 TaskGroup<Tp, Arg, MaxDepth>::operator+=(std::shared_ptr<Up>&& _task)
 {
-    // thread-safe increment of tasks in task group
-    operator++();
     // guard adding the task
     m_task_lock.lock();
+    // thread-safe increment of tasks in task group
+    operator++();
     // copy the shared pointer to abstract instance
-    m_task_list.push_back(_task);
+    m_task_list.emplace_back(_task);
     // release guard
     m_task_lock.unlock();
     // return the derived instance
@@ -633,7 +635,9 @@ TaskGroup<Tp, Arg, MaxDepth>::local_exec(Func func, Args... args)
     if(_tdata)
         ++(_tdata->task_depth);
     promise_type _p{};
+    m_task_lock.lock();
     m_future_list.emplace_back(_p.get_future());
+    m_task_lock.unlock();
 
     ScopeDestructor dtor{ [&_p, &_tdata]() {
         _p.set_value();
@@ -653,7 +657,9 @@ TaskGroup<Tp, Arg, MaxDepth>::local_exec(Func func, Args... args)
     if(_tdata)
         ++(_tdata->task_depth);
     promise_type _p{};
+    m_task_lock.lock();
     m_future_list.emplace_back(_p.get_future());
+    m_task_lock.unlock();
     _p.set_value(func(args...));
     if(_tdata)
         --(_tdata->task_depth);
@@ -665,17 +671,20 @@ inline Up
 TaskGroup<Tp, Arg, MaxDepth>::join(Up accum)
 {
     this->wait();
-    for(auto& itr : m_task_list)
+    m_task_lock.lock();
+    auto _task_list   = std::move(m_task_list);
+    auto _future_list = std::move(m_future_list);
+    m_task_lock.unlock();
+    for(auto& itr : _task_list)
     {
         using RetT = decay_t<decltype(itr->get())>;
         accum      = std::move(m_join(std::ref(accum), std::forward<RetT>(itr->get())));
     }
-    for(auto& itr : m_future_list)
+    for(auto& itr : _future_list)
     {
         using RetT = decay_t<decltype(itr.get())>;
         accum      = std::move(m_join(std::ref(accum), std::forward<RetT>(itr.get())));
     }
-    this->clear();
     return accum;
 }
 
@@ -686,12 +695,15 @@ inline void
 TaskGroup<Tp, Arg, MaxDepth>::join()
 {
     this->wait();
-    for(auto& itr : m_task_list)
+    m_task_lock.lock();
+    auto _task_list   = std::move(m_task_list);
+    auto _future_list = std::move(m_future_list);
+    m_task_lock.unlock();
+    for(auto& itr : _task_list)
         itr->get();
-    for(auto& itr : m_future_list)
+    for(auto& itr : _future_list)
         itr.get();
     m_join();
-    this->clear();
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
@@ -701,25 +713,31 @@ inline void
 TaskGroup<Tp, Arg, MaxDepth>::join()
 {
     this->wait();
-    for(auto& itr : m_task_list)
+    m_task_lock.lock();
+    auto _task_list   = std::move(m_task_list);
+    auto _future_list = std::move(m_future_list);
+    m_task_lock.unlock();
+    for(auto& itr : _task_list)
     {
         using RetT = decay_t<decltype(itr->get())>;
         m_join(std::forward<RetT>(itr->get()));
     }
-    for(auto& itr : m_future_list)
+    for(auto& itr : _future_list)
     {
         using RetT = decay_t<decltype(itr.get())>;
         m_join(std::forward<RetT>(itr.get()));
     }
-    this->clear();
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
 void
 TaskGroup<Tp, Arg, MaxDepth>::clear()
 {
+    m_task_lock.lock();
+    m_tot_task_count.store(0);
     m_future_list.clear();
     m_task_list.clear();
+    m_task_lock.unlock();
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
@@ -742,7 +760,7 @@ TaskGroup<Tp, Arg, MaxDepth>::internal_update()
         m_tbb_task_group = new tbb_task_group_t{};
     }
 
-    m_task_list.reserve(32);
+    reserve(32);
 }
 
 template <typename Tp, typename Arg, intmax_t MaxDepth>
