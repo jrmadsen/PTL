@@ -65,11 +65,7 @@ thread_id_map()
     return _v;
 }
 
-auto ptl_init_thread_id_map = (thread_id_map(), std::atexit([]() {
-                                   delete thread_id_map();
-                                   thread_id_map() = nullptr;
-                               }),
-                               true);
+auto ptl_init_thread_id_map = (thread_id_map(), true);
 }  // namespace
 
 //======================================================================================//
