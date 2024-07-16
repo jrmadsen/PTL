@@ -296,7 +296,6 @@ UserTaskQueue::InsertTask(task_pointer&& task, ThreadData* data, intmax_t subq)
         if(insert_task(_n))
             return _n;
     }
-    return GetThreadBin();
 }
 
 //======================================================================================//
