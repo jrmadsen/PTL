@@ -103,7 +103,7 @@ GetNumberOfPhysicalCpus()
                     while((_pos = line.find(itr)) != _npos)
                         line = line.replace(_pos, itr.length(), "");
                 }
-                core_ids.insert(line);
+                core_ids.insert(std::move(line));
             }
         }
         core_id_count = static_cast<unsigned>(core_ids.size());
