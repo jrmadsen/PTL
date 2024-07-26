@@ -149,13 +149,15 @@ public:
     };
 
 public:
+    // NOLINTBEGIN(performance-noexcept-move-constructor)
     // Constructor and Destructors
     explicit ThreadPool(const Config&);
     ~ThreadPool();
-    ThreadPool(const ThreadPool&)     = delete;
-    ThreadPool(ThreadPool&&) noexcept = default;
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool&&)      = default;
     ThreadPool& operator=(const ThreadPool&) = delete;
-    ThreadPool& operator=(ThreadPool&&) noexcept = default;
+    ThreadPool& operator=(ThreadPool&&) = default;
+    // NOLINTEND(performance-noexcept-move-constructor)
 
 public:
     // Public functions
