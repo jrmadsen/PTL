@@ -49,9 +49,9 @@ GetEnv(const std::string& env_id, Tp _default = Tp())
     char* env_var = std::getenv(env_id.c_str());
     if(env_var)
     {
-        std::string        str_var = std::string(env_var);
-        std::istringstream iss(str_var);
-        Tp                 var = Tp();
+        const auto str_var = std::string{ env_var };
+        auto       iss     = std::istringstream{ str_var };
+        auto       var     = Tp{};
         iss >> var;
         return var;
     }

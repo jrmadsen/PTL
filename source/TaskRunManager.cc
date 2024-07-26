@@ -23,6 +23,9 @@
 #include "PTL/TaskManager.hh"
 #include "PTL/ThreadPool.hh"
 
+#include <cstdint>
+#include <thread>
+
 namespace PTL
 {
 //======================================================================================//

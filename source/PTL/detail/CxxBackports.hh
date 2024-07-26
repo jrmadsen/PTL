@@ -61,7 +61,7 @@ struct Itup_cat<Index_tuple<Ind1...>, Index_tuple<Ind2...>>
 template <size_t NumT>
 struct Build_index_tuple
 : Itup_cat<typename Build_index_tuple<NumT / 2>::__type,
-           typename Build_index_tuple<NumT - NumT / 2>::__type>
+           typename Build_index_tuple<NumT - (NumT / 2)>::__type>
 {};
 
 template <>

@@ -68,9 +68,10 @@ public:
 
 public:
     // execution operator
-    virtual future_type get_future() = 0;
-    virtual void        wait()       = 0;
-    virtual RetT        get()        = 0;
+    void                operator()() override = 0;
+    virtual future_type get_future()          = 0;
+    virtual void        wait()                = 0;
+    virtual RetT        get()                 = 0;
 };
 
 //======================================================================================//

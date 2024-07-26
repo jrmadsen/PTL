@@ -20,9 +20,13 @@ modernize-*,\
 -modernize-use-nodiscard,\
 -modernize-make-unique,\
 performance-*,\
+-performance-enum-size,\
+-performance-avoid-endl,\
 readability-*,\
+-readability-avoid-return-with-void-value,\
 -readability-function-size,\
 -readability-identifier-naming,\
+-readability-identifier-length,\
 -readability-implicit-bool-cast,\
 -readability-inconsistent-declaration-parameter-name,\
 -readability-named-parameter,\
@@ -40,6 +44,7 @@ readability-*,\
 -readability-const-return-type,\
 -readability-function-cognitive-complexity,\
 -readability-redundant-access-specifiers,\
+-readability-use-anyofallof,\
 "
 HeaderFilterRegex: 'source/PTL/.*\.(hh|icc)$'
 CheckOptions:

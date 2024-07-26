@@ -377,8 +377,8 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
     ThreadPool*     tpool = (m_pool) ? m_pool : data->thread_pool;
     VUserTaskQueue* taskq = (tpool) ? tpool->get_queue() : data->current_queue;
 
-    bool _is_main     = data->is_main;
-    bool _within_task = data->within_task;
+    bool       _is_main     = data->is_main;
+    const bool _within_task = data->within_task;
 
     auto is_active_state = [&]() {
         return (tpool->state()->load(std::memory_order_relaxed) !=
@@ -392,7 +392,7 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
         // only want to process if within a task
         if((!_is_main || tpool->size() < 2) && _within_task)
         {
-            int bin = static_cast<int>(taskq->GetThreadBin());
+            const int bin = static_cast<int>(taskq->GetThreadBin());
             // const auto nitr = (tpool) ? tpool->size() :
             // Thread::hardware_concurrency();
             while(this->pending() > 0)
@@ -438,8 +438,8 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
         }
     }
 
-    intmax_t wake_size = 2;
-    AutoLock _lock(m_task_lock, std::defer_lock);
+    const intmax_t wake_size = 2;
+    AutoLock       _lock(m_task_lock, std::defer_lock);
 
     while(is_active_state())
     {
@@ -480,12 +480,12 @@ TaskGroup<Tp, Arg, MaxDepth>::wait()
     if(_lock.owns_lock())
         _lock.unlock();
 
-    intmax_t ntask = this->task_count().load();
+    const intmax_t ntask = this->task_count().load();
     if(ntask > 0)
     {
         std::stringstream ss;
         ss << "\nWarning! Join operation issue! " << ntask << " tasks still "
-           << "are running!" << std::endl;
+           << "are running!\n";
         std::cerr << ss.str();
         this->wait();
     }
@@ -502,7 +502,7 @@ TaskGroup<Tp, Arg, MaxDepth>::get_scope_destructor()
         auto _count = --(_counter);
         if(_count < 1)
         {
-            AutoLock _lk{ _task_lock };
+            auto _lk = AutoLock{ _task_lock };
             _task_cond.notify_all();
         }
     } };
@@ -512,7 +512,7 @@ template <typename Tp, typename Arg, intmax_t MaxDepth>
 void
 TaskGroup<Tp, Arg, MaxDepth>::notify()
 {
-    AutoLock _lk{ m_task_lock };
+    auto _lk = AutoLock{ m_task_lock };
     m_task_cond.notify_one();
 }
 
@@ -520,7 +520,7 @@ template <typename Tp, typename Arg, intmax_t MaxDepth>
 void
 TaskGroup<Tp, Arg, MaxDepth>::notify_all()
 {
-    AutoLock _lk{ m_task_lock };
+    auto _lk = AutoLock{ m_task_lock };
     m_task_cond.notify_all();
 }
 

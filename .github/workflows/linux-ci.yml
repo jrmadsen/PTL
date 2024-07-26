@@ -46,6 +46,7 @@ jobs:
             compiler: 'clang-12'
             extra_args: '--num-tasks=256 --tbb --sanitizer --sanitizer-type=thread --static-analysis'
             extra_cmake: '-DPTL_USE_LOCKS=ON'
+            extra_ctest: ''
             extra_packages: 'clang-tidy-12'
             standard: '17'
             os-release: '20.04'
@@ -72,7 +73,7 @@ jobs:
         os-release: ['20.04', '22.04']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install Conda
       run:
@@ -141,6 +142,7 @@ jobs:
           -- -DCMAKE_INSTALL_PREFIX=${HOME}/ptl-install -DCMAKE_CXX_STANDARD=${{ matrix.standard }} ${{ matrix.extra_cmake }}
 
     - name: Install
+      if: ${{ !contains(matrix.extra_args, 'sanitizer') }}
       run:
         export PATH="/opt/conda/bin:${PATH}" &&
         source activate &&

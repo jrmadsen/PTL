@@ -3,7 +3,7 @@ if(PTL_CLANG_FORMATTER MATCHES ".*-6")
     unset(PTL_CLANG_FORMATTER CACHE)
 endif()
 
-find_program(PTL_CLANG_FORMATTER NAMES clang-format-9 clang-format-mp-9.0 clang-format)
+find_program(PTL_CLANG_FORMATTER NAMES clang-format-11 clang-format-mp-11.0 clang-format)
 mark_as_advanced(PTL_CLANG_FORMATTER)
 
 find_program(PTL_CMAKE_FORMATTER NAMES cmake-format)

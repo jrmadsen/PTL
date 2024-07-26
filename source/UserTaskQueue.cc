@@ -30,15 +30,21 @@
 #include "PTL/TaskGroup.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/ThreadPool.hh"
+#include "PTL/Types.hh"
 
+#include <atomic>
 #include <cassert>
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <map>
+#include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace PTL
 {
@@ -88,7 +94,7 @@ UserTaskQueue::resize(intmax_t n)
 {
     if(!m_mutex)
         throw std::runtime_error("nullptr to mutex");
-    AutoLock lk(m_mutex);
+    auto lk = AutoLock{ m_mutex };
     if(m_workers < n)
     {
         while(m_workers < n)
@@ -121,7 +127,7 @@ intmax_t
 UserTaskQueue::GetThreadBin() const
 {
     // get a thread id number
-    static thread_local intmax_t tl_bin =
+    static thread_local const intmax_t tl_bin =
         (m_thread_bin + ThreadPool::get_this_thread_id()) % (m_workers + 1);
     return tl_bin;
 }
@@ -139,9 +145,9 @@ UserTaskQueue::GetInsertBin() const
 UserTaskQueue::task_pointer
 UserTaskQueue::GetThreadBinTask()
 {
-    intmax_t      tbin      = GetThreadBin();
-    TaskSubQueue* task_subq = (*m_subqueues)[tbin % (m_workers + 1)];
-    task_pointer  _task     = nullptr;
+    const intmax_t tbin      = GetThreadBin();
+    TaskSubQueue*  task_subq = (*m_subqueues)[tbin % (m_workers + 1)];
+    task_pointer   _task     = nullptr;
 
     //------------------------------------------------------------------------//
     auto get_task = [&]() {
@@ -234,8 +240,8 @@ UserTaskQueue::InsertTask(task_pointer&& task, ThreadData* data, intmax_t subq)
     // increment number of tasks
     ++(*m_ntasks);
 
-    bool     spin = m_hold->load(std::memory_order_relaxed);
-    intmax_t tbin = GetThreadBin();
+    const bool     spin = m_hold->load(std::memory_order_relaxed);
+    const intmax_t tbin = GetThreadBin();
 
     if(data && data->within_task)
     {
@@ -326,8 +332,8 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
 
         //--------------------------------------------------------------------//
         auto thread_specific_func = [&]() {
-            ScopeDestructor _dtor = tg.get_scope_destructor();
-            static Mutex    _mtx;
+            auto         _dtor = tg.get_scope_destructor();
+            static Mutex _mtx;
             _mtx.lock();
             bool& _executed = thread_execute_map[GetThreadBin()];
             _mtx.unlock();
@@ -345,7 +351,7 @@ UserTaskQueue::ExecuteOnAllThreads(ThreadPool* tp, function_type func)
     }
 
     tp->notify_all();
-    int nexecuted = tg.join();
+    const int nexecuted = tg.join();
     if(nexecuted != m_workers)
     {
         std::stringstream msg;
@@ -384,8 +390,8 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
     // wrap the function so that it will only be executed if the thread
     // has an ID in the set
     auto thread_specific_func = [&]() {
-        ScopeDestructor _dtor = tg.get_scope_destructor();
-        static Mutex    _mtx;
+        auto         _dtor = tg.get_scope_destructor();
+        static Mutex _mtx;
         _mtx.lock();
         bool& _executed = thread_execute_map[GetThreadBin()];
         _mtx.unlock();
@@ -411,7 +417,7 @@ UserTaskQueue::ExecuteOnSpecificThreads(ThreadIdSet tid_set, ThreadPool* tp,
         InsertTask(tg.wrap(thread_specific_func), ThreadData::GetInstance(), i);
     }
     tp->notify_all();
-    decltype(tid_set.size()) nexecuted = tg.join();
+    const decltype(tid_set.size()) nexecuted = tg.join();
     if(nexecuted != tid_set.size())
     {
         std::stringstream msg;

@@ -401,7 +401,7 @@ private:
 
     //========================================================================//
     // standard locking
-    inline void _lock_deferred()
+    void _lock_deferred()
     {
         try
         {

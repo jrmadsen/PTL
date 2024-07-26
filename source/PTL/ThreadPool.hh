@@ -116,7 +116,7 @@ public:
     {
         static affinity_func_t _v = [](intmax_t) {
             static std::atomic<intmax_t> assigned;
-            intmax_t                     _assign = assigned++;
+            const intmax_t               _assign = assigned++;
             return _assign % Thread::hardware_concurrency();
         };
         return _v;
@@ -149,6 +149,7 @@ public:
     };
 
 public:
+    // NOLINTBEGIN(performance-noexcept-move-constructor)
     // Constructor and Destructors
     explicit ThreadPool(const Config&);
     ~ThreadPool();
@@ -156,6 +157,7 @@ public:
     ThreadPool(ThreadPool&&)      = default;
     ThreadPool& operator=(const ThreadPool&) = delete;
     ThreadPool& operator=(ThreadPool&&) = default;
+    // NOLINTEND(performance-noexcept-move-constructor)
 
 public:
     // Public functions
@@ -303,7 +305,7 @@ ThreadPool::notify()
     // wake up one thread that is waiting for a task to be available
     if(m_thread_awake->load() < m_pool_size)
     {
-        AutoLock l(*m_task_lock);
+        auto l = AutoLock{ *m_task_lock };
         m_task_cond->notify_one();
     }
 }
@@ -312,7 +314,7 @@ inline void
 ThreadPool::notify_all()
 {
     // wake all threads
-    AutoLock l(*m_task_lock);
+    auto l = AutoLock{ *m_task_lock };
     m_task_cond->notify_all();
 }
 //--------------------------------------------------------------------------------------//
@@ -325,7 +327,7 @@ ThreadPool::notify(size_type ntasks)
     // wake up as many threads that tasks just added
     if(m_thread_awake->load() < m_pool_size)
     {
-        AutoLock l(*m_task_lock);
+        auto l = AutoLock{ *m_task_lock };
         if(ntasks < this->size())
         {
             for(size_type i = 0; i < ntasks; ++i)
@@ -354,10 +356,10 @@ ThreadPool::get_task_arena()
     // create a task arena
     if(!m_tbb_task_arena)
     {
-        auto _sz = (tbb_global_control())
-                       ? tbb_global_control()->active_value(
+        auto _sz         = (tbb_global_control())
+                               ? tbb_global_control()->active_value(
                              tbb::global_control::max_allowed_parallelism)
-                       : size();
+                               : size();
         m_tbb_task_arena = new tbb_task_arena_t(::tbb::task_arena::attach{});
         m_tbb_task_arena->initialize(_sz, 1);
     }
@@ -492,9 +494,9 @@ ThreadPool::execute_on_all_threads(FuncT&& _func)
         // number of cores
         size_t _ncore = GetNumberOfCores();
         // maximum depth for recursion
-        size_t _dmax = std::max<size_t>(_ncore, 8);
+        const size_t _dmax = std::max<size_t>(_ncore, 8);
         // how many threads we need to initialize
-        size_t _num = std::min(_maxp, std::min(_sz, _ncore));
+        const size_t _num = std::min({ _maxp, _sz, _ncore });
         // this is the task passed to the task-group
         std::function<void()> _init_task;
         _init_task = [&]() {
@@ -602,9 +604,9 @@ ThreadPool::execute_on_specific_threads(const std::set<std::thread::id>& _tids,
         // executed the _exec function above
         std::atomic<size_t> _total_exec{ 0 };
         // number of cores
-        size_t _ncore = GetNumberOfCores();
+        const size_t _ncore = GetNumberOfCores();
         // maximum depth for recursion
-        size_t _dmax = std::max<size_t>(_ncore, 8);
+        const size_t _dmax = std::max<size_t>(_ncore, 8);
         // how many threads we need to initialize
         size_t _num = _tids.size();
         // create a task arena
