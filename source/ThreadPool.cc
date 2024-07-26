@@ -33,14 +33,22 @@
 #include "PTL/ScopeDestructor.hh"
 #include "PTL/ThreadData.hh"
 #include "PTL/Threading.hh"
+#include "PTL/Types.hh"
 #include "PTL/UserTaskQueue.hh"
 #include "PTL/VUserTaskQueue.hh"
 
+#include <atomic>
 #include <cassert>
+#include <chrono>
+#include <cstdint>
+#include <iostream>
+#include <memory>
 #include <mutex>
 #include <new>
+#include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <utility>
 
 //======================================================================================//
 
@@ -82,13 +90,13 @@ ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
 {
     if(tp->get_verbose() > 0)
     {
-        AutoLock lock(TypeMutex<decltype(std::cerr)>());
-        std::cerr << "[PTL::ThreadPool] Starting thread " << _idx << "..." << std::endl;
+        auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
+        std::cerr << "[PTL::ThreadPool] Starting thread " << _idx << "...\n";
     }
 
     auto _thr_data = std::make_shared<ThreadData>(tp);
     {
-        AutoLock lock(TypeMutex<ThreadPool>(), std::defer_lock);
+        auto lock = AutoLock{ TypeMutex<ThreadPool>(), std::defer_lock };
         if(!lock.owns_lock())
             lock.lock();
         if(_idx < 0)
@@ -104,9 +112,8 @@ ThreadPool::start_thread(ThreadPool* tp, thread_data_t* _data, intmax_t _idx)
 
     if(tp->get_verbose() > 0)
     {
-        AutoLock lock(TypeMutex<decltype(std::cerr)>());
-        std::cerr << "[PTL::ThreadPool] Thread " << _idx << " terminating..."
-                  << std::endl;
+        auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
+        std::cerr << "[PTL::ThreadPool] Thread " << _idx << " terminating...\n";
     }
 }
 
@@ -183,8 +190,8 @@ ThreadPool::ThreadPool(const Config& _cfg)
     auto master_id = get_this_thread_id();
     if(master_id != 0 && m_verbose > 1)
     {
-        AutoLock lock(TypeMutex<decltype(std::cerr)>());
-        std::cerr << "[PTL::ThreadPool] ThreadPool created on worker thread" << std::endl;
+        auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
+        std::cerr << "[PTL::ThreadPool] ThreadPool created on worker thread\n";
     }
 
     thread_data() = new ThreadData(this);
@@ -202,8 +209,7 @@ ThreadPool::~ThreadPool()
     {
         std::cerr << "Warning! ThreadPool was not properly destroyed! Call "
                      "destroy_threadpool() before deleting the ThreadPool object to "
-                     "eliminate this message."
-                  << std::endl;
+                     "eliminate this message.\n";
         m_pool_state->store(thread_pool::state::STOPPED);
         m_task_lock->lock();
         m_task_cond->notify_all();
@@ -252,11 +258,11 @@ ThreadPool::set_affinity(intmax_t i, Thread& _thread) const
 {
     try
     {
-        NativeThread native_thread = _thread.native_handle();
-        intmax_t     _pin          = m_affinity_func(i);
+        NativeThread   native_thread = _thread.native_handle();
+        const intmax_t _pin          = m_affinity_func(i);
         if(m_verbose > 0)
         {
-            AutoLock lock(TypeMutex<decltype(std::cerr)>());
+            auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
             std::cerr << "[PTL::ThreadPool] Setting pin affinity for thread "
                       << get_thread_id(_thread.get_id()) << " to " << _pin << std::endl;
         }
@@ -278,7 +284,7 @@ ThreadPool::set_priority(int _prio, Thread& _thread) const
         NativeThread native_thread = _thread.native_handle();
         if(m_verbose > 0)
         {
-            AutoLock lock(TypeMutex<decltype(std::cerr)>());
+            auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
             std::cerr << "[PTL::ThreadPool] Setting thread "
                       << get_thread_id(_thread.get_id()) << " priority to " << _prio
                       << std::endl;
@@ -286,7 +292,7 @@ ThreadPool::set_priority(int _prio, Thread& _thread) const
         SetThreadPriority(_prio, native_thread);
     } catch(std::runtime_error& e)
     {
-        AutoLock lock(TypeMutex<decltype(std::cerr)>());
+        auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
         std::cerr << "[PTL::ThreadPool] Error setting thread priority: " << e.what()
                   << std::endl;
     }
@@ -324,11 +330,13 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
 
         if(!_global_control)
         {
+            // NOLINTBEGIN(misc-include-cleaner)
             _global_control = new tbb_global_control_t(
                 tbb::global_control::max_allowed_parallelism, proposed_size + 1);
+            // NOLINTEND(misc-include-cleaner)
             if(m_verbose > 0)
             {
-                AutoLock lock(TypeMutex<decltype(std::cerr)>());
+                auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
                 std::cerr << "[PTL::ThreadPool] ThreadPool [TBB] initialized with "
                           << m_pool_size << " threads." << std::endl;
             }
@@ -357,7 +365,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
                 ;
             if(m_verbose > 0)
             {
-                AutoLock lock(TypeMutex<decltype(std::cerr)>());
+                auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
                 std::cerr << "[PTL::ThreadPool] ThreadPool initialized with "
                           << m_pool_size << " threads." << std::endl;
             }
@@ -376,7 +384,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
         {
             if(m_verbose > 0)
             {
-                AutoLock lock(TypeMutex<decltype(std::cerr)>());
+                auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
                 std::cerr << "ThreadPool initialized with " << m_pool_size << " threads."
                           << std::endl;
             }
@@ -392,7 +400,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
     //--------------------------------------------------------------------//
     // reserve enough space to prevent realloc later
     {
-        AutoLock _task_lock(*m_task_lock);
+        auto _task_lock = AutoLock{ *m_task_lock };
         m_is_joined.reserve(proposed_size);
     }
 
@@ -425,20 +433,20 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
             m_threads.emplace_back(std::move(thr));
         } catch(std::runtime_error& e)
         {
-            AutoLock lock(TypeMutex<decltype(std::cerr)>());
+            auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
             std::cerr << "[PTL::ThreadPool] " << e.what()
                       << std::endl;  // issue creating thread
             continue;
         } catch(std::bad_alloc& e)
         {
-            AutoLock lock(TypeMutex<decltype(std::cerr)>());
+            auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
             std::cerr << "[PTL::ThreadPool] " << e.what() << std::endl;
             continue;
         }
     }
     //------------------------------------------------------------------------//
 
-    AutoLock _task_lock(*m_task_lock);
+    auto _task_lock = AutoLock{ *m_task_lock };
 
     // thread pool size doesn't match with join vector
     // this will screw up joining later
@@ -454,7 +462,7 @@ ThreadPool::initialize_threadpool(size_type proposed_size)
 
     if(m_verbose > 0)
     {
-        AutoLock lock(TypeMutex<decltype(std::cerr)>());
+        auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
         std::cerr << "[PTL::ThreadPool] ThreadPool initialized with " << m_pool_size
                   << " threads." << std::endl;
     }
@@ -499,7 +507,7 @@ ThreadPool::destroy_threadpool()
         delete _global_control;
         _global_control = nullptr;
         m_tbb_tp        = false;
-        AutoLock lock(TypeMutex<decltype(std::cerr)>());
+        auto lock       = AutoLock{ TypeMutex<decltype(std::cerr)>() };
         if(m_verbose > 0)
         {
             std::cerr << "[PTL::ThreadPool] ThreadPool [TBB] destroyed" << std::endl;
@@ -580,12 +588,12 @@ ThreadPool::destroy_threadpool()
     {
         if(_active == 0)
         {
-            AutoLock lock(TypeMutex<decltype(std::cerr)>());
+            auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
             std::cerr << "[PTL::ThreadPool] ThreadPool destroyed" << std::endl;
         }
         else
         {
-            AutoLock lock(TypeMutex<decltype(std::cerr)>());
+            auto lock = AutoLock{ TypeMutex<decltype(std::cerr)>() };
             std::cerr << "[PTL::ThreadPool] ThreadPool destroyed but " << _active
                       << " threads might still be active (and cause a termination error)"
                       << std::endl;
@@ -623,7 +631,7 @@ ThreadPool::stop_thread()
         ;
 
     // lock up the task queue
-    AutoLock _task_lock(*m_task_lock);
+    auto _task_lock = AutoLock{ *m_task_lock };
 
     while(!m_stop_threads.empty())
     {
@@ -668,7 +676,7 @@ ThreadPool::execute_thread(VUserTaskQueue* _task_queue)
     // initialization function
     m_init_func();
     // finalization function (executed when scope is destroyed)
-    ScopeDestructor _fini{ [this]() { m_fini_func(); } };
+    auto _fini = ScopeDestructor{ [this]() { m_fini_func(); } };
 
     ThreadId    tid  = ThisThread::get_id();
     ThreadData* data = thread_data();

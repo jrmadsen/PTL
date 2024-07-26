@@ -24,8 +24,9 @@
 
 #include "PTL/Threading.hh"
 
-#include "PTL/ConsumeParameters.hh"
+#include "PTL/ConsumeParameters.hh"  // NOLINT(misc-include-cleaner)
 #include "PTL/Macros.hh"
+#include "PTL/Types.hh"
 
 #if defined(PTL_WINDOWS)
 #    include <Windows.h>
@@ -37,10 +38,12 @@
 
 #if defined(PTL_LINUX)
 #    include <fstream>
+#    include <pthread.h>
+#    include <sched.h>
 #    include <set>
 #endif
 
-#include <cstddef>
+#include <string>
 #include <thread>
 
 //======================================================================================//
@@ -93,7 +96,7 @@ GetNumberOfPhysicalCpus()
                 break;
             if(line.find("core id") != std::string::npos)
             {
-                for(std::string itr : { "core id", ":", " ", "\t" })
+                for(const std::string& itr : { "core id", ":", " ", "\t" })
                 {
                     static auto _npos = std::string::npos;
                     auto        _pos  = _npos;
@@ -166,6 +169,7 @@ SetPinAffinity(int _cpu, NativeThread& _t)
     cpu_set_t _cpu_set{};
     CPU_ZERO(&_cpu_set);
     CPU_SET(_cpu, &_cpu_set);
+    // NOLINTNEXTLINE(misc-include-cleaner)
     return (pthread_setaffinity_np(static_cast<pthread_t>(_t), sizeof(cpu_set_t),
                                    &_cpu_set) == 0);
 #else  // Not available for Mac, WIN,...

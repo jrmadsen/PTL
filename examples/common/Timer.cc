@@ -24,6 +24,7 @@
 
 #include "Timer.hh"
 
+#include <chrono>
 #include <stdexcept>
 
 using namespace PTL;
@@ -89,7 +90,7 @@ Timer::GetRealElapsed() const
         throw std::runtime_error("Timer::GetRealElapsed() - "
                                  "Timer not stopped or times not recorded!");
     }
-    std::chrono::duration<double> diff = fEndRealTime - fStartRealTime;
+    const std::chrono::duration<double> diff = fEndRealTime - fStartRealTime;
     return diff.count();
 }
 
@@ -103,7 +104,7 @@ Timer::GetSystemElapsed() const
         throw std::runtime_error("Timer::GetSystemElapsed() - "
                                  "Timer not stopped or times not recorded!");
     }
-    double diff = fEndTimes.tms_stime - fStartTimes.tms_stime;
+    const double diff = fEndTimes.tms_stime - fStartTimes.tms_stime;
     return diff / sysconf(_SC_CLK_TCK);
 }
 
@@ -117,7 +118,7 @@ Timer::GetUserElapsed() const
         throw std::runtime_error("Timer::GetUserElapsed() - "
                                  "Timer not stopped or times not recorded!");
     }
-    double diff = fEndTimes.tms_utime - fStartTimes.tms_utime;
+    const double diff = fEndTimes.tms_utime - fStartTimes.tms_utime;
     return diff / sysconf(_SC_CLK_TCK);
 }
 

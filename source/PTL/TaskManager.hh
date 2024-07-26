@@ -70,15 +70,15 @@ public:
 public:
     //------------------------------------------------------------------------//
     // return the thread pool
-    inline ThreadPool* thread_pool() const { return m_pool; }
+    ThreadPool* thread_pool() const { return m_pool; }
 
     //------------------------------------------------------------------------//
     // return the number of threads in the thread pool
-    inline size_type size() const { return (m_pool) ? m_pool->size() : 0; }
+    size_type size() const { return (m_pool) ? m_pool->size() : 0; }
 
     //------------------------------------------------------------------------//
     // kill all the threads
-    inline void finalize()
+    void finalize()
     {
         if(m_is_finalized)
             return;
@@ -237,9 +237,7 @@ PTL::TaskManager::GetInstance()
 {
     if(!fgInstance())
     {
-        auto nthreads = std::thread::hardware_concurrency();
-        std::cout << "Allocating mad::TaskManager with " << nthreads << " thread(s)..."
-                  << std::endl;
+        // auto nthreads = std::thread::hardware_concurrency();
         new TaskManager(TaskRunManager::GetMasterRunManager()->GetThreadPool());
     }
     return fgInstance();

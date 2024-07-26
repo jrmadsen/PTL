@@ -47,3 +47,5 @@
 *~
 *.bak
 
+# clangd
+/.cache

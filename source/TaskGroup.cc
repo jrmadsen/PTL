@@ -33,6 +33,9 @@
 #include "PTL/TaskRunManager.hh"
 #include "PTL/ThreadData.hh"
 
+#include <atomic>
+#include <cstdint>
+
 //======================================================================================//
 
 namespace PTL
