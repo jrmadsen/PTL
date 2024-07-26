@@ -20,14 +20,14 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang-format-9 cmake
+        sudo apt-get install -y clang-format-11 cmake
     - name: clang-format
       run: |
         cmake -B build-PTL -DPTL_USE_TBB=OFF .
         cmake --build build-PTL --target format-source
         rm -rf build-PTL
         if [ $(git diff | wc -l) -gt 0 ]; then
-          echo -e "\nError! Source code not formatted. Run clang-format-9...\n"
+          echo -e "\nError! Source code not formatted. Run clang-format-11...\n"
           echo -e "\nFiles:\n"
           git diff --name-only
           echo -e "\nFull diff:\n"
